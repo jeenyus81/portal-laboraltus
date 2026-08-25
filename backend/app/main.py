@@ -1,11 +1,12 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import engine
 from app.dependencies import get_current_user, require_hr
 from app.models import Employee, User, UserRole
-from app.schemas import EmployeeResponse, LoginRequest
+from app.schemas import EmployeeCreate, EmployeeResponse, LoginRequest
 from app.security import create_access_token, verify_password
 
 
@@ -70,6 +71,7 @@ def get_me(current_user: User = Depends(get_current_user)):
             "seniority_date": employee.seniority_date,
             "social_security_number": employee.social_security_number,
         }
+
 @app.get("/api/employees", response_model=list[EmployeeResponse])
 def list_employees(
     current_user: User = Depends(require_hr),
@@ -78,6 +80,30 @@ def list_employees(
         return session.scalars(
             select(Employee).order_by(Employee.id)
         ).all()
+
+
+@app.post("/api/employees", response_model=EmployeeResponse, status_code=201)
+def create_employee(
+    data: EmployeeCreate,
+    current_user: User = Depends(require_hr),
+):
+    with Session(engine) as session:
+        employee = Employee(**data.model_dump())
+
+        session.add(employee)
+
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            raise HTTPException(
+                status_code=409,
+                detail="An employee with this national ID or social security number already exists",
+            )
+
+        session.refresh(employee)
+
+        return employee
 
 
 @app.get("/api/employees/{employee_id}", response_model=EmployeeResponse)

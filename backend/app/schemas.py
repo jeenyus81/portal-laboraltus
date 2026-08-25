@@ -7,6 +7,18 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
+class EmployeeCreate(BaseModel):
+    first_name: str
+    last_name: str
+    national_id: str
+    nationality: str
+    gender: str
+    birth_date: date
+    address: str
+    job_category: str
+    job_title: str
+    seniority_date: date
+    social_security_number: str
 
 class EmployeeResponse(BaseModel):
     id: int
