@@ -37,3 +37,21 @@ class EmployeeResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+class ContractResponse(BaseModel):
+    id: int
+    employee_id: int
+    start_date: date
+    end_date: date | None
+    contract_type: str
+    document_path: str | None
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class ContractCreate(BaseModel):
+    start_date: date
+    end_date: date | None = None
+    contract_type: str
+    document_path: str | None = None

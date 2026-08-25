@@ -5,8 +5,14 @@ from sqlalchemy.orm import Session
 
 from app.database import engine
 from app.dependencies import get_current_user, require_hr
-from app.models import Employee, User, UserRole
-from app.schemas import EmployeeCreate, EmployeeResponse, LoginRequest
+from app.models import Contract, Employee, User, UserRole
+from app.schemas import (
+    ContractCreate,
+    ContractResponse,
+    EmployeeCreate,
+    EmployeeResponse,
+    LoginRequest,
+)
 from app.security import create_access_token, verify_password
 
 
@@ -105,6 +111,62 @@ def create_employee(
 
         return employee
 
+@app.get(
+    "/api/employees/{employee_id}/contracts",
+    response_model=list[ContractResponse],
+)
+def list_employee_contracts(
+    employee_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role == UserRole.EMPLOYEE:
+        if current_user.employee_id != employee_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access your own contracts",
+            )
+
+    with Session(engine) as session:
+        employee = session.get(Employee, employee_id)
+
+        if employee is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Employee not found",
+            )
+
+        return employee.contracts
+
+
+@app.post(
+    "/api/employees/{employee_id}/contracts",
+    response_model=ContractResponse,
+    status_code=201,
+)
+def create_contract(
+    employee_id: int,
+    data: ContractCreate,
+    current_user: User = Depends(require_hr),
+):
+    with Session(engine) as session:
+        employee = session.get(Employee, employee_id)
+
+        if employee is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Employee not found",
+            )
+
+        contract = Contract(
+            employee_id=employee_id,
+            **data.model_dump(),
+        )
+
+        session.add(contract)
+        session.commit()
+        session.refresh(contract)
+
+        return contract
 
 @app.get("/api/employees/{employee_id}", response_model=EmployeeResponse)
 def get_employee(
