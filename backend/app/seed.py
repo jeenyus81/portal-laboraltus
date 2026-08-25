@@ -62,7 +62,22 @@ def seed():
             print("Usuario creado: carlos.garcia")
         else:
             print("El usuario carlos.garcia ya existe")
+        hr_user = session.scalar(
+            select(User).where(User.username == "hr.admin")
+        )
 
+        if hr_user is None:
+            hr_user = User(
+                username="hr.admin",
+                password_hash=hash_password("Prueba123!"),
+                role=UserRole.HR,
+                employee_id=None,
+            )
+
+            session.add(hr_user)
+            print("Usuario HR creado: hr.admin")
+        else:
+            print("El usuario HR hr.admin ya existe")
         session.commit()
 
 
