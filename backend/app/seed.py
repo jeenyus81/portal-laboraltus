@@ -1,41 +1,69 @@
 ﻿from datetime import date
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import engine
-from app.models import Contract, Employee
+from app.models import Contract, Employee, User, UserRole
+from app.security import hash_password
 
 
 def seed():
     with Session(engine) as session:
-        employee = Employee(
-            first_name="Carlos",
-            last_name="Garcia Lopez",
-            national_id="00000000T",
-            nationality="Espanola",
-            gender="M",
-            birth_date=date(1990, 5, 15),
-            address="Calle de Prueba 1, Santander",
-            job_category="Tecnico",
-            job_title="Tecnico de Sistemas",
-            seniority_date=date(2024, 1, 15),
-            social_security_number="000000000000",
+        employee = session.scalar(
+            select(Employee).where(Employee.national_id == "00000000T")
         )
 
-        contract = Contract(
-            start_date=date(2024, 1, 15),
-            end_date=None,
-            contract_type="Indefinido",
-            document_path=None,
+        if employee is None:
+            employee = Employee(
+                first_name="Carlos",
+                last_name="Garcia Lopez",
+                national_id="00000000T",
+                nationality="Espanola",
+                gender="M",
+                birth_date=date(1990, 5, 15),
+                address="Calle de Prueba 1, Santander",
+                job_category="Tecnico",
+                job_title="Tecnico de Sistemas",
+                seniority_date=date(2024, 1, 15),
+                social_security_number="000000000000",
+            )
+
+            contract = Contract(
+                start_date=date(2024, 1, 15),
+                end_date=None,
+                contract_type="Indefinido",
+                document_path=None,
+            )
+
+            employee.contracts.append(contract)
+
+            session.add(employee)
+            session.flush()
+
+            print(f"Empleado creado con ID: {employee.id}")
+            print(f"Contrato creado con ID: {contract.id}")
+        else:
+            print(f"El empleado ya existe con ID: {employee.id}")
+
+        user = session.scalar(
+            select(User).where(User.username == "carlos.garcia")
         )
 
-        employee.contracts.append(contract)
+        if user is None:
+            user = User(
+                username="carlos.garcia",
+                password_hash=hash_password("Prueba123!"),
+                role=UserRole.EMPLOYEE,
+                employee_id=employee.id,
+            )
 
-        session.add(employee)
+            session.add(user)
+            print("Usuario creado: carlos.garcia")
+        else:
+            print("El usuario carlos.garcia ya existe")
+
         session.commit()
-
-        print(f"Empleado creado con ID: {employee.id}")
-        print(f"Contrato creado con ID: {contract.id}")
 
 
 if __name__ == "__main__":

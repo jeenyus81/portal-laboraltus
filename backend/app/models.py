@@ -4,7 +4,9 @@ from sqlalchemy import Date, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
-
+class UserRole:
+    EMPLOYEE = "EMPLOYEE"
+    HR = "HR"
 
 class Employee(Base):
     __tablename__ = "employees"
