@@ -1,11 +1,11 @@
-﻿from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import engine
 from app.dependencies import get_current_user
-from app.models import Employee, User
-from app.schemas import LoginRequest
+from app.models import Employee, User, UserRole
+from app.schemas import EmployeeResponse, LoginRequest
 from app.security import create_access_token, verify_password
 
 
@@ -70,3 +70,26 @@ def get_me(current_user: User = Depends(get_current_user)):
             "seniority_date": employee.seniority_date,
             "social_security_number": employee.social_security_number,
         }
+
+@app.get("/api/employees/{employee_id}", response_model=EmployeeResponse)
+def get_employee(
+    employee_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role == UserRole.EMPLOYEE:
+        if current_user.employee_id != employee_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access your own employee profile",
+            )
+
+    with Session(engine) as session:
+        employee = session.get(Employee, employee_id)
+
+        if employee is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Employee not found",
+            )
+
+        return employee
