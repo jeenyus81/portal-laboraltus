@@ -1,4 +1,5 @@
-from fastapi import Depends, FastAPI, HTTPException
+from pathlib import Path
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -167,6 +168,59 @@ def create_contract(
         session.refresh(contract)
 
         return contract
+
+
+@app.post(
+    "/api/employees/{employee_id}/contracts/{contract_id}/document",
+)
+def upload_contract_document(
+    employee_id: int,
+    contract_id: int,
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_hr),
+):
+    allowed_extensions = {".pdf", ".doc", ".docx"}
+
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="A file name is required",
+        )
+
+    extension = Path(file.filename).suffix.lower()
+
+    if extension not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF, DOC and DOCX files are allowed",
+        )
+
+    with Session(engine) as session:
+        contract = session.get(Contract, contract_id)
+
+        if contract is None or contract.employee_id != employee_id:
+            raise HTTPException(
+                status_code=404,
+                detail="Contract not found",
+            )
+
+        upload_dir = Path("uploads/contracts")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        file_path = upload_dir / f"contract_{contract.id}{extension}"
+
+        with file_path.open("wb") as buffer:
+            buffer.write(file.file.read())
+
+        contract.document_path = str(file_path)
+
+        session.commit()
+        session.refresh(contract)
+
+        return {
+            "contract_id": contract.id,
+            "document_path": contract.document_path,
+        }
 
 @app.get("/api/employees/{employee_id}", response_model=EmployeeResponse)
 def get_employee(
