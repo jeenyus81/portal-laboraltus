@@ -172,7 +172,7 @@ function App() {
         <section className="card">
           <div className="header">
             <div>
-              <p className="eyebrow">Proyecto Learning</p>
+              <p className="eyebrow">Portal Laboraltus</p>
               <h1>Bienvenido, {user.first_name}</h1>
             </div>
 
@@ -310,7 +310,7 @@ function App() {
     <main className="app">
       <section className="login-card">
         <div className="login-header">
-          <p className="eyebrow">Proyecto Learning</p>
+          <p className="eyebrow">Portal Laboraltus</p>
           <h1>Portal del empleado</h1>
           <p>Inicia sesion para acceder a tu informacion.</p>
         </div>
