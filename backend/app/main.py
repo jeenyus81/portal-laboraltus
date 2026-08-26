@@ -1,5 +1,6 @@
 from pathlib import Path
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -221,6 +222,49 @@ def upload_contract_document(
             "contract_id": contract.id,
             "document_path": contract.document_path,
         }
+@app.get(
+    "/api/employees/{employee_id}/contracts/{contract_id}/document",
+)
+def download_contract_document(
+    employee_id: int,
+    contract_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role == UserRole.EMPLOYEE:
+        if current_user.employee_id != employee_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access your own contracts",
+            )
+
+    with Session(engine) as session:
+        contract = session.get(Contract, contract_id)
+
+        if contract is None or contract.employee_id != employee_id:
+            raise HTTPException(
+                status_code=404,
+                detail="Contract not found",
+            )
+
+        if not contract.document_path:
+            raise HTTPException(
+                status_code=404,
+                detail="Contract document not found",
+            )
+
+        file_path = Path(contract.document_path)
+
+        if not file_path.exists():
+            raise HTTPException(
+                status_code=404,
+                detail="Contract document not found",
+            )
+
+        return FileResponse(
+            path=file_path,
+            filename=file_path.name,
+        )
+
 
 @app.get("/api/employees/{employee_id}", response_model=EmployeeResponse)
 def get_employee(
