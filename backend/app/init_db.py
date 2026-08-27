@@ -1,5 +1,5 @@
 from app.database import Base, engine
-from app.models import User, Employee, Contract
+from app.models import User, Employee, Contract, Nomina
 
 
 def init_db():

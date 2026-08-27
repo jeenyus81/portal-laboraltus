@@ -299,3 +299,34 @@ button:disabled {
     width: 100%;
   }
 }
+.contract-document label.download-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  font: inherit;
+}
+.upload-file-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-sizing: border-box;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  border: 1px solid #2563eb;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.upload-file-label:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}

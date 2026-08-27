@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import engine
-from app.models import Contract, Employee, User, UserRole
+from app.models import Contract, Employee, Nomina, User, UserRole
 from app.security import hash_password
 
 
@@ -43,8 +43,30 @@ def seed():
 
             print(f"Empleado creado con ID: {employee.id}")
             print(f"Contrato creado con ID: {contract.id}")
+
         else:
             print(f"El empleado ya existe con ID: {employee.id}")
+
+        nomina = session.scalar(
+            select(Nomina).where(
+                Nomina.employee_id == employee.id,
+                Nomina.date == date(2026, 8, 1),
+            )
+        )
+
+        if nomina is None:
+            nomina = Nomina(
+                employee_id=employee.id,
+                date=date(2026, 8, 1),
+                document_path=None,
+            )
+
+            session.add(nomina)
+            session.flush()
+
+            print(f"Nomina creada con ID: {nomina.id}")
+        else:
+            print(f"La nomina ya existe con ID: {nomina.id}")
 
         user = session.scalar(
             select(User).where(User.username == "carlos.garcia")
@@ -62,6 +84,7 @@ def seed():
             print("Usuario creado: carlos.garcia")
         else:
             print("El usuario carlos.garcia ya existe")
+
         hr_user = session.scalar(
             select(User).where(User.username == "hr.admin")
         )
@@ -78,6 +101,7 @@ def seed():
             print("Usuario HR creado: hr.admin")
         else:
             print("El usuario HR hr.admin ya existe")
+
         session.commit()
 
 

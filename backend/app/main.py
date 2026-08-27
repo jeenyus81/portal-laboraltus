@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -8,13 +9,14 @@ from sqlalchemy.orm import Session
 
 from app.database import engine
 from app.dependencies import get_current_user, require_hr
-from app.models import Contract, Employee, User, UserRole
+from app.models import Contract, Employee, Nomina, User, UserRole
 from app.schemas import (
     ContractCreate,
     ContractResponse,
     EmployeeCreate,
     EmployeeResponse,
     LoginRequest,
+    NominaResponse,
 )
 from app.security import create_access_token, verify_password
 
@@ -34,6 +36,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/api/hello")
 def hello():
@@ -94,6 +97,7 @@ def get_me(current_user: User = Depends(get_current_user)):
             "social_security_number": employee.social_security_number,
         }
 
+
 @app.get("/api/employees", response_model=list[EmployeeResponse])
 def list_employees(
     current_user: User = Depends(require_hr),
@@ -104,7 +108,11 @@ def list_employees(
         ).all()
 
 
-@app.post("/api/employees", response_model=EmployeeResponse, status_code=201)
+@app.post(
+    "/api/employees",
+    response_model=EmployeeResponse,
+    status_code=201,
+)
 def create_employee(
     data: EmployeeCreate,
     current_user: User = Depends(require_hr),
@@ -126,6 +134,7 @@ def create_employee(
         session.refresh(employee)
 
         return employee
+
 
 @app.get(
     "/api/employees/{employee_id}/contracts",
@@ -236,6 +245,8 @@ def upload_contract_document(
             "contract_id": contract.id,
             "document_path": contract.document_path,
         }
+
+
 @app.get(
     "/api/employees/{employee_id}/contracts/{contract_id}/document",
 )
@@ -274,13 +285,155 @@ def download_contract_document(
                 detail="Contract document not found",
             )
 
+        media_types = {
+            ".pdf": "application/pdf",
+            ".doc": "application/msword",
+            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        }
+
         return FileResponse(
             path=file_path,
             filename=file_path.name,
+            media_type=media_types.get(file_path.suffix.lower()),
         )
 
 
-@app.get("/api/employees/{employee_id}", response_model=EmployeeResponse)
+# ============================================================
+# NÓMINAS
+# ============================================================
+
+
+@app.get(
+    "/api/employees/{employee_id}/nominas",
+    response_model=list[NominaResponse],
+)
+def list_employee_nominas(
+    employee_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role == UserRole.EMPLOYEE:
+        if current_user.employee_id != employee_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access your own nominas",
+            )
+
+    with Session(engine) as session:
+        employee = session.get(Employee, employee_id)
+
+        if employee is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Employee not found",
+            )
+
+        return session.scalars(
+            select(Nomina)
+            .where(Nomina.employee_id == employee_id)
+            .order_by(Nomina.date.desc())
+        ).all()
+
+
+@app.post(
+    "/api/employees/{employee_id}/nominas/{nomina_id}/document",
+)
+def upload_nomina_document(
+    employee_id: int,
+    nomina_id: int,
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_hr),
+):
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="A file name is required",
+        )
+
+    extension = Path(file.filename).suffix.lower()
+
+    if extension != ".pdf":
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF files are allowed",
+        )
+
+    with Session(engine) as session:
+        nomina = session.get(Nomina, nomina_id)
+
+        if nomina is None or nomina.employee_id != employee_id:
+            raise HTTPException(
+                status_code=404,
+                detail="Nomina not found",
+            )
+
+        upload_dir = Path("uploads/nominas")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        file_path = upload_dir / f"nomina_{nomina.id}.pdf"
+
+        with file_path.open("wb") as buffer:
+            buffer.write(file.file.read())
+
+        nomina.document_path = str(file_path)
+
+        session.commit()
+        session.refresh(nomina)
+
+        return {
+            "nomina_id": nomina.id,
+            "document_path": nomina.document_path,
+        }
+
+
+@app.get(
+    "/api/employees/{employee_id}/nominas/{nomina_id}/document",
+)
+def download_nomina_document(
+    employee_id: int,
+    nomina_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role == UserRole.EMPLOYEE:
+        if current_user.employee_id != employee_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access your own nominas",
+            )
+
+    with Session(engine) as session:
+        nomina = session.get(Nomina, nomina_id)
+
+        if nomina is None or nomina.employee_id != employee_id:
+            raise HTTPException(
+                status_code=404,
+                detail="Nomina not found",
+            )
+
+        if not nomina.document_path:
+            raise HTTPException(
+                status_code=404,
+                detail="Nomina document not found",
+            )
+
+        file_path = Path(nomina.document_path)
+
+        if not file_path.exists():
+            raise HTTPException(
+                status_code=404,
+                detail="Nomina document not found",
+            )
+
+        return FileResponse(
+            path=file_path,
+            filename=file_path.name,
+            media_type="application/pdf",
+        )
+
+
+@app.get(
+    "/api/employees/{employee_id}",
+    response_model=EmployeeResponse,
+)
 def get_employee(
     employee_id: int,
     current_user: User = Depends(get_current_user),

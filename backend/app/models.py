@@ -4,9 +4,12 @@ from sqlalchemy import Date, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
+
+
 class UserRole:
     EMPLOYEE = "EMPLOYEE"
     HR = "HR"
+
 
 class Employee(Base):
     __tablename__ = "employees"
@@ -34,6 +37,10 @@ class Employee(Base):
     )
 
     contracts: Mapped[list["Contract"]] = relationship(
+        back_populates="employee"
+    )
+
+    nominas: Mapped[list["Nomina"]] = relationship(
         back_populates="employee"
     )
 
@@ -93,4 +100,25 @@ class Contract(Base):
 
     employee: Mapped["Employee"] = relationship(
         back_populates="contracts"
+    )
+
+
+class Nomina(Base):
+    __tablename__ = "nominas"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    employee_id: Mapped[int] = mapped_column(
+        ForeignKey("employees.id")
+    )
+
+    date: Mapped[date] = mapped_column(Date)
+
+    document_path: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    employee: Mapped["Employee"] = relationship(
+        back_populates="nominas"
     )
