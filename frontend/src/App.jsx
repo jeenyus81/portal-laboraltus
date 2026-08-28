@@ -1585,10 +1585,127 @@ function App() {
   // PORTAL RRHH
   // =========================================================
 
-  if (loggedIn && user && user.role === 'HR') {
-    return (
-      <main className="app">
-        <section className="card">
+if (loggedIn && user && user.role === 'HR') {
+  return (
+    <main className="app hr-app">
+      <aside className="hr-sidebar">
+
+        <div className="hr-brand">
+          <div className="hr-brand-mark">L</div>
+
+          <div>
+            <strong>Laboraltus</strong>
+            <span>Portal laboral</span>
+          </div>
+        </div>
+
+        <nav className="hr-nav">
+
+          <button
+            type="button"
+            className="hr-nav-button active"
+            onClick={() => {
+              setCompanyView('companies')
+              setSelectedCompany(null)
+              setSelectedEmployee(null)
+            }}
+          >
+            <span className="hr-nav-icon">⌂</span>
+            Inicio
+          </button>
+
+          <button
+            type="button"
+            className="hr-nav-button"
+            onClick={() => {
+              setCompanyView(
+                selectedCompany ? 'company' : 'companies'
+              )
+            }}
+          >
+            <span className="hr-nav-icon">▣</span>
+            Empresas
+          </button>
+
+          <button
+            type="button"
+            className="hr-nav-button"
+            onClick={() => {
+              if (selectedCompany) {
+                handleEnterEmployees()
+              } else {
+                setCompanyView('companies')
+              }
+            }}
+          >
+            <span className="hr-nav-icon">●</span>
+            Empleados
+          </button>
+
+          <button
+            type="button"
+            className="hr-nav-button"
+            onClick={() => {
+              if (selectedEmployee) {
+                handleViewContracts(selectedEmployee)
+              } else if (selectedCompany) {
+                handleEnterEmployees()
+              } else {
+                setCompanyView('companies')
+              }
+            }}
+          >
+            <span className="hr-nav-icon">▤</span>
+            Contratos
+          </button>
+
+          <button
+            type="button"
+            className="hr-nav-button"
+            onClick={() => {
+              if (selectedEmployee) {
+                handleViewNominas(selectedEmployee)
+              } else if (selectedCompany) {
+                handleEnterEmployees()
+              } else {
+                setCompanyView('companies')
+              }
+            }}
+          >
+            <span className="hr-nav-icon">▥</span>
+            Nóminas
+          </button>
+
+        </nav>
+
+        <div className="hr-sidebar-bottom">
+
+          <div className="hr-user-box">
+            <div className="hr-user-avatar">
+              {(user.username || 'H').charAt(0).toUpperCase()}
+            </div>
+
+            <div>
+              <strong>{user.username}</strong>
+              <span>RR. HH.</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="hr-logout-button"
+            onClick={handleLogout}
+          >
+            <span className="hr-nav-icon">↪</span>
+            Cerrar sesión
+          </button>
+
+        </div>
+
+      </aside>
+
+      <div className="hr-main">
+        <section className="card hr-card">
 
           <input
             ref={contractFileInputRef}
@@ -3381,7 +3498,8 @@ function App() {
               </div>
             )}
 
-        </section>
+          </section>
+        </div>
       </main>
     )
   }
