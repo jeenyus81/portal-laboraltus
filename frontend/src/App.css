@@ -10,8 +10,7 @@ body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  background: #f4f7fb;
-  color: #172033;
+  background: #f4f3ee;
 }
 
 button,
@@ -25,134 +24,33 @@ input {
   align-items: center;
   justify-content: center;
   padding: 32px;
-  background:
-    radial-gradient(circle at top left, #e8f0ff 0, transparent 35%),
-    #f4f7fb;
+  background: #f4f3ee;
 }
 
 .login-card,
 .card {
-  width: min(100%, 1180px);
-  background: #ffffff;
-  border-radius: 20px;
+  width: min(100%, 760px);
+  background: white;
+  border-radius: 18px;
   padding: 40px;
-  box-shadow: 0 16px 50px rgba(16, 24, 40, 0.08);
-  border: 1px solid #e7ebf2;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
 }
 
 .login-card {
   width: min(100%, 440px);
 }
 
-/* =========================================================
-   CABECERA
-   ========================================================= */
-
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 36px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid #eaecf0;
-}
-
-.header h1 {
-  margin: 0;
-  font-size: 30px;
-  letter-spacing: -0.02em;
-}
-
-.header p:last-child {
-  margin: 8px 0 0;
-  color: #667085;
-}
-
-/* Marca visual */
-
-.header .eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  color: #2563eb;
-  font-size: 15px;
-  letter-spacing: 0.02em;
-}
-
-.header .eyebrow::before {
-  content: "L";
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: #2563eb;
-  color: white;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 0;
-  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
-}
-
-/* =========================================================
-   LOGIN
-   ========================================================= */
-
 .login-header {
   margin-bottom: 32px;
 }
 
-.login-header .eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 18px;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  color: #172033;
-}
-
-.login-header .eyebrow::before {
-  content: "L";
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  background: #2563eb;
-  color: white;
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.login-header h1 {
-  margin-bottom: 10px;
-  font-size: 32px;
-  letter-spacing: -0.03em;
-}
-
-.login-header p:last-child {
-  margin-bottom: 0;
-  color: #667085;
-}
-
-/* =========================================================
-   TEXTOS
-   ========================================================= */
-
 .eyebrow {
   margin: 0 0 8px;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #2563eb;
+  color: #000000;
 }
 
 h1,
@@ -160,14 +58,15 @@ h2 {
   margin-top: 0;
 }
 
-h2 {
-  font-size: 25px;
-  letter-spacing: -0.02em;
+.login-header h1 {
+  margin-bottom: 10px;
+  font-size: 32px;
 }
 
-/* =========================================================
-   FORMULARIOS
-   ========================================================= */
+.login-header p:last-child {
+  margin-bottom: 0;
+  color: #667085;
+}
 
 form {
   display: flex;
@@ -178,7 +77,6 @@ form {
 label {
   margin-top: 8px;
   font-weight: 600;
-  color: #344054;
 }
 
 input {
@@ -188,47 +86,26 @@ input {
   border-radius: 10px;
   outline: none;
   background: #ffffff;
-  color: #172033;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-input:hover {
-  border-color: #b8c0cc;
 }
 
 input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  border-color: #000000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
-
-/* =========================================================
-   BOTONES
-   ========================================================= */
 
 button {
   margin-top: 18px;
-  padding: 12px 18px;
+  padding: 13px 18px;
   border: 0;
   border-radius: 10px;
-  background: #2563eb;
+  background: #000000;
   color: white;
   font-weight: 700;
   cursor: pointer;
-  transition:
-    background 0.15s ease,
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
 }
 
 button:hover {
-  background: #1d4ed8;
-  box-shadow: 0 5px 14px rgba(37, 99, 235, 0.18);
-}
-
-button:active {
-  transform: translateY(1px);
+  background: #222222;
 }
 
 button:disabled {
@@ -238,36 +115,61 @@ button:disabled {
 
 .secondary {
   margin-top: 0;
-  background: #eef2f6;
+  background: #eef0ed;
   color: #344054;
 }
 
 .secondary:hover {
-  background: #e4e7ec;
-  box-shadow: none;
+  background: #e4e7e3;
 }
-
-/* =========================================================
-   MENSAJES
-   ========================================================= */
 
 .error {
   margin: 10px 0 0;
-  padding: 11px 13px;
-  border-radius: 9px;
+  padding: 10px 12px;
+  border-radius: 8px;
   background: #fef3f2;
   color: #b42318;
   font-size: 14px;
-  border: 1px solid #fecdca;
 }
 
-.muted {
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 36px;
+}
+
+.header h1 {
+  margin-bottom: 0;
+}
+
+.profile h2 {
+  margin-bottom: 20px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.profile-grid > div {
+  padding: 16px;
+  border: 1px solid #eaecf0;
+  border-radius: 12px;
+}
+
+.profile-grid span {
+  display: block;
+  margin-bottom: 6px;
   color: #667085;
+  font-size: 13px;
 }
 
-/* =========================================================
-   SECCIONES
-   ========================================================= */
+.profile-grid strong {
+  display: block;
+}
 
 .contracts {
   margin-top: 36px;
@@ -287,66 +189,35 @@ button:disabled {
   margin-bottom: 0;
 }
 
-/* =========================================================
-   PERFIL
-   ========================================================= */
-
-.profile {
-  margin-top: 20px;
-  padding: 24px;
-  border: 1px solid #e5e9f0;
-  border-radius: 16px;
-  background: #fbfcfe;
-}
-
-.profile h2 {
-  margin-bottom: 20px;
-}
-
-.profile-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.profile-grid > div {
-  padding: 17px;
-  border: 1px solid #e5e9f0;
-  border-radius: 12px;
-  background: #ffffff;
-}
-
-.profile-grid span {
-  display: block;
-  margin-bottom: 6px;
-  color: #667085;
-  font-size: 13px;
-}
-
-.profile-grid strong {
-  display: block;
-  color: #172033;
-}
-
-/* =========================================================
-   CONTADORES
-   ========================================================= */
-
 .contract-count {
-  display: inline-flex;
-  align-items: center;
-  padding: 7px 11px;
+  padding: 6px 10px;
   border-radius: 999px;
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: #f4f3ee;
+  color: #000000;
   font-size: 13px;
   font-weight: 700;
-  white-space: nowrap;
 }
 
-/* =========================================================
-   LISTADOS
-   ========================================================= */
+.muted {
+  color: #667085;
+}
+
+.empty-state {
+  padding: 24px;
+  border: 1px dashed #d0d5dd;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.empty-state strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #667085;
+}
 
 .contract-list {
   display: flex;
@@ -356,19 +227,9 @@ button:disabled {
 
 .contract-card {
   padding: 20px;
-  border: 1px solid #e5e9f0;
+  border: 1px solid #eaecf0;
   border-radius: 14px;
-  background: #ffffff;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
-}
-
-.contract-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
-  transform: translateY(-1px);
+  background: #fcfcfd;
 }
 
 .contract-info {
@@ -386,25 +247,15 @@ button:disabled {
 
 .contract-info strong {
   display: block;
-  color: #172033;
 }
-
-/* =========================================================
-   DOCUMENTOS / BOTONES DE ACCION
-   ========================================================= */
 
 .contract-document {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
   margin-top: 18px;
   padding-top: 16px;
   border-top: 1px solid #eaecf0;
-}
-
-.contract-document button {
-  margin-top: 0;
 }
 
 .download-button {
@@ -425,10 +276,6 @@ button:disabled {
   font: inherit;
 }
 
-/* =========================================================
-   SUBIDA DE ARCHIVOS
-   ========================================================= */
-
 .upload-file-label {
   display: inline-flex;
   align-items: center;
@@ -437,99 +284,22 @@ button:disabled {
   box-sizing: border-box;
   padding: 0.65rem 1rem;
   border-radius: 8px;
-  background: #2563eb;
+  background: #000000;
   color: white;
   font: inherit;
   font-weight: 600;
   line-height: 1.2;
   text-decoration: none;
-  border: 1px solid #2563eb;
+  border: 1px solid #000000;
   appearance: none;
   -webkit-appearance: none;
 }
 
 .upload-file-label:hover {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
+  background: #222222;
+  border-color: #222222;
 }
 
-/* =========================================================
-   ESTADO VACIO
-   ========================================================= */
-
-.empty-state {
-  padding: 32px 24px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 14px;
-  text-align: center;
-  background: #fbfcfe;
-}
-
-.empty-state strong {
-  display: block;
-  margin-bottom: 6px;
-}
-
-.empty-state p {
-  margin: 0;
-  color: #667085;
-}
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-
-@media (max-width: 800px) {
-  .app {
-    padding: 16px;
-    align-items: flex-start;
-  }
-
-  .login-card,
-  .card {
-    padding: 24px;
-    border-radius: 16px;
-  }
-
-  .header {
-    flex-direction: column;
-  }
-
-  .profile-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .contract-info {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 600px) {
-  .section-header {
-    flex-direction: column;
-  }
-
-  .contract-document {
-    justify-content: stretch;
-    flex-wrap: wrap;
-  }
-
-  .contract-document button {
-    flex: 1;
-  }
-
-  .download-button {
-    width: 100%;
-  }
-
-  .header h1 {
-    font-size: 25px;
-  }
-
-  .login-header h1 {
-    font-size: 28px;
-  }
-}
 /* =========================================================
    PANEL RR. HH.
    ========================================================= */
@@ -538,7 +308,7 @@ button:disabled {
   align-items: stretch;
   justify-content: flex-start;
   padding: 0;
-  background: #f4f7fb;
+  background: #f4f3ee;
 }
 
 .hr-sidebar {
@@ -554,8 +324,8 @@ button:disabled {
 
   padding: 24px 16px;
 
-  background: #172554;
-  color: white;
+  background: #000000;
+  color: #ffffff;
 
   z-index: 10;
 }
@@ -563,39 +333,17 @@ button:disabled {
 .hr-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-
-  padding: 4px 10px 28px;
-}
-
-.hr-brand-mark {
-  display: flex;
-  align-items: center;
   justify-content: center;
 
-  width: 40px;
-  height: 40px;
-
-  border-radius: 11px;
-
-  background: white;
-  color: #2563eb;
-
-  font-size: 22px;
-  font-weight: 800;
+  padding: 8px 10px 28px;
 }
 
-.hr-brand strong {
+.hr-logo {
   display: block;
-  font-size: 18px;
-}
-
-.hr-brand span {
-  display: block;
-  margin-top: 2px;
-
-  color: #bfdbfe;
-  font-size: 12px;
+  width: 235px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .hr-nav {
@@ -618,7 +366,7 @@ button:disabled {
   border-radius: 9px;
 
   background: transparent;
-  color: #dbeafe;
+  color: #ffffff;
 
   font-weight: 600;
   text-align: left;
@@ -627,14 +375,14 @@ button:disabled {
 }
 
 .hr-nav-button:hover {
-  background: rgba(255, 255, 255, 0.09);
-  color: white;
+  background: #222222;
+  color: #ffffff;
   box-shadow: none;
 }
 
 .hr-nav-button.active {
-  background: white;
-  color: #172554;
+  background: #f4f3ee;
+  color: #000000;
 }
 
 .hr-nav-icon {
@@ -659,7 +407,7 @@ button:disabled {
   margin-bottom: 12px;
   padding: 12px;
 
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid #333333;
 }
 
 .hr-user-avatar {
@@ -672,8 +420,8 @@ button:disabled {
 
   border-radius: 50%;
 
-  background: #bfdbfe;
-  color: #172554;
+  background: #f4f3ee;
+  color: #000000;
 
   font-weight: 800;
 }
@@ -687,7 +435,7 @@ button:disabled {
   display: block;
   margin-top: 2px;
 
-  color: #bfdbfe;
+  color: #cccccc;
   font-size: 12px;
 }
 
@@ -700,8 +448,8 @@ button:disabled {
 
   margin: 0;
 
-  background: rgba(255, 255, 255, 0.08);
-  color: #dbeafe;
+  background: #1a1a1a;
+  color: #ffffff;
 
   text-align: left;
 
@@ -709,8 +457,8 @@ button:disabled {
 }
 
 .hr-logout-button:hover {
-  background: rgba(255, 255, 255, 0.14);
-  color: white;
+  background: #2a2a2a;
+  color: #ffffff;
   box-shadow: none;
 }
 
@@ -729,6 +477,181 @@ button:disabled {
   min-height: calc(100vh - 64px);
 }
 
+/* =========================================================
+   DASHBOARD RR. HH.
+   ========================================================= */
+
+.hr-dashboard {
+  padding-top: 8px;
+}
+
+.hr-dashboard-header {
+  margin-bottom: 28px;
+}
+
+.hr-dashboard-header h2 {
+  margin-bottom: 8px;
+  font-size: 30px;
+  color: #000000;
+}
+
+.hr-dashboard-header p {
+  margin-bottom: 0;
+}
+
+.hr-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.hr-dashboard-card {
+  position: relative;
+
+  padding: 24px;
+
+  border: 1px solid #deddd7;
+  border-radius: 16px;
+
+  background: #ffffff;
+
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.hr-dashboard-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+
+  margin-bottom: 18px;
+
+  border-radius: 11px;
+
+  background: #f4f3ee;
+  color: #000000;
+
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.hr-dashboard-card span {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #666666;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hr-dashboard-card strong {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #000000;
+
+  font-size: 30px;
+}
+
+.hr-dashboard-card p {
+  min-height: 40px;
+
+  margin: 0;
+
+  color: #666666;
+
+  font-size: 14px;
+}
+
+.hr-dashboard-card button {
+  width: 100%;
+
+  margin-top: 18px;
+
+  background: #000000;
+  color: #ffffff;
+}
+
+.hr-dashboard-card button:hover {
+  background: #222222;
+}
+
+/* =========================================================
+   ACCESOS RAPIDOS
+   ========================================================= */
+
+.hr-dashboard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  margin-top: 28px;
+  padding: 24px;
+
+  border: 1px solid #deddd7;
+  border-radius: 16px;
+
+  background: #f4f3ee;
+}
+
+.hr-dashboard-actions h2 {
+  margin: 0;
+  color: #000000;
+}
+
+.hr-dashboard-action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.hr-dashboard-action-buttons button {
+  margin-top: 0;
+
+  background: #000000;
+  color: #ffffff;
+}
+
+.hr-dashboard-action-buttons button:hover {
+  background: #222222;
+}
+
+/* =========================================================
+   ELEMENTOS GENERALES RR. HH.
+   ========================================================= */
+
+.hr-card .eyebrow {
+  color: #000000;
+}
+
+.hr-card .contract-count {
+  background: #f4f3ee;
+  color: #000000;
+}
+
+.hr-card button:not(.secondary) {
+  background: #000000;
+  color: #ffffff;
+}
+
+.hr-card button:not(.secondary):hover {
+  background: #222222;
+}
+
+.hr-card input:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
 @media (max-width: 800px) {
   .hr-sidebar {
     width: 210px;
@@ -739,9 +662,55 @@ button:disabled {
     margin-left: 210px;
     padding: 20px;
   }
+
+  .hr-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hr-dashboard-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hr-dashboard-action-buttons {
+    flex-direction: column;
+  }
+
+  .section-header {
+    flex-direction: column;
+  }
+
+  .contract-info {
+    grid-template-columns: 1fr;
+  }
+
+  .contract-document {
+    justify-content: stretch;
+  }
+
+  .download-button {
+    width: 100%;
+  }
 }
 
 @media (max-width: 600px) {
+  .app {
+    padding: 16px;
+  }
+
+  .login-card,
+  .card {
+    padding: 24px;
+  }
+
+  .header {
+    flex-direction: column;
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
   .hr-sidebar {
     position: relative;
 
@@ -761,5 +730,9 @@ button:disabled {
 
   .hr-card {
     min-height: auto;
+  }
+
+  .hr-dashboard-grid {
+    grid-template-columns: 1fr;
   }
 }

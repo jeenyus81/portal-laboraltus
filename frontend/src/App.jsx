@@ -1458,7 +1458,7 @@ function App() {
         setUser(loggedUser)
         setLoggedIn(true)
 
-        setCompanyView('companies')
+        setCompanyView('dashboard')
         setSelectedCompany(null)
 
         await loadCompanies(data.access_token)
@@ -1590,29 +1590,32 @@ if (loggedIn && user && user.role === 'HR') {
     <main className="app hr-app">
       <aside className="hr-sidebar">
 
-        <div className="hr-brand">
-          <div className="hr-brand-mark">L</div>
-
-          <div>
-            <strong>Laboraltus</strong>
-            <span>Portal laboral</span>
-          </div>
-        </div>
+<div className="hr-brand">
+  <img
+    src="/logo-laboraltus.png"
+    alt="Laboraltus"
+    className="hr-logo"
+  />
+</div>
 
         <nav className="hr-nav">
 
-          <button
-            type="button"
-            className="hr-nav-button active"
-            onClick={() => {
-              setCompanyView('companies')
-              setSelectedCompany(null)
-              setSelectedEmployee(null)
-            }}
-          >
-            <span className="hr-nav-icon">⌂</span>
-            Inicio
-          </button>
+<button
+  type="button"
+  className={
+    companyView === 'dashboard'
+      ? 'hr-nav-button active'
+      : 'hr-nav-button'
+  }
+  onClick={() => {
+    setCompanyView('dashboard')
+    setSelectedCompany(null)
+    setSelectedEmployee(null)
+  }}
+>
+  <span className="hr-nav-icon">⌂</span>
+  Inicio
+</button>
 
           <button
             type="button"
@@ -1746,7 +1749,215 @@ if (loggedIn && user && user.role === 'HR') {
               Cerrar sesion
             </button>
           </div>
+{/* ================================================= */}
+{/* DASHBOARD RR. HH. */}
+{/* ================================================= */}
 
+{companyView === 'dashboard' && (
+  <div className="hr-dashboard">
+
+    <div className="hr-dashboard-header">
+      <div>
+        <p className="eyebrow">
+          Resumen
+        </p>
+
+        <h2>
+          Buenos días, {user.username}
+        </h2>
+
+        <p className="muted">
+          Aquí tienes una visión general del portal de RR. HH.
+        </p>
+      </div>
+    </div>
+
+    <div className="hr-dashboard-grid">
+
+      <article className="hr-dashboard-card">
+        <div className="hr-dashboard-icon">
+          ▣
+        </div>
+
+        <div>
+          <span>
+            Empresas
+          </span>
+
+          <strong>
+            {companies.length}
+          </strong>
+
+          <p>
+            Empresas registradas
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            setCompanyView('companies')
+            setSelectedCompany(null)
+            setSelectedEmployee(null)
+          }}
+        >
+          Ver empresas
+        </button>
+      </article>
+
+      <article className="hr-dashboard-card">
+        <div className="hr-dashboard-icon">
+          ●
+        </div>
+
+        <div>
+          <span>
+            Empleados
+          </span>
+
+          <strong>
+            {employees.length}
+          </strong>
+
+          <p>
+            Empleados registrados
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (selectedCompany) {
+              handleEnterEmployees()
+            } else {
+              setCompanyView('companies')
+            }
+          }}
+        >
+          Ver empleados
+        </button>
+      </article>
+
+      <article className="hr-dashboard-card">
+        <div className="hr-dashboard-icon">
+          ▤
+        </div>
+
+        <div>
+          <span>
+            Contratos
+          </span>
+
+          <strong>
+            {selectedEmployee
+              ? contracts.length
+              : '—'}
+          </strong>
+
+          <p>
+            {selectedEmployee
+              ? 'Contratos del empleado seleccionado'
+              : 'Selecciona un empleado para gestionarlos'}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (selectedEmployee) {
+              handleViewContracts(selectedEmployee)
+            } else if (selectedCompany) {
+              handleEnterEmployees()
+            } else {
+              setCompanyView('companies')
+            }
+          }}
+        >
+          Gestionar contratos
+        </button>
+      </article>
+
+      <article className="hr-dashboard-card">
+        <div className="hr-dashboard-icon">
+          ▥
+        </div>
+
+        <div>
+          <span>
+            Nóminas
+          </span>
+
+          <strong>
+            {selectedEmployee
+              ? nominas.length
+              : '—'}
+          </strong>
+
+          <p>
+            {selectedEmployee
+              ? 'Nóminas del empleado seleccionado'
+              : 'Selecciona un empleado para gestionarlas'}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (selectedEmployee) {
+              handleViewNominas(selectedEmployee)
+            } else if (selectedCompany) {
+              handleEnterEmployees()
+            } else {
+              setCompanyView('companies')
+            }
+          }}
+        >
+          Gestionar nóminas
+        </button>
+      </article>
+
+    </div>
+
+    <div className="hr-dashboard-actions">
+
+      <div>
+        <p className="eyebrow">
+          Accesos rápidos
+        </p>
+
+        <h2>
+          Gestión habitual
+        </h2>
+      </div>
+
+      <div className="hr-dashboard-action-buttons">
+
+        <button
+          type="button"
+          onClick={handleAddCompany}
+        >
+          + Añadir empresa
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (selectedCompany) {
+              handleAddEmployee()
+            } else {
+              setCompanyView('companies')
+            }
+          }}
+        >
+          + Añadir empleado
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
           {/* ================================================= */}
           {/* LISTA DE EMPRESAS */}
           {/* ================================================= */}
