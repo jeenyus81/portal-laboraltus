@@ -1684,9 +1684,12 @@ if (loggedIn && user && user.role === 'HR') {
         <div className="hr-sidebar-bottom">
 
           <div className="hr-user-box">
-            <div className="hr-user-avatar">
-              {(user.username || 'H').charAt(0).toUpperCase()}
-            </div>
+<div className="hr-user-avatar">
+  <img
+    src="/avatar-rrhh.jpg"
+    alt="RR. HH."
+  />
+</div>
 
             <div>
               <strong>{user.username}</strong>
@@ -1732,9 +1735,9 @@ if (loggedIn && user && user.role === 'HR') {
                 Portal Laboraltus
               </p>
 
-              <h1>
-                Panel de RR. HH.
-              </h1>
+<h1 className="hr-panel-title">
+  Panel de Administracion
+</h1>
 
               <p>
                 Bienvenido, {user.username}
