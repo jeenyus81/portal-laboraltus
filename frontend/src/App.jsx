@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import './App.css'
 
 const API_URL = 'http://127.0.0.1:8000'
@@ -12,30 +12,97 @@ function App() {
   const [loggedIn, setLoggedIn] = useState(false)
   const [user, setUser] = useState(null)
 
-  const [contracts, setContracts] = useState([])
-  const [contractsLoading, setContractsLoading] = useState(false)
-  const [contractsError, setContractsError] = useState('')
+  // =========================================================
+  // INPUTS DE ARCHIVOS DIRECTOS
+  // =========================================================
 
-  const [nominas, setNominas] = useState([])
-  const [nominasLoading, setNominasLoading] = useState(false)
-  const [nominasError, setNominasError] = useState('')
+  const contractFileInputRef = useRef(null)
+  const nominaFileInputRef = useRef(null)
+
+  // =========================================================
+  // EMPRESAS
+  // =========================================================
+
+  const [companies, setCompanies] = useState([])
+  const [companiesLoading, setCompaniesLoading] = useState(false)
+  const [companiesError, setCompaniesError] = useState('')
+
+  const [selectedCompany, setSelectedCompany] = useState(null)
+  const [companyView, setCompanyView] = useState('companies')
+
+  const [companyForm, setCompanyForm] = useState({
+    name: '',
+    tax_id: '',
+    address: '',
+  })
+
+  const [editingCompany, setEditingCompany] = useState(null)
+  const [companySaving, setCompanySaving] = useState(false)
+
+  // =========================================================
+  // EMPLEADOS
+  // =========================================================
 
   const [employees, setEmployees] = useState([])
   const [employeesLoading, setEmployeesLoading] = useState(false)
   const [employeesError, setEmployeesError] = useState('')
 
   const [selectedEmployee, setSelectedEmployee] = useState(null)
+
+  // =========================================================
+  // EDICION DE EMPLEADO
+  // =========================================================
+
+  const [editingEmployee, setEditingEmployee] = useState(null)
+  const [employeeForm, setEmployeeForm] = useState({
+    first_name: '',
+    last_name: '',
+    job_title: '',
+    job_category: '',
+    nationality: '',
+    username: '',
+  })
+  const [employeeSaving, setEmployeeSaving] = useState(false)
+  const [employeeEditError, setEmployeeEditError] = useState('')
+
+  // =========================================================
+  // CONTRATOS
+  // =========================================================
+
+  const [contracts, setContracts] = useState([])
+  const [contractsLoading, setContractsLoading] = useState(false)
+  const [contractsError, setContractsError] = useState('')
+
   const [selectedFiles, setSelectedFiles] = useState({})
+
+  // =========================================================
+  // NOMINAS
+  // =========================================================
+
+  const [nominas, setNominas] = useState([])
+  const [nominasLoading, setNominasLoading] = useState(false)
+  const [nominasError, setNominasError] = useState('')
+
   const [selectedNominaFiles, setSelectedNominaFiles] = useState({})
-  const [employeeSection, setEmployeeSection] = useState('contracts')
 
-  async function loadContracts(employeeId, token) {
-    setContractsLoading(true)
-    setContractsError('')
+  // =========================================================
+  // SECCION DEL EMPLEADO
+  // =========================================================
+
+  const [employeeSection, setEmployeeSection] =
+    useState('contracts')
+
+  // =========================================================
+  // CARGAR EMPRESAS
+  // =========================================================
+
+  async function loadCompanies(token) {
+    setCompaniesLoading(true)
+    setCompaniesError('')
 
     try {
       const response = await fetch(
-        API_URL + '/api/employees/' + employeeId + '/contracts',
+        API_URL + '/api/companies',
         {
           headers: {
             Authorization: 'Bearer ' + token,
@@ -47,29 +114,106 @@ function App() {
 
       if (!response.ok) {
         throw new Error(
-          data.detail || 'No se pudieron cargar los contratos',
+          data.detail || 'No se pudieron cargar las empresas',
         )
       }
 
-      setContracts(Array.isArray(data) ? data : [])
+      setCompanies(Array.isArray(data) ? data : [])
     } catch (err) {
-      setContractsError(err.message)
+      setCompaniesError(err.message)
     } finally {
-      setContractsLoading(false)
+      setCompaniesLoading(false)
     }
   }
 
-  async function loadNominas(employeeId, token) {
-    setNominasLoading(true)
-    setNominasError('')
+  // =========================================================
+  // ENTRAR EN EMPRESA
+  // =========================================================
+
+  function handleEnterCompany(company) {
+    setSelectedCompany(company)
+    setCompanyView('company')
+    setEditingCompany(null)
+    setCompaniesError('')
+  }
+
+  // =========================================================
+  // VOLVER A EMPRESAS
+  // =========================================================
+
+  function handleBackToCompanies() {
+    setSelectedCompany(null)
+    setEditingCompany(null)
+    setCompanyView('companies')
+
+    setCompanyForm({
+      name: '',
+      tax_id: '',
+      address: '',
+    })
+
+    setCompaniesError('')
+  }
+
+  // =========================================================
+  // EDITAR EMPRESA
+  // =========================================================
+
+  function handleEditCompany(company) {
+    setEditingCompany(company)
+
+    setCompanyForm({
+      name: company.name || '',
+      tax_id: company.tax_id || '',
+      address: company.address || '',
+    })
+
+    setCompaniesError('')
+  }
+
+  function handleCancelEditCompany() {
+    setEditingCompany(null)
+
+    setCompanyForm({
+      name: '',
+      tax_id: '',
+      address: '',
+    })
+
+    setCompaniesError('')
+  }
+
+  async function handleUpdateCompany(event) {
+    event.preventDefault()
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setCompaniesError('No hay una sesion valida')
+      return
+    }
+
+    if (!editingCompany) {
+      return
+    }
+
+    setCompanySaving(true)
+    setCompaniesError('')
 
     try {
       const response = await fetch(
-        API_URL + '/api/employees/' + employeeId + '/nominas',
+        API_URL + '/api/companies/' + editingCompany.id,
         {
+          method: 'PUT',
           headers: {
+            'Content-Type': 'application/json',
             Authorization: 'Bearer ' + token,
           },
+          body: JSON.stringify({
+            name: companyForm.name,
+            tax_id: companyForm.tax_id,
+            address: companyForm.address,
+          }),
         },
       )
 
@@ -77,17 +221,34 @@ function App() {
 
       if (!response.ok) {
         throw new Error(
-          data.detail || 'No se pudieron cargar las nominas',
+          data.detail || 'No se pudo actualizar la empresa',
         )
       }
 
-      setNominas(Array.isArray(data) ? data : [])
+      setCompanies((previous) =>
+        previous.map((company) =>
+          company.id === data.id ? data : company,
+        ),
+      )
+
+      setSelectedCompany(data)
+      setEditingCompany(null)
+
+      setCompanyForm({
+        name: '',
+        tax_id: '',
+        address: '',
+      })
     } catch (err) {
-      setNominasError(err.message)
+      setCompaniesError(err.message)
     } finally {
-      setNominasLoading(false)
+      setCompanySaving(false)
     }
   }
+
+  // =========================================================
+  // CARGAR EMPLEADOS
+  // =========================================================
 
   async function loadEmployees(token) {
     setEmployeesLoading(true)
@@ -118,6 +279,891 @@ function App() {
       setEmployeesLoading(false)
     }
   }
+
+  // =========================================================
+  // ENTRAR EN EMPLEADOS DE LA EMPRESA
+  // =========================================================
+
+  async function handleEnterEmployees() {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setEmployeesError('No hay una sesion valida')
+      return
+    }
+
+    await loadEmployees(token)
+
+    setCompanyView('employees')
+    setSelectedEmployee(null)
+    setContracts([])
+    setNominas([])
+    setSelectedFiles({})
+    setSelectedNominaFiles({})
+  }
+
+  // =========================================================
+  // VOLVER A EMPRESA DESDE EMPLEADOS
+  // =========================================================
+
+  function handleBackToCompany() {
+    setCompanyView('company')
+    setSelectedEmployee(null)
+    setContracts([])
+    setNominas([])
+    setSelectedFiles({})
+    setSelectedNominaFiles({})
+
+    setEmployeesError('')
+    setContractsError('')
+    setNominasError('')
+  }
+
+  // =========================================================
+  // EDITAR EMPLEADO
+  // =========================================================
+
+  function handleEditEmployee(employee) {
+    setEditingEmployee(employee)
+
+    setEmployeeForm({
+      first_name: employee.first_name || '',
+      last_name: employee.last_name || '',
+      job_title: employee.job_title || '',
+      job_category: employee.job_category || '',
+      nationality: employee.nationality || '',
+      username: employee.username || '',
+    })
+
+    setEmployeeEditError('')
+  }
+
+  function handleCancelEditEmployee() {
+    setEditingEmployee(null)
+
+    setEmployeeForm({
+      first_name: '',
+      last_name: '',
+      job_title: '',
+      job_category: '',
+      nationality: '',
+      username: '',
+    })
+
+    setEmployeeEditError('')
+  }
+
+  async function handleUpdateEmployee(event) {
+    event.preventDefault()
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setEmployeeEditError('No hay una sesion valida')
+      return
+    }
+
+    if (!editingEmployee) {
+      return
+    }
+
+    setEmployeeSaving(true)
+    setEmployeeEditError('')
+
+    try {
+      const response = await fetch(
+        API_URL + '/api/employees/' + editingEmployee.id,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token,
+          },
+          body: JSON.stringify({
+            first_name: employeeForm.first_name,
+            last_name: employeeForm.last_name,
+            job_title: employeeForm.job_title,
+            job_category: employeeForm.job_category,
+            nationality: employeeForm.nationality,
+            username: employeeForm.username,
+          }),
+        },
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail || 'No se pudo actualizar el empleado',
+        )
+      }
+
+      setEmployees((previous) =>
+        previous.map((employee) =>
+          employee.id === data.id ? data : employee,
+        ),
+      )
+
+      setSelectedEmployee(data)
+      setEditingEmployee(null)
+
+      setEmployeeForm({
+        first_name: '',
+        last_name: '',
+        job_title: '',
+        job_category: '',
+        nationality: '',
+        username: '',
+      })
+    } catch (err) {
+      setEmployeeEditError(err.message)
+    } finally {
+      setEmployeeSaving(false)
+    }
+  }
+
+  // =========================================================
+  // CONTRATOS
+  // =========================================================
+
+  async function loadContracts(employeeId, token) {
+    setContractsLoading(true)
+    setContractsError('')
+
+    try {
+      const response = await fetch(
+        API_URL +
+          '/api/employees/' +
+          employeeId +
+          '/contracts',
+        {
+          headers: {
+            Authorization: 'Bearer ' + token,
+          },
+        },
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail || 'No se pudieron cargar los contratos',
+        )
+      }
+
+      setContracts(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setContractsError(err.message)
+    } finally {
+      setContractsLoading(false)
+    }
+  }
+
+  // =========================================================
+  // NOMINAS
+  // =========================================================
+
+  async function loadNominas(employeeId, token) {
+    setNominasLoading(true)
+    setNominasError('')
+
+    try {
+      const response = await fetch(
+        API_URL +
+          '/api/employees/' +
+          employeeId +
+          '/nominas',
+        {
+          headers: {
+            Authorization: 'Bearer ' + token,
+          },
+        },
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail || 'No se pudieron cargar las nominas',
+        )
+      }
+
+      setNominas(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setNominasError(err.message)
+    } finally {
+      setNominasLoading(false)
+    }
+  }
+
+  // =========================================================
+  // ENTRAR EN EMPLEADO
+  // =========================================================
+
+  async function handleEnterEmployee(employee) {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setEmployeesError('No hay una sesion valida')
+      return
+    }
+
+    setSelectedEmployee(employee)
+    setCompanyView('employee')
+    setEmployeeSection('employee')
+    setSelectedFiles({})
+    setSelectedNominaFiles({})
+    setContracts([])
+    setNominas([])
+    setEditingEmployee(null)
+
+    setContractsError('')
+    setNominasError('')
+    setEmployeeEditError('')
+  }
+
+  // =========================================================
+  // ENTRAR EN MENU DE CONTRATOS
+  // =========================================================
+
+  async function handleViewContracts(employee) {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setContractsError('No hay una sesion valida')
+      return
+    }
+
+    setSelectedEmployee(employee)
+    setEmployeeSection('contracts')
+    setCompanyView('employeeContracts')
+
+    setSelectedFiles({})
+    setSelectedNominaFiles({})
+
+    await loadContracts(employee.id, token)
+  }
+
+  // =========================================================
+  // ENTRAR EN MENU DE NOMINAS
+  // =========================================================
+
+  async function handleViewNominas(employee) {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setNominasError('No hay una sesion valida')
+      return
+    }
+
+    setSelectedEmployee(employee)
+    setEmployeeSection('nominas')
+    setCompanyView('employeeNominas')
+
+    setSelectedFiles({})
+    setSelectedNominaFiles({})
+
+    await loadNominas(employee.id, token)
+  }
+
+  // =========================================================
+  // AÑADIR CONTRATOS - DIRECTO AL SELECTOR DE ARCHIVO
+  // =========================================================
+
+  function handleAddContracts() {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setContractsError('No hay una sesion valida')
+      return
+    }
+
+    if (!selectedEmployee) {
+      setContractsError('No se ha seleccionado ningún empleado')
+      return
+    }
+
+    setContractsError('')
+
+    if (contractFileInputRef.current) {
+      contractFileInputRef.current.value = ''
+      contractFileInputRef.current.click()
+    }
+  }
+
+  // =========================================================
+  // ARCHIVO DE CONTRATO SELECCIONADO DIRECTAMENTE
+  // =========================================================
+
+  async function handleDirectContractFile(event) {
+    const file = event.target.files?.[0]
+
+    event.target.value = ''
+
+    if (!file) {
+      return
+    }
+
+    if (!selectedEmployee) {
+      setContractsError('No se ha seleccionado ningún empleado')
+      return
+    }
+
+    if (file.type !== 'application/pdf') {
+      setContractsError('El archivo debe ser un PDF')
+      return
+    }
+
+    const contractsWithoutDocument = contracts.filter(
+      (contract) => !contract.document_path,
+    )
+
+    let targetContract = contractsWithoutDocument[0]
+
+    if (!targetContract) {
+      targetContract = contracts[0]
+    }
+
+    if (!targetContract) {
+      setContractsError(
+        'Este empleado no tiene ningún contrato registrado',
+      )
+      return
+    }
+
+    await handleUploadDocument(
+      targetContract,
+      selectedEmployee.id,
+      file,
+    )
+  }
+
+  // =========================================================
+  // ALMACEN DE CONTRATOS
+  // =========================================================
+
+  async function handleContractStore() {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setContractsError('No hay una sesion valida')
+      return
+    }
+
+    setEmployeeSection('contractStore')
+    setCompanyView('employeeContractStore')
+    setSelectedFiles({})
+
+    if (selectedEmployee) {
+      await loadContracts(selectedEmployee.id, token)
+    }
+  }
+
+  // =========================================================
+  // AÑADIR NOMINAS - DIRECTO AL SELECTOR DE ARCHIVO
+  // =========================================================
+
+  function handleAddNominas() {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setNominasError('No hay una sesion valida')
+      return
+    }
+
+    if (!selectedEmployee) {
+      setNominasError('No se ha seleccionado ningún empleado')
+      return
+    }
+
+    setNominasError('')
+
+    if (nominaFileInputRef.current) {
+      nominaFileInputRef.current.value = ''
+      nominaFileInputRef.current.click()
+    }
+  }
+
+  // =========================================================
+  // ARCHIVO DE NOMINA SELECCIONADO DIRECTAMENTE
+  // =========================================================
+
+  async function handleDirectNominaFile(event) {
+    const file = event.target.files?.[0]
+
+    event.target.value = ''
+
+    if (!file) {
+      return
+    }
+
+    if (!selectedEmployee) {
+      setNominasError('No se ha seleccionado ningún empleado')
+      return
+    }
+
+    if (file.type !== 'application/pdf') {
+      setNominasError('El archivo debe ser un PDF')
+      return
+    }
+
+    const nominasWithoutDocument = nominas.filter(
+      (nomina) => !nomina.document_path,
+    )
+
+    let targetNomina = nominasWithoutDocument[0]
+
+    if (!targetNomina) {
+      targetNomina = nominas[0]
+    }
+
+    if (!targetNomina) {
+      setNominasError(
+        'Este empleado no tiene ninguna nómina registrada',
+      )
+      return
+    }
+
+    await handleUploadNominaDocument(
+      targetNomina,
+      selectedEmployee.id,
+      file,
+    )
+  }
+
+  // =========================================================
+  // ALMACEN DE NOMINAS
+  // =========================================================
+
+  async function handleNominaStore() {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setNominasError('No hay una sesion valida')
+      return
+    }
+
+    setEmployeeSection('nominaStore')
+    setCompanyView('employeeNominaStore')
+    setSelectedNominaFiles({})
+
+    if (selectedEmployee) {
+      await loadNominas(selectedEmployee.id, token)
+    }
+  }
+
+  // =========================================================
+  // VOLVER AL EMPLEADO
+  // =========================================================
+
+  function handleBackToEmployee() {
+    setCompanyView('employee')
+    setEmployeeSection('employee')
+
+    setContracts([])
+    setNominas([])
+
+    setSelectedFiles({})
+    setSelectedNominaFiles({})
+
+    setContractsError('')
+    setNominasError('')
+  }
+
+  // =========================================================
+  // VOLVER AL MENU DE CONTRATOS
+  // =========================================================
+
+  function handleBackToContractsMenu() {
+    setCompanyView('employeeContracts')
+    setEmployeeSection('contracts')
+
+    setSelectedFiles({})
+    setContractsError('')
+  }
+
+  // =========================================================
+  // VOLVER AL MENU DE NOMINAS
+  // =========================================================
+
+  function handleBackToNominasMenu() {
+    setCompanyView('employeeNominas')
+    setEmployeeSection('nominas')
+
+    setSelectedNominaFiles({})
+    setNominasError('')
+  }
+
+  // =========================================================
+  // VOLVER A EMPLEADOS
+  // =========================================================
+
+  function handleBackToEmployees() {
+    setCompanyView('employees')
+    setSelectedEmployee(null)
+    setEditingEmployee(null)
+
+    setContracts([])
+    setNominas([])
+
+    setSelectedFiles({})
+    setSelectedNominaFiles({})
+
+    setEmployeesError('')
+    setContractsError('')
+    setNominasError('')
+    setEmployeeEditError('')
+  }
+
+  // =========================================================
+  // DESCARGAR CONTRATO
+  // =========================================================
+
+  async function handleDownload(
+    contract,
+    employeeId = null,
+  ) {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setContractsError('No hay una sesion valida')
+      return
+    }
+
+    const targetEmployeeId =
+      employeeId || user?.id
+
+    if (!targetEmployeeId) {
+      setContractsError(
+        'No se ha podido identificar al empleado',
+      )
+      return
+    }
+
+    setContractsError('')
+
+    try {
+      const url =
+        API_URL +
+        '/api/employees/' +
+        targetEmployeeId +
+        '/contracts/' +
+        contract.id +
+        '/document'
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: 'Bearer ' + token,
+        },
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+
+        throw new Error(
+          data?.detail ||
+            'No se pudo descargar el documento',
+        )
+      }
+
+      const blob = await response.blob()
+
+      const downloadUrl =
+        window.URL.createObjectURL(blob)
+
+      const link = document.createElement('a')
+
+      link.href = downloadUrl
+      link.download = getDocumentName(contract)
+
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+      window.URL.revokeObjectURL(downloadUrl)
+    } catch (err) {
+      setContractsError(err.message)
+    }
+  }
+
+  // =========================================================
+  // SUBIR CONTRATO
+  // =========================================================
+
+  async function handleUploadDocument(
+    contract,
+    employeeId,
+    file,
+  ) {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setContractsError('No hay una sesion valida')
+      return
+    }
+
+    if (!file) {
+      setContractsError('Selecciona un archivo PDF')
+      return
+    }
+
+    if (file.type !== 'application/pdf') {
+      setContractsError('El archivo debe ser un PDF')
+      return
+    }
+
+    setContractsError('')
+
+    try {
+      const formData = new FormData()
+
+      formData.append('file', file)
+
+      const url =
+        API_URL +
+        '/api/employees/' +
+        employeeId +
+        '/contracts/' +
+        contract.id +
+        '/document'
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+        },
+        body: formData,
+      })
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail ||
+            'No se pudo subir el documento',
+        )
+      }
+
+      setSelectedFiles((previous) => {
+        const updated = { ...previous }
+
+        delete updated[contract.id]
+
+        return updated
+      })
+
+      await loadContracts(employeeId, token)
+    } catch (err) {
+      setContractsError(err.message)
+    }
+  }
+
+  // =========================================================
+  // DESCARGAR NOMINA
+  // =========================================================
+
+  async function handleDownloadNomina(
+    nomina,
+    employeeId = null,
+  ) {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setNominasError('No hay una sesion valida')
+      return
+    }
+
+    const targetEmployeeId =
+      employeeId || user?.id
+
+    if (!targetEmployeeId) {
+      setNominasError(
+        'No se ha podido identificar al empleado',
+      )
+      return
+    }
+
+    setNominasError('')
+
+    try {
+      const url =
+        API_URL +
+        '/api/employees/' +
+        targetEmployeeId +
+        '/nominas/' +
+        nomina.id +
+        '/document'
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: 'Bearer ' + token,
+        },
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+
+        throw new Error(
+          data?.detail ||
+            'No se pudo descargar la nomina',
+        )
+      }
+
+      const blob = await response.blob()
+
+      const downloadUrl =
+        window.URL.createObjectURL(blob)
+
+      const link = document.createElement('a')
+
+      link.href = downloadUrl
+      link.download = getNominaDocumentName(nomina)
+
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+      window.URL.revokeObjectURL(downloadUrl)
+    } catch (err) {
+      setNominasError(err.message)
+    }
+  }
+
+  // =========================================================
+  // SUBIR NOMINA
+  // =========================================================
+
+  async function handleUploadNominaDocument(
+    nomina,
+    employeeId,
+    file,
+  ) {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setNominasError('No hay una sesion valida')
+      return
+    }
+
+    if (!file) {
+      setNominasError('Selecciona un archivo PDF')
+      return
+    }
+
+    if (file.type !== 'application/pdf') {
+      setNominasError('El archivo debe ser un PDF')
+      return
+    }
+
+    setNominasError('')
+
+    try {
+      const formData = new FormData()
+
+      formData.append('file', file)
+
+      const url =
+        API_URL +
+        '/api/employees/' +
+        employeeId +
+        '/nominas/' +
+        nomina.id +
+        '/document'
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+        },
+        body: formData,
+      })
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail ||
+            'No se pudo subir la nomina',
+        )
+      }
+
+      setSelectedNominaFiles((previous) => {
+        const updated = { ...previous }
+
+        delete updated[nomina.id]
+
+        return updated
+      })
+
+      await loadNominas(employeeId, token)
+    } catch (err) {
+      setNominasError(err.message)
+    }
+  }
+
+  // =========================================================
+  // NOMBRES DE DOCUMENTOS
+  // =========================================================
+
+  function getDocumentName(contract) {
+    if (contract.document_path) {
+      const normalizedPath =
+        contract.document_path.replaceAll('\\', '/')
+
+      const parts = normalizedPath.split('/')
+
+      return (
+        parts[parts.length - 1] ||
+        'contrato-' + contract.id + '.pdf'
+      )
+    }
+
+    return 'contrato-' + contract.id + '.pdf'
+  }
+
+  function getNominaDocumentName(nomina) {
+    if (nomina.document_path) {
+      const normalizedPath =
+        nomina.document_path.replaceAll('\\', '/')
+
+      const parts = normalizedPath.split('/')
+
+      return (
+        parts[parts.length - 1] ||
+        'nomina-' + nomina.id + '.pdf'
+      )
+    }
+
+    return 'nomina-' + nomina.id + '.pdf'
+  }
+
+  // =========================================================
+  // FECHAS
+  // =========================================================
+
+  function formatDate(value) {
+    if (!value) {
+      return 'Sin fecha'
+    }
+
+    const parts = value.split('-')
+
+    if (parts.length !== 3) {
+      return value
+    }
+
+    return (
+      parts[2] +
+      '/' +
+      parts[1] +
+      '/' +
+      parts[0]
+    )
+  }
+
+  // =========================================================
+  // LOGIN
+  // =========================================================
 
   async function handleLogin(event) {
     event.preventDefault()
@@ -162,6 +1208,10 @@ function App() {
         setUser(loggedUser)
         setLoggedIn(true)
 
+        setCompanyView('companies')
+        setSelectedCompany(null)
+
+        await loadCompanies(data.access_token)
         await loadEmployees(data.access_token)
       } else {
         const meResponse = await fetch(
@@ -208,500 +1258,51 @@ function App() {
     }
   }
 
-  async function handleSelectEmployee(employee) {
-    const token = localStorage.getItem(
-      'access_token',
-    )
-
-    if (!token) {
-      setEmployeesError(
-        'No hay una sesion valida',
-      )
-      return
-    }
-
-    setSelectedEmployee(employee)
-    setSelectedFiles({})
-    setSelectedNominaFiles({})
-    setEmployeeSection('contracts')
-
-    await loadContracts(
-      employee.id,
-      token,
-    )
-  }
-
-  async function handleViewNominas(employee) {
-    const token = localStorage.getItem(
-      'access_token',
-    )
-
-    if (!token) {
-      setEmployeesError(
-        'No hay una sesion valida',
-      )
-      return
-    }
-
-    setSelectedEmployee(employee)
-    setSelectedFiles({})
-    setSelectedNominaFiles({})
-    setEmployeeSection('nominas')
-
-    await loadNominas(
-      employee.id,
-      token,
-    )
-  }
-
-  async function handleDownload(
-    contract,
-    employeeId = null,
-  ) {
-    const token = localStorage.getItem(
-      'access_token',
-    )
-
-    if (!token) {
-      setContractsError(
-        'No hay una sesion valida',
-      )
-      return
-    }
-
-    const targetEmployeeId =
-      employeeId || user?.id
-
-    if (!targetEmployeeId) {
-      setContractsError(
-        'No se ha podido identificar al empleado',
-      )
-      return
-    }
-
-    setContractsError('')
-
-    try {
-      const url =
-        API_URL +
-        '/api/employees/' +
-        targetEmployeeId +
-        '/contracts/' +
-        contract.id +
-        '/document'
-
-      const response = await fetch(url, {
-        headers: {
-          Authorization:
-            'Bearer ' + token,
-        },
-      })
-
-      if (!response.ok) {
-        const data =
-          await response
-            .json()
-            .catch(() => null)
-
-        throw new Error(
-          data?.detail ||
-            'No se pudo descargar el documento',
-        )
-      }
-
-      const blob =
-        await response.blob()
-
-      const downloadUrl =
-        window.URL.createObjectURL(blob)
-
-      const link =
-        document.createElement('a')
-
-      link.href = downloadUrl
-      link.download =
-        getDocumentName(contract)
-
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-
-      window.URL.revokeObjectURL(
-        downloadUrl,
-      )
-    } catch (err) {
-      setContractsError(
-        err.message,
-      )
-    }
-  }
-
-  async function handleUploadDocument(
-    contract,
-    employeeId,
-    file,
-  ) {
-    const token = localStorage.getItem(
-      'access_token',
-    )
-
-    if (!token) {
-      setContractsError(
-        'No hay una sesion valida',
-      )
-      return
-    }
-
-    if (!file) {
-      setContractsError(
-        'Selecciona un archivo PDF',
-      )
-      return
-    }
-
-    if (file.type !== 'application/pdf') {
-      setContractsError(
-        'El archivo debe ser un PDF',
-      )
-      return
-    }
-
-    setContractsError('')
-
-    try {
-      const formData = new FormData()
-
-      formData.append(
-        'file',
-        file,
-      )
-
-      const url =
-        API_URL +
-        '/api/employees/' +
-        employeeId +
-        '/contracts/' +
-        contract.id +
-        '/document'
-
-      const response = await fetch(
-        url,
-        {
-          method: 'POST',
-          headers: {
-            Authorization:
-              'Bearer ' + token,
-          },
-          body: formData,
-        },
-      )
-
-      const data =
-        await response
-          .json()
-          .catch(() => null)
-
-      if (!response.ok) {
-        throw new Error(
-          data?.detail ||
-            'No se pudo subir el documento',
-        )
-      }
-
-      setSelectedFiles(
-        (previous) => {
-          const updated = {
-            ...previous,
-          }
-
-          delete updated[
-            contract.id
-          ]
-
-          return updated
-        },
-      )
-
-      await loadContracts(
-        employeeId,
-        token,
-      )
-    } catch (err) {
-      setContractsError(
-        err.message,
-      )
-    }
-  }
-
-  async function handleDownloadNomina(
-    nomina,
-    employeeId = null,
-  ) {
-    const token = localStorage.getItem(
-      'access_token',
-    )
-
-    if (!token) {
-      setNominasError(
-        'No hay una sesion valida',
-      )
-      return
-    }
-
-    const targetEmployeeId =
-      employeeId || user?.id
-
-    if (!targetEmployeeId) {
-      setNominasError(
-        'No se ha podido identificar al empleado',
-      )
-      return
-    }
-
-    setNominasError('')
-
-    try {
-      const url =
-        API_URL +
-        '/api/employees/' +
-        targetEmployeeId +
-        '/nominas/' +
-        nomina.id +
-        '/document'
-
-      const response = await fetch(url, {
-        headers: {
-          Authorization:
-            'Bearer ' + token,
-        },
-      })
-
-      if (!response.ok) {
-        const data =
-          await response
-            .json()
-            .catch(() => null)
-
-        throw new Error(
-          data?.detail ||
-            'No se pudo descargar la nomina',
-        )
-      }
-
-      const blob =
-        await response.blob()
-
-      const downloadUrl =
-        window.URL.createObjectURL(blob)
-
-      const link =
-        document.createElement('a')
-
-      link.href = downloadUrl
-      link.download =
-        getNominaDocumentName(nomina)
-
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-
-      window.URL.revokeObjectURL(
-        downloadUrl,
-      )
-    } catch (err) {
-      setNominasError(
-        err.message,
-      )
-    }
-  }
-
-  async function handleUploadNominaDocument(
-    nomina,
-    employeeId,
-    file,
-  ) {
-    const token = localStorage.getItem(
-      'access_token',
-    )
-
-    if (!token) {
-      setNominasError(
-        'No hay una sesion valida',
-      )
-      return
-    }
-
-    if (!file) {
-      setNominasError(
-        'Selecciona un archivo PDF',
-      )
-      return
-    }
-
-    if (file.type !== 'application/pdf') {
-      setNominasError(
-        'El archivo debe ser un PDF',
-      )
-      return
-    }
-
-    setNominasError('')
-
-    try {
-      const formData = new FormData()
-
-      formData.append(
-        'file',
-        file,
-      )
-
-      const url =
-        API_URL +
-        '/api/employees/' +
-        employeeId +
-        '/nominas/' +
-        nomina.id +
-        '/document'
-
-      const response = await fetch(
-        url,
-        {
-          method: 'POST',
-          headers: {
-            Authorization:
-              'Bearer ' + token,
-          },
-          body: formData,
-        },
-      )
-
-      const data =
-        await response
-          .json()
-          .catch(() => null)
-
-      if (!response.ok) {
-        throw new Error(
-          data?.detail ||
-            'No se pudo subir la nomina',
-        )
-      }
-
-      setSelectedNominaFiles(
-        (previous) => {
-          const updated = {
-            ...previous,
-          }
-
-          delete updated[
-            nomina.id
-          ]
-
-          return updated
-        },
-      )
-
-      await loadNominas(
-        employeeId,
-        token,
-      )
-    } catch (err) {
-      setNominasError(
-        err.message,
-      )
-    }
-  }
-
-  function getDocumentName(contract) {
-    if (contract.document_path) {
-      const normalizedPath =
-        contract.document_path.replaceAll(
-          '\\',
-          '/',
-        )
-
-      const parts =
-        normalizedPath.split('/')
-
-      return (
-        parts[parts.length - 1] ||
-        'contrato-' +
-          contract.id +
-          '.pdf'
-      )
-    }
-
-    return (
-      'contrato-' +
-      contract.id +
-      '.pdf'
-    )
-  }
-
-  function getNominaDocumentName(nomina) {
-    if (nomina.document_path) {
-      const normalizedPath =
-        nomina.document_path.replaceAll(
-          '\\',
-          '/',
-        )
-
-      const parts =
-        normalizedPath.split('/')
-
-      return (
-        parts[parts.length - 1] ||
-        'nomina-' +
-          nomina.id +
-          '.pdf'
-      )
-    }
-
-    return (
-      'nomina-' +
-      nomina.id +
-      '.pdf'
-    )
-  }
-
-  function formatDate(value) {
-    if (!value) {
-      return 'Sin fecha'
-    }
-
-    const parts =
-      value.split('-')
-
-    if (parts.length !== 3) {
-      return value
-    }
-
-    return (
-      parts[2] +
-      '/' +
-      parts[1] +
-      '/' +
-      parts[0]
-    )
-  }
+  // =========================================================
+  // LOGOUT
+  // =========================================================
 
   function handleLogout() {
-    localStorage.removeItem(
-      'access_token',
-    )
+    localStorage.removeItem('access_token')
 
     setUser(null)
+    setCompanies([])
     setContracts([])
     setNominas([])
     setEmployees([])
+
+    setSelectedCompany(null)
     setSelectedEmployee(null)
+
     setSelectedFiles({})
     setSelectedNominaFiles({})
+
+    setCompanyView('companies')
     setEmployeeSection('contracts')
 
+    setEditingCompany(null)
+    setEditingEmployee(null)
+
+    setCompanyForm({
+      name: '',
+      tax_id: '',
+      address: '',
+    })
+
+    setEmployeeForm({
+      first_name: '',
+      last_name: '',
+      job_title: '',
+      job_category: '',
+      nationality: '',
+      username: '',
+    })
+
+    setCompaniesError('')
     setContractsError('')
     setNominasError('')
     setEmployeesError('')
+    setEmployeeEditError('')
 
     setLoggedIn(false)
 
@@ -709,183 +1310,863 @@ function App() {
     setPassword('')
   }
 
-  if (loggedIn && user) {
-    if (user.role === 'HR') {
-      return (
-        <main className="app">
-          <section className="card">
-            <div className="header">
-              <div>
-                <p className="eyebrow">
-                  Portal Laboraltus
-                </p>
+  // =========================================================
+  // PORTAL RRHH
+  // =========================================================
 
-                <h1>
-                  Panel de RR. HH.
-                </h1>
+  if (loggedIn && user && user.role === 'HR') {
+    return (
+      <main className="app">
+        <section className="card">
 
-                <p>
-                  Bienvenido,{' '}
-                  {user.username}
-                </p>
-              </div>
+          {/* INPUTS OCULTOS PARA AÑADIR DIRECTAMENTE */}
 
-              <button
-                type="button"
-                className="secondary"
-                onClick={
-                  handleLogout
-                }
-              >
-                Cerrar sesion
-              </button>
+          <input
+            ref={contractFileInputRef}
+            type="file"
+            accept="application/pdf"
+            style={{ display: 'none' }}
+            onChange={handleDirectContractFile}
+          />
+
+          <input
+            ref={nominaFileInputRef}
+            type="file"
+            accept="application/pdf"
+            style={{ display: 'none' }}
+            onChange={handleDirectNominaFile}
+          />
+
+          {/* ================================================= */}
+          {/* CABECERA */}
+          {/* ================================================= */}
+
+          <div className="header">
+            <div>
+              <p className="eyebrow">
+                Portal Laboraltus
+              </p>
+
+              <h1>
+                Panel de RR. HH.
+              </h1>
+
+              <p>
+                Bienvenido, {user.username}
+              </p>
             </div>
 
+            <button
+              type="button"
+              className="secondary"
+              onClick={handleLogout}
+            >
+              Cerrar sesion
+            </button>
+          </div>
+
+          {/* ================================================= */}
+          {/* LISTA DE EMPRESAS */}
+          {/* ================================================= */}
+
+          {companyView === 'companies' && (
             <div className="contracts">
               <div className="section-header">
                 <div>
                   <p className="eyebrow">
-                    Gestion de personal
+                    Gestion de empresas
                   </p>
 
                   <h2>
-                    Empleados
+                    Empresas
                   </h2>
                 </div>
 
-                {!employeesLoading &&
-                  employees.length >
-                    0 && (
+                {!companiesLoading &&
+                  companies.length > 0 && (
                     <span className="contract-count">
-                      {employees.length}{' '}
-                      {employees.length ===
-                      1
-                        ? 'empleado'
-                        : 'empleados'}
+                      {companies.length}{' '}
+                      {companies.length === 1
+                        ? 'empresa'
+                        : 'empresas'}
                     </span>
                   )}
               </div>
 
-              {employeesLoading && (
+              {companiesLoading && (
                 <p className="muted">
-                  Cargando empleados...
+                  Cargando empresas...
                 </p>
               )}
 
-              {!employeesLoading &&
-                employeesError && (
+              {!companiesLoading &&
+                companiesError && (
                   <p className="error">
-                    {employeesError}
+                    {companiesError}
                   </p>
                 )}
 
-              {!employeesLoading &&
-                !employeesError &&
-                employees.length ===
-                  0 && (
+              {!companiesLoading &&
+                !companiesError &&
+                companies.length === 0 && (
                   <div className="empty-state">
                     <strong>
-                      No hay empleados
+                      No hay empresas
                     </strong>
 
                     <p>
-                      No se encontraron
-                      empleados en el
-                      sistema.
+                      No se encontraron empresas
+                      en el sistema.
                     </p>
                   </div>
                 )}
 
-              {!employeesLoading &&
-                employees.length >
-                  0 && (
+              {!companiesLoading &&
+                companies.length > 0 && (
                   <div className="contract-list">
-                    {employees.map(
-                      (employee) => (
-                        <article
-                          className="contract-card"
-                          key={
-                            employee.id
-                          }
-                        >
-                          <div className="contract-info">
-                            <div>
-                              <span>
-                                Nombre
-                              </span>
+                    {companies.map((company) => (
+                      <article
+                        className="contract-card"
+                        key={company.id}
+                      >
+                        <div className="contract-info">
 
-                              <strong>
-                                {
-                                  employee.first_name
-                                }{' '}
-                                {
-                                  employee.last_name
-                                }
-                              </strong>
-                            </div>
+                          <div>
+                            <span>
+                              Empresa
+                            </span>
 
-                            <div>
-                              <span>
-                                Puesto
-                              </span>
-
-                              <strong>
-                                {
-                                  employee.job_title
-                                }
-                              </strong>
-                            </div>
-
-                            <div>
-                              <span>
-                                Categoria
-                              </span>
-
-                              <strong>
-                                {
-                                  employee.job_category
-                                }
-                              </strong>
-                            </div>
+                            <strong>
+                              {company.name}
+                            </strong>
                           </div>
 
-                          <div className="contract-document">
-                            <button
-                              type="button"
-                              className="download-button"
-                              onClick={() =>
-                                handleSelectEmployee(
-                                  employee,
-                                )
-                              }
-                            >
-                              Ver contratos
-                            </button>
+                          <div>
+                            <span>
+                              CIF / NIF
+                            </span>
 
-                            <button
-                              type="button"
-                              className="download-button"
-                              onClick={() =>
-                                handleViewNominas(
-                                  employee,
-                                )
-                              }
-                            >
-                              Ver nominas
-                            </button>
+                            <strong>
+                              {company.tax_id}
+                            </strong>
                           </div>
-                        </article>
-                      ),
-                    )}
+
+                          <div>
+                            <span>
+                              Direccion
+                            </span>
+
+                            <strong>
+                              {company.address}
+                            </strong>
+                          </div>
+
+                        </div>
+
+                        <div className="contract-document">
+
+                          <button
+                            type="button"
+                            className="download-button"
+                            onClick={() =>
+                              handleEnterCompany(
+                                company,
+                              )
+                            }
+                          >
+                            Entrar
+                          </button>
+
+                        </div>
+                      </article>
+                    ))}
                   </div>
                 )}
             </div>
+          )}
 
-            {selectedEmployee &&
-              employeeSection ===
-                'contracts' && (
+          {/* ================================================= */}
+          {/* FICHA DE EMPRESA */}
+          {/* ================================================= */}
+
+          {companyView === 'company' &&
+            selectedCompany && (
               <div className="contracts">
+
                 <div className="section-header">
+                  <div>
+                    <p className="eyebrow">
+                      Empresa
+                    </p>
+
+                    <h2>
+                      {selectedCompany.name}
+                    </h2>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={
+                      handleBackToCompanies
+                    }
+                  >
+                    Volver
+                  </button>
+                </div>
+
+                <div className="profile">
+
+                  <div className="profile-grid">
+
+                    <div>
+                      <span>
+                        Nombre
+                      </span>
+
+                      <strong>
+                        {selectedCompany.name}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>
+                        CIF / NIF
+                      </span>
+
+                      <strong>
+                        {selectedCompany.tax_id}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>
+                        Direccion
+                      </span>
+
+                      <strong>
+                        {selectedCompany.address}
+                      </strong>
+                    </div>
+
+                  </div>
+
+                  <div className="contract-document">
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleEditCompany(
+                          selectedCompany,
+                        )
+                      }
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={
+                        handleEnterEmployees
+                      }
+                    >
+                      Empleados
+                    </button>
+
+                  </div>
+                </div>
+
+                {/* EDITAR EMPRESA */}
+
+                {editingCompany && (
+                  <div className="profile">
+
+                    <div className="section-header">
+                      <div>
+                        <p className="eyebrow">
+                          Gestion de empresas
+                        </p>
+
+                        <h2>
+                          Editar empresa
+                        </h2>
+                      </div>
+                    </div>
+
+                    <form
+                      onSubmit={
+                        handleUpdateCompany
+                      }
+                    >
+                      <label htmlFor="company-name">
+                        Nombre
+                      </label>
+
+                      <input
+                        id="company-name"
+                        type="text"
+                        value={
+                          companyForm.name
+                        }
+                        onChange={(event) =>
+                          setCompanyForm({
+                            ...companyForm,
+                            name:
+                              event.target
+                                .value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="company-tax-id">
+                        CIF / NIF
+                      </label>
+
+                      <input
+                        id="company-tax-id"
+                        type="text"
+                        value={
+                          companyForm.tax_id
+                        }
+                        onChange={(event) =>
+                          setCompanyForm({
+                            ...companyForm,
+                            tax_id:
+                              event.target
+                                .value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="company-address">
+                        Direccion
+                      </label>
+
+                      <input
+                        id="company-address"
+                        type="text"
+                        value={
+                          companyForm.address
+                        }
+                        onChange={(event) =>
+                          setCompanyForm({
+                            ...companyForm,
+                            address:
+                              event.target
+                                .value,
+                          })
+                        }
+                        required
+                      />
+
+                      {companiesError && (
+                        <p className="error">
+                          {companiesError}
+                        </p>
+                      )}
+
+                      <div className="contract-document">
+
+                        <button
+                          type="submit"
+                          disabled={
+                            companySaving
+                          }
+                        >
+                          {companySaving
+                            ? 'Guardando...'
+                            : 'Guardar cambios'}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={
+                            handleCancelEditCompany
+                          }
+                          disabled={
+                            companySaving
+                          }
+                        >
+                          Cancelar
+                        </button>
+
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+              </div>
+            )}
+
+          {/* ================================================= */}
+          {/* EMPLEADOS DE EMPRESA */}
+          {/* ================================================= */}
+
+          {companyView === 'employees' &&
+            selectedCompany && (
+              <div className="contracts">
+
+                <div className="section-header">
+                  <div>
+                    <p className="eyebrow">
+                      {selectedCompany.name}
+                    </p>
+
+                    <h2>
+                      Empleados
+                    </h2>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={
+                      handleBackToCompany
+                    }
+                  >
+                    Volver a empresa
+                  </button>
+                </div>
+
+                <div className="profile">
+                  <p>
+                    Empleados de{' '}
+                    <strong>
+                      {selectedCompany.name}
+                    </strong>
+                  </p>
+                </div>
+
+                {employeesLoading && (
+                  <p className="muted">
+                    Cargando empleados...
+                  </p>
+                )}
+
+                {!employeesLoading &&
+                  employeesError && (
+                    <p className="error">
+                      {employeesError}
+                    </p>
+                  )}
+
+                {!employeesLoading &&
+                  !employeesError &&
+                  employees.length === 0 && (
+                    <div className="empty-state">
+                      <strong>
+                        No hay empleados
+                      </strong>
+
+                      <p>
+                        No se encontraron empleados
+                        en el sistema.
+                      </p>
+                    </div>
+                  )}
+
+                {!employeesLoading &&
+                  employees.length > 0 && (
+                    <div className="contract-list">
+
+                      {employees.map(
+                        (employee) => (
+                          <article
+                            className="contract-card"
+                            key={employee.id}
+                          >
+
+                            <div className="contract-info">
+
+                              <div>
+                                <span>
+                                  Nombre
+                                </span>
+
+                                <strong>
+                                  {
+                                    employee.first_name
+                                  }{' '}
+                                  {
+                                    employee.last_name
+                                  }
+                                </strong>
+                              </div>
+
+                              <div>
+                                <span>
+                                  Puesto
+                                </span>
+
+                                <strong>
+                                  {
+                                    employee.job_title ||
+                                    'Sin puesto'
+                                  }
+                                </strong>
+                              </div>
+
+                              <div>
+                                <span>
+                                  Categoria
+                                </span>
+
+                                <strong>
+                                  {
+                                    employee.job_category ||
+                                    'Sin categoria'
+                                  }
+                                </strong>
+                              </div>
+
+                            </div>
+
+                            <div className="contract-document">
+
+                              <button
+                                type="button"
+                                className="download-button"
+                                onClick={() =>
+                                  handleEnterEmployee(
+                                    employee,
+                                  )
+                                }
+                              >
+                                Entrar
+                              </button>
+
+                            </div>
+
+                          </article>
+                        ),
+                      )}
+
+                    </div>
+                  )}
+
+              </div>
+            )}
+
+          {/* ================================================= */}
+          {/* FICHA DEL EMPLEADO */}
+          {/* ================================================= */}
+
+          {companyView === 'employee' &&
+            selectedEmployee && (
+              <div className="contracts">
+
+                <div className="section-header">
+                  <div>
+                    <p className="eyebrow">
+                      Empleado
+                    </p>
+
+                    <h2>
+                      {
+                        selectedEmployee.first_name
+                      }{' '}
+                      {
+                        selectedEmployee.last_name
+                      }
+                    </h2>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={
+                      handleBackToEmployees
+                    }
+                  >
+                    Volver
+                  </button>
+                </div>
+
+                <div className="profile">
+
+                  <div className="profile-grid">
+
+                    <div>
+                      <span>
+                        Nombre
+                      </span>
+
+                      <strong>
+                        {
+                          selectedEmployee.first_name
+                        }{' '}
+                        {
+                          selectedEmployee.last_name
+                        }
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>
+                        Puesto
+                      </span>
+
+                      <strong>
+                        {
+                          selectedEmployee.job_title ||
+                          'Sin puesto'
+                        }
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>
+                        Categoria
+                      </span>
+
+                      <strong>
+                        {
+                          selectedEmployee.job_category ||
+                          'Sin categoria'
+                        }
+                      </strong>
+                    </div>
+
+                  </div>
+
+                  <div className="contract-document">
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleEditEmployee(
+                          selectedEmployee,
+                        )
+                      }
+                    >
+                      Editar empleado
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleViewContracts(
+                          selectedEmployee,
+                        )
+                      }
+                    >
+                      Contratos
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleViewNominas(
+                          selectedEmployee,
+                        )
+                      }
+                    >
+                      Nóminas
+                    </button>
+
+                  </div>
+
+                </div>
+
+                {/* EDITAR EMPLEADO */}
+
+                {editingEmployee && (
+                  <div className="profile">
+
+                    <div className="section-header">
+                      <div>
+                        <p className="eyebrow">
+                          Gestion de empleados
+                        </p>
+
+                        <h2>
+                          Editar empleado
+                        </h2>
+                      </div>
+                    </div>
+
+                    <form
+                      onSubmit={
+                        handleUpdateEmployee
+                      }
+                    >
+                      <label htmlFor="employee-first-name">
+                        Nombre
+                      </label>
+
+                      <input
+                        id="employee-first-name"
+                        type="text"
+                        value={
+                          employeeForm.first_name
+                        }
+                        onChange={(event) =>
+                          setEmployeeForm({
+                            ...employeeForm,
+                            first_name:
+                              event.target
+                                .value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="employee-last-name">
+                        Apellidos
+                      </label>
+
+                      <input
+                        id="employee-last-name"
+                        type="text"
+                        value={
+                          employeeForm.last_name
+                        }
+                        onChange={(event) =>
+                          setEmployeeForm({
+                            ...employeeForm,
+                            last_name:
+                              event.target
+                                .value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="employee-username">
+                        Usuario
+                      </label>
+
+                      <input
+                        id="employee-username"
+                        type="text"
+                        value={
+                          employeeForm.username
+                        }
+                        onChange={(event) =>
+                          setEmployeeForm({
+                            ...employeeForm,
+                            username:
+                              event.target
+                                .value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="employee-job-title">
+                        Puesto
+                      </label>
+
+                      <input
+                        id="employee-job-title"
+                        type="text"
+                        value={
+                          employeeForm.job_title
+                        }
+                        onChange={(event) =>
+                          setEmployeeForm({
+                            ...employeeForm,
+                            job_title:
+                              event.target
+                                .value,
+                          })
+                        }
+                      />
+
+                      <label htmlFor="employee-job-category">
+                        Categoria
+                      </label>
+
+                      <input
+                        id="employee-job-category"
+                        type="text"
+                        value={
+                          employeeForm.job_category
+                        }
+                        onChange={(event) =>
+                          setEmployeeForm({
+                            ...employeeForm,
+                            job_category:
+                              event.target
+                                .value,
+                          })
+                        }
+                      />
+
+                      <label htmlFor="employee-nationality">
+                        Nacionalidad
+                      </label>
+
+                      <input
+                        id="employee-nationality"
+                        type="text"
+                        value={
+                          employeeForm.nationality
+                        }
+                        onChange={(event) =>
+                          setEmployeeForm({
+                            ...employeeForm,
+                            nationality:
+                              event.target
+                                .value,
+                          })
+                        }
+                      />
+
+                      {employeeEditError && (
+                        <p className="error">
+                          {employeeEditError}
+                        </p>
+                      )}
+
+                      <div className="contract-document">
+
+                        <button
+                          type="submit"
+                          disabled={
+                            employeeSaving
+                          }
+                        >
+                          {employeeSaving
+                            ? 'Guardando...'
+                            : 'Guardar cambios'}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={
+                            handleCancelEditEmployee
+                          }
+                          disabled={
+                            employeeSaving
+                          }
+                        >
+                          Cancelar
+                        </button>
+
+                      </div>
+                    </form>
+
+                  </div>
+                )}
+
+              </div>
+            )}
+
+          {/* ================================================= */}
+          {/* MENU DE CONTRATOS */}
+          {/* ================================================= */}
+
+          {companyView === 'employeeContracts' &&
+            selectedEmployee && (
+              <div className="contracts">
+
+                <div className="section-header">
+
                   <div>
                     <p className="eyebrow">
                       Documentacion laboral
@@ -905,19 +2186,103 @@ function App() {
                   <button
                     type="button"
                     className="secondary"
-                    onClick={() => {
-                      setSelectedEmployee(
-                        null,
-                      )
-                      setContracts([])
-                      setSelectedFiles({})
-                      setContractsError(
-                        '',
-                      )
-                    }}
+                    onClick={
+                      handleBackToEmployee
+                    }
                   >
                     Volver
                   </button>
+
+                </div>
+
+                <div className="profile">
+
+                  <div className="profile-grid">
+
+                    <div>
+                      <span>
+                        Gestion
+                      </span>
+
+                      <strong>
+                        Contratos
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>
+                        Empleado
+                      </span>
+
+                      <strong>
+                        {
+                          selectedEmployee.first_name
+                        }{' '}
+                        {
+                          selectedEmployee.last_name
+                        }
+                      </strong>
+                    </div>
+
+                  </div>
+
+                  <div className="contract-document">
+
+                    <button
+                      type="button"
+                      onClick={
+                        handleAddContracts
+                      }
+                    >
+                      Añadir contratos
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={
+                        handleContractStore
+                      }
+                    >
+                      Almacén de contratos
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+          {/* ================================================= */}
+          {/* ALMACEN DE CONTRATOS */}
+          {/* ================================================= */}
+
+          {companyView === 'employeeContractStore' &&
+            selectedEmployee && (
+              <div className="contracts">
+
+                <div className="section-header">
+
+                  <div>
+                    <p className="eyebrow">
+                      Almacén de contratos
+                    </p>
+
+                    <h2>
+                      Contratos almacenados
+                    </h2>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={
+                      handleBackToContractsMenu
+                    }
+                  >
+                    Volver
+                  </button>
+
                 </div>
 
                 {contractsLoading && (
@@ -928,195 +2293,131 @@ function App() {
 
                 {!contractsLoading &&
                   contractsError && (
-                  <p className="error">
-                    {
-                      contractsError
-                    }
-                  </p>
-                )}
+                    <p className="error">
+                      {contractsError}
+                    </p>
+                  )}
 
                 {!contractsLoading &&
                   !contractsError &&
-                  contracts.length ===
-                    0 && (
-                  <div className="empty-state">
-                    <strong>
-                      No hay contratos
-                    </strong>
+                  contracts.filter(
+                    (contract) =>
+                      contract.document_path,
+                  ).length === 0 && (
+                    <div className="empty-state">
 
-                    <p>
-                      Este empleado
-                      todavía no tiene
-                      contratos
-                      asociados.
-                    </p>
-                  </div>
-                )}
+                      <strong>
+                        No hay documentos almacenados
+                      </strong>
+
+                      <p>
+                        Todavía no hay contratos con
+                        documentos disponibles.
+                      </p>
+
+                    </div>
+                  )}
 
                 {!contractsLoading &&
-                  contracts.length >
-                    0 && (
-                  <div className="contract-list">
-                    {contracts.map(
-                      (contract) => (
-                        <article
-                          className="contract-card"
-                          key={
-                            contract.id
-                          }
-                        >
-                          <div className="contract-info">
-                            <div>
-                              <span>
-                                Tipo de
-                                contrato
-                              </span>
+                  contracts.length > 0 && (
+                    <div className="contract-list">
 
-                              <strong>
-                                {
-                                  contract.contract_type
-                                }
-                              </strong>
-                            </div>
+                      {contracts
+                        .filter(
+                          (contract) =>
+                            contract.document_path,
+                        )
+                        .map(
+                          (contract) => (
+                            <article
+                              className="contract-card"
+                              key={contract.id}
+                            >
 
-                            <div>
-                              <span>
-                                Inicio
-                              </span>
+                              <div className="contract-info">
 
-                              <strong>
-                                {formatDate(
-                                  contract.start_date,
-                                )}
-                              </strong>
-                            </div>
+                                <div>
+                                  <span>
+                                    Tipo de contrato
+                                  </span>
 
-                            <div>
-                              <span>
-                                Fin
-                              </span>
+                                  <strong>
+                                    {
+                                      contract.contract_type
+                                    }
+                                  </strong>
+                                </div>
 
-                              <strong>
-                                {contract.end_date
-                                  ? formatDate(
-                                      contract.end_date,
-                                    )
-                                  : 'Indefinido'}
-                              </strong>
-                            </div>
-                          </div>
+                                <div>
+                                  <span>
+                                    Inicio
+                                  </span>
 
-                          <div className="contract-document">
-                            {contract.document_path && (
-                              <button
-                                type="button"
-                                className="download-button"
-                                onClick={() =>
-                                  handleDownload(
-                                    contract,
-                                    selectedEmployee.id,
-                                  )
-                                }
-                              >
-                                Descargar
-                                documento
-                              </button>
-                            )}
+                                  <strong>
+                                    {formatDate(
+                                      contract.start_date,
+                                    )}
+                                  </strong>
+                                </div>
 
-                            <input
-                              id={
-                                'contract-file-' +
-                                contract.id
-                              }
-                              type="file"
-                              accept="application/pdf"
-                              style={{
-                                display: 'none',
-                              }}
-                              onChange={(
-                                event,
-                              ) => {
-                                const file =
-                                  event.target.files?.[0]
+                                <div>
+                                  <span>
+                                    Documento
+                                  </span>
 
-                                if (file) {
-                                  if (
-                                    file.type !==
-                                    'application/pdf'
-                                  ) {
-                                    setContractsError(
-                                      'El archivo debe ser un PDF',
-                                    )
-                                  } else {
-                                    setContractsError(
-                                      '',
-                                    )
+                                  <strong>
+                                    {getDocumentName(
+                                      contract,
+                                    )}
+                                  </strong>
+                                </div>
 
-                                    setSelectedFiles(
-                                      (previous) => ({
-                                        ...previous,
-                                        [contract.id]:
-                                          file,
-                                      }),
+                              </div>
+
+                              <div className="contract-document">
+
+                                <button
+                                  type="button"
+                                  className="download-button"
+                                  onClick={() =>
+                                    handleDownload(
+                                      contract,
+                                      selectedEmployee.id,
                                     )
                                   }
-                                }
+                                >
+                                  Descargar
+                                </button>
 
-                                event.target.value =
-                                  ''
-                              }}
-                            />
+                              </div>
 
-                            <label
-                              htmlFor={
-                                'contract-file-' +
-                                contract.id
-                              }
-                              className="download-button upload-file-label"
-                            >
-                              Seleccionar PDF
-                            </label>
+                            </article>
+                          ),
+                        )}
 
-                            {selectedFiles[
-                              contract.id
-                            ] && (
-                              <button
-                                type="button"
-                                className="download-button"
-                                onClick={() =>
-                                  handleUploadDocument(
-                                    contract,
-                                    selectedEmployee.id,
-                                    selectedFiles[
-                                      contract.id
-                                    ],
-                                  )
-                                }
-                              >
-                                Subir documento
-                              </button>
-                            )}
-                          </div>
-                        </article>
-                      ),
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+
               </div>
             )}
 
-            {selectedEmployee &&
-              employeeSection ===
-                'nominas' && (
+          {/* ================================================= */}
+          {/* MENU DE NOMINAS */}
+          {/* ================================================= */}
+
+          {companyView === 'employeeNominas' &&
+            selectedEmployee && (
               <div className="contracts">
+
                 <div className="section-header">
+
                   <div>
                     <p className="eyebrow">
                       Documentacion laboral
                     </p>
 
                     <h2>
-                      Nominas de{' '}
+                      Nóminas de{' '}
                       {
                         selectedEmployee.first_name
                       }{' '}
@@ -1129,19 +2430,103 @@ function App() {
                   <button
                     type="button"
                     className="secondary"
-                    onClick={() => {
-                      setSelectedEmployee(
-                        null,
-                      )
-                      setNominas([])
-                      setSelectedNominaFiles({})
-                      setNominasError(
-                        '',
-                      )
-                    }}
+                    onClick={
+                      handleBackToEmployee
+                    }
                   >
                     Volver
                   </button>
+
+                </div>
+
+                <div className="profile">
+
+                  <div className="profile-grid">
+
+                    <div>
+                      <span>
+                        Gestion
+                      </span>
+
+                      <strong>
+                        Nóminas
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>
+                        Empleado
+                      </span>
+
+                      <strong>
+                        {
+                          selectedEmployee.first_name
+                        }{' '}
+                        {
+                          selectedEmployee.last_name
+                        }
+                      </strong>
+                    </div>
+
+                  </div>
+
+                  <div className="contract-document">
+
+                    <button
+                      type="button"
+                      onClick={
+                        handleAddNominas
+                      }
+                    >
+                      Añadir nóminas
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={
+                        handleNominaStore
+                      }
+                    >
+                      Almacén de nóminas
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+          {/* ================================================= */}
+          {/* ALMACEN DE NOMINAS */}
+          {/* ================================================= */}
+
+          {companyView === 'employeeNominaStore' &&
+            selectedEmployee && (
+              <div className="contracts">
+
+                <div className="section-header">
+
+                  <div>
+                    <p className="eyebrow">
+                      Almacén de nóminas
+                    </p>
+
+                    <h2>
+                      Nóminas almacenadas
+                    </h2>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={
+                      handleBackToNominasMenu
+                    }
+                  >
+                    Volver
+                  </button>
+
                 </div>
 
                 {nominasLoading && (
@@ -1152,192 +2537,148 @@ function App() {
 
                 {!nominasLoading &&
                   nominasError && (
-                  <p className="error">
-                    {
-                      nominasError
-                    }
-                  </p>
-                )}
+                    <p className="error">
+                      {nominasError}
+                    </p>
+                  )}
 
                 {!nominasLoading &&
                   !nominasError &&
-                  nominas.length ===
-                    0 && (
-                  <div className="empty-state">
-                    <strong>
-                      No hay nominas
-                    </strong>
+                  nominas.filter(
+                    (nomina) =>
+                      nomina.document_path,
+                  ).length === 0 && (
+                    <div className="empty-state">
 
-                    <p>
-                      Este empleado
-                      todavía no tiene
-                      nominas
-                      asociadas.
-                    </p>
-                  </div>
-                )}
+                      <strong>
+                        No hay documentos almacenados
+                      </strong>
+
+                      <p>
+                        Todavía no hay nóminas con
+                        documentos disponibles.
+                      </p>
+
+                    </div>
+                  )}
 
                 {!nominasLoading &&
-                  nominas.length >
-                    0 && (
-                  <div className="contract-list">
-                    {nominas.map(
-                      (nomina) => (
-                        <article
-                          className="contract-card"
-                          key={
-                            nomina.id
-                          }
-                        >
-                          <div className="contract-info">
-                            <div>
-                              <span>
-                                Fecha
-                              </span>
+                  nominas.length > 0 && (
+                    <div className="contract-list">
 
-                              <strong>
-                                {formatDate(
-                                  nomina.date,
-                                )}
-                              </strong>
-                            </div>
-                          </div>
+                      {nominas
+                        .filter(
+                          (nomina) =>
+                            nomina.document_path,
+                        )
+                        .map(
+                          (nomina) => (
+                            <article
+                              className="contract-card"
+                              key={nomina.id}
+                            >
 
-                          <div className="contract-document">
-                            {nomina.document_path && (
-                              <button
-                                type="button"
-                                className="download-button"
-                                onClick={() =>
-                                  handleDownloadNomina(
-                                    nomina,
-                                    selectedEmployee.id,
-                                  )
-                                }
-                              >
-                                Descargar
-                                documento
-                              </button>
-                            )}
+                              <div className="contract-info">
 
-                            <input
-                              id={
-                                'nomina-file-' +
-                                nomina.id
-                              }
-                              type="file"
-                              accept="application/pdf"
-                              style={{
-                                display: 'none',
-                              }}
-                              onChange={(
-                                event,
-                              ) => {
-                                const file =
-                                  event.target.files?.[0]
+                                <div>
+                                  <span>
+                                    Fecha
+                                  </span>
 
-                                if (file) {
-                                  if (
-                                    file.type !==
-                                    'application/pdf'
-                                  ) {
-                                    setNominasError(
-                                      'El archivo debe ser un PDF',
-                                    )
-                                  } else {
-                                    setNominasError(
-                                      '',
-                                    )
+                                  <strong>
+                                    {formatDate(
+                                      nomina.date,
+                                    )}
+                                  </strong>
+                                </div>
 
-                                    setSelectedNominaFiles(
-                                      (previous) => ({
-                                        ...previous,
-                                        [nomina.id]:
-                                          file,
-                                      }),
+                                <div>
+                                  <span>
+                                    Documento
+                                  </span>
+
+                                  <strong>
+                                    {getNominaDocumentName(
+                                      nomina,
+                                    )}
+                                  </strong>
+                                </div>
+
+                              </div>
+
+                              <div className="contract-document">
+
+                                <button
+                                  type="button"
+                                  className="download-button"
+                                  onClick={() =>
+                                    handleDownloadNomina(
+                                      nomina,
+                                      selectedEmployee.id,
                                     )
                                   }
-                                }
+                                >
+                                  Descargar
+                                </button>
 
-                                event.target.value =
-                                  ''
-                              }}
-                            />
+                              </div>
 
-                            <label
-                              htmlFor={
-                                'nomina-file-' +
-                                nomina.id
-                              }
-                              className="download-button upload-file-label"
-                            >
-                              Seleccionar PDF
-                            </label>
+                            </article>
+                          ),
+                        )}
 
-                            {selectedNominaFiles[
-                              nomina.id
-                            ] && (
-                              <button
-                                type="button"
-                                className="download-button"
-                                onClick={() =>
-                                  handleUploadNominaDocument(
-                                    nomina,
-                                    selectedEmployee.id,
-                                    selectedNominaFiles[
-                                      nomina.id
-                                    ],
-                                  )
-                                }
-                              >
-                                Subir documento
-                              </button>
-                            )}
-                          </div>
-                        </article>
-                      ),
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+
               </div>
             )}
-          </section>
-        </main>
-      )
-    }
 
+        </section>
+      </main>
+    )
+  }
+
+  // =========================================================
+  // PORTAL EMPLEADO
+  // =========================================================
+
+  if (loggedIn && user) {
     return (
       <main className="app">
         <section className="card">
+
           <div className="header">
+
             <div>
               <p className="eyebrow">
                 Portal Laboraltus
               </p>
 
               <h1>
-                Bienvenido,{' '}
-                {user.first_name}
+                Bienvenido, {user.first_name}
               </h1>
             </div>
 
             <button
               type="button"
               className="secondary"
-              onClick={
-                handleLogout
-              }
+              onClick={handleLogout}
             >
               Cerrar sesion
             </button>
+
           </div>
 
+          {/* PERFIL */}
+
           <div className="profile">
+
             <h2>
               Mi perfil
             </h2>
 
             <div className="profile-grid">
+
               <div>
                 <span>
                   Nombre
@@ -1398,11 +2739,17 @@ function App() {
                   {user.nationality}
                 </strong>
               </div>
+
             </div>
+
           </div>
 
+          {/* CONTRATOS */}
+
           <div className="contracts">
+
             <div className="section-header">
+
               <div>
                 <p className="eyebrow">
                   Documentacion laboral
@@ -1414,16 +2761,15 @@ function App() {
               </div>
 
               {!contractsLoading &&
-                contracts.length >
-                  0 && (
+                contracts.length > 0 && (
                   <span className="contract-count">
                     {contracts.length}{' '}
-                    {contracts.length ===
-                    1
+                    {contracts.length === 1
                       ? 'contrato'
                       : 'contratos'}
                   </span>
                 )}
+
             </div>
 
             {contractsLoading && (
@@ -1441,39 +2787,37 @@ function App() {
 
             {!contractsLoading &&
               !contractsError &&
-              contracts.length ===
-                0 && (
+              contracts.length === 0 && (
                 <div className="empty-state">
+
                   <strong>
-                    No hay contratos
-                    disponibles
+                    No hay contratos disponibles
                   </strong>
 
                   <p>
-                    Todavia no hay
-                    contratos asociados
-                    a tu perfil.
+                    Todavia no hay contratos
+                    asociados a tu perfil.
                   </p>
+
                 </div>
               )}
 
             {!contractsLoading &&
-              contracts.length >
-                0 && (
+              contracts.length > 0 && (
                 <div className="contract-list">
+
                   {contracts.map(
                     (contract) => (
                       <article
                         className="contract-card"
-                        key={
-                          contract.id
-                        }
+                        key={contract.id}
                       >
+
                         <div className="contract-info">
+
                           <div>
                             <span>
-                              Tipo de
-                              contrato
+                              Tipo de contrato
                             </span>
 
                             <strong>
@@ -1508,9 +2852,11 @@ function App() {
                                 : 'Indefinido'}
                             </strong>
                           </div>
+
                         </div>
 
                         <div className="contract-document">
+
                           {contract.document_path ? (
                             <button
                               type="button"
@@ -1521,25 +2867,31 @@ function App() {
                                 )
                               }
                             >
-                              Descargar
-                              documento
+                              Descargar documento
                             </button>
                           ) : (
                             <span className="no-document">
-                              Documento no
-                              disponible
+                              Documento no disponible
                             </span>
                           )}
+
                         </div>
+
                       </article>
                     ),
                   )}
+
                 </div>
               )}
+
           </div>
 
+          {/* NOMINAS */}
+
           <div className="contracts">
+
             <div className="section-header">
+
               <div>
                 <p className="eyebrow">
                   Documentacion laboral
@@ -1551,16 +2903,15 @@ function App() {
               </div>
 
               {!nominasLoading &&
-                nominas.length >
-                  0 && (
+                nominas.length > 0 && (
                   <span className="contract-count">
                     {nominas.length}{' '}
-                    {nominas.length ===
-                    1
+                    {nominas.length === 1
                       ? 'nomina'
                       : 'nominas'}
                   </span>
                 )}
+
             </div>
 
             {nominasLoading && (
@@ -1578,35 +2929,34 @@ function App() {
 
             {!nominasLoading &&
               !nominasError &&
-              nominas.length ===
-                0 && (
+              nominas.length === 0 && (
                 <div className="empty-state">
+
                   <strong>
-                    No hay nominas
-                    disponibles
+                    No hay nominas disponibles
                   </strong>
 
                   <p>
-                    Todavia no hay
-                    nominas asociadas
-                    a tu perfil.
+                    Todavia no hay nominas
+                    asociadas a tu perfil.
                   </p>
+
                 </div>
               )}
 
             {!nominasLoading &&
-              nominas.length >
-                0 && (
+              nominas.length > 0 && (
                 <div className="contract-list">
+
                   {nominas.map(
                     (nomina) => (
                       <article
                         className="contract-card"
-                        key={
-                          nomina.id
-                        }
+                        key={nomina.id}
                       >
+
                         <div className="contract-info">
+
                           <div>
                             <span>
                               Fecha
@@ -1618,9 +2968,11 @@ function App() {
                               )}
                             </strong>
                           </div>
+
                         </div>
 
                         <div className="contract-document">
+
                           {nomina.document_path ? (
                             <button
                               type="button"
@@ -1631,31 +2983,41 @@ function App() {
                                 )
                               }
                             >
-                              Descargar
-                              documento
+                              Descargar documento
                             </button>
                           ) : (
                             <span className="no-document">
-                              Documento no
-                              disponible
+                              Documento no disponible
                             </span>
                           )}
+
                         </div>
+
                       </article>
                     ),
                   )}
+
                 </div>
               )}
+
           </div>
+
         </section>
       </main>
     )
   }
 
+  // =========================================================
+  // LOGIN
+  // =========================================================
+
   return (
     <main className="app">
+
       <section className="login-card">
+
         <div className="login-header">
+
           <p className="eyebrow">
             Portal Laboraltus
           </p>
@@ -1665,15 +3027,14 @@ function App() {
           </h1>
 
           <p>
-            Inicia sesion para
-            acceder a tu
+            Inicia sesion para acceder a tu
             informacion.
           </p>
+
         </div>
 
-        <form
-          onSubmit={handleLogin}
-        >
+        <form onSubmit={handleLogin}>
+
           <label htmlFor="username">
             Usuario
           </label>
@@ -1683,9 +3044,7 @@ function App() {
             type="text"
             value={username}
             onChange={(event) =>
-              setUsername(
-                event.target.value,
-              )
+              setUsername(event.target.value)
             }
             placeholder="Introduce tu usuario"
             autoComplete="username"
@@ -1701,9 +3060,7 @@ function App() {
             type="password"
             value={password}
             onChange={(event) =>
-              setPassword(
-                event.target.value,
-              )
+              setPassword(event.target.value)
             }
             placeholder="Introduce tu contrasena"
             autoComplete="current-password"
@@ -1724,8 +3081,11 @@ function App() {
               ? 'Iniciando sesion...'
               : 'Iniciar sesion'}
           </button>
+
         </form>
+
       </section>
+
     </main>
   )
 }
