@@ -843,48 +843,85 @@ function App() {
   // ARCHIVO DE CONTRATO
   // =========================================================
 
-  async function handleDirectContractFile(event) {
-    const file = event.target.files?.[0]
+ async function handleDirectContractFile(event) {
+  const file = event.target.files?.[0]
 
-    event.target.value = ''
+  event.target.value = ''
 
-    if (!file) {
-      return
-    }
+  if (!file) {
+    return
+  }
 
-    if (!selectedEmployee) {
-      setContractsError('No se ha seleccionado ningún empleado')
-      return
-    }
-
-    if (file.type !== 'application/pdf') {
-      setContractsError('El archivo debe ser un PDF')
-      return
-    }
-
-    const contractsWithoutDocument = contracts.filter(
-      (contract) => !contract.document_path,
+  if (!selectedEmployee) {
+    setContractsError(
+      'No se ha seleccionado ningún empleado',
     )
+    return
+  }
 
-    let targetContract = contractsWithoutDocument[0]
+  if (file.type !== 'application/pdf') {
+    setContractsError(
+      'El archivo debe ser un PDF',
+    )
+    return
+  }
 
-    if (!targetContract) {
-      targetContract = contracts[0]
-    }
+  const token = localStorage.getItem(
+    'access_token',
+  )
 
-    if (!targetContract) {
-      setContractsError(
-        'Este empleado no tiene ningún contrato registrado',
-      )
-      return
-    }
+  if (!token) {
+    setContractsError(
+      'No hay una sesion valida',
+    )
+    return
+  }
 
-    await handleUploadDocument(
-      targetContract,
-      selectedEmployee.id,
+  setContractsError('')
+
+  try {
+    const formData = new FormData()
+
+    formData.append(
+      'file',
       file,
     )
+
+    const response = await fetch(
+      API_URL +
+        '/api/employees/' +
+        selectedEmployee.id +
+        '/contracts/upload',
+      {
+        method: 'POST',
+        headers: {
+          Authorization:
+            'Bearer ' + token,
+        },
+        body: formData,
+      },
+    )
+
+    const data =
+      await response
+        .json()
+        .catch(() => null)
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+          'No se pudo guardar el contrato',
+      )
+    }
+
+    await loadContracts(
+      selectedEmployee.id,
+      token,
+    )
+  } catch (err) {
+    setContractsError(err.message)
   }
+}
 
   // =========================================================
   // ALMACEN DE CONTRATOS
@@ -936,48 +973,85 @@ function App() {
   // ARCHIVO DE NOMINA
   // =========================================================
 
-  async function handleDirectNominaFile(event) {
-    const file = event.target.files?.[0]
+async function handleDirectNominaFile(event) {
+  const file = event.target.files?.[0]
 
-    event.target.value = ''
+  event.target.value = ''
 
-    if (!file) {
-      return
-    }
+  if (!file) {
+    return
+  }
 
-    if (!selectedEmployee) {
-      setNominasError('No se ha seleccionado ningún empleado')
-      return
-    }
-
-    if (file.type !== 'application/pdf') {
-      setNominasError('El archivo debe ser un PDF')
-      return
-    }
-
-    const nominasWithoutDocument = nominas.filter(
-      (nomina) => !nomina.document_path,
+  if (!selectedEmployee) {
+    setNominasError(
+      'No se ha seleccionado ningún empleado',
     )
+    return
+  }
 
-    let targetNomina = nominasWithoutDocument[0]
+  if (file.type !== 'application/pdf') {
+    setNominasError(
+      'El archivo debe ser un PDF',
+    )
+    return
+  }
 
-    if (!targetNomina) {
-      targetNomina = nominas[0]
-    }
+  const token = localStorage.getItem(
+    'access_token',
+  )
 
-    if (!targetNomina) {
-      setNominasError(
-        'Este empleado no tiene ninguna nómina registrada',
-      )
-      return
-    }
+  if (!token) {
+    setNominasError(
+      'No hay una sesion valida',
+    )
+    return
+  }
 
-    await handleUploadNominaDocument(
-      targetNomina,
-      selectedEmployee.id,
+  setNominasError('')
+
+  try {
+    const formData = new FormData()
+
+    formData.append(
+      'file',
       file,
     )
+
+    const response = await fetch(
+      API_URL +
+        '/api/employees/' +
+        selectedEmployee.id +
+        '/nominas/upload',
+      {
+        method: 'POST',
+        headers: {
+          Authorization:
+            'Bearer ' + token,
+        },
+        body: formData,
+      },
+    )
+
+    const data =
+      await response
+        .json()
+        .catch(() => null)
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+          'No se pudo guardar la nómina',
+      )
+    }
+
+    await loadNominas(
+      selectedEmployee.id,
+      token,
+    )
+  } catch (err) {
+    setNominasError(err.message)
   }
+}
 
   // =========================================================
   // ALMACEN DE NOMINAS

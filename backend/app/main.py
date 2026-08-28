@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 
 from fastapi import (
@@ -694,7 +695,86 @@ def create_contract(
         session.refresh(contract)
 
         return contract
+# ============================================================
+# AÑADIR CONTRATO DIRECTAMENTE CON PDF
+# ============================================================
 
+@app.post(
+    "/api/employees/{employee_id}/contracts/upload",
+)
+def create_contract_with_document(
+    employee_id: int,
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_hr),
+):
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="A file name is required",
+        )
+
+    extension = Path(
+        file.filename
+    ).suffix.lower()
+
+    if extension != ".pdf":
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF files are allowed",
+        )
+
+    with Session(engine) as session:
+
+        employee = session.get(
+            Employee,
+            employee_id,
+        )
+
+        if employee is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Employee not found",
+            )
+
+        contract = Contract(
+            employee_id=employee_id,
+            start_date=date.today(),
+            end_date=None,
+            contract_type="Documento",
+            document_path=None,
+        )
+
+        session.add(contract)
+        session.commit()
+        session.refresh(contract)
+
+        upload_dir = Path(
+            "uploads/contracts"
+        )
+
+        upload_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        file_path = (
+            upload_dir
+            / f"contract_{contract.id}.pdf"
+        )
+
+        with file_path.open("wb") as buffer:
+            buffer.write(
+                file.file.read()
+            )
+
+        contract.document_path = str(
+            file_path
+        )
+
+        session.commit()
+        session.refresh(contract)
+
+        return contract
 
 # ============================================================
 # SUBIR DOCUMENTO DEL CONTRATO
@@ -998,7 +1078,84 @@ def upload_nomina_document(
             "document_path":
                 nomina.document_path,
         }
+# ============================================================
+# AÑADIR NÓMINA DIRECTAMENTE CON PDF
+# ============================================================
 
+@app.post(
+    "/api/employees/{employee_id}/nominas/upload",
+)
+def create_nomina_with_document(
+    employee_id: int,
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_hr),
+):
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="A file name is required",
+        )
+
+    extension = Path(
+        file.filename
+    ).suffix.lower()
+
+    if extension != ".pdf":
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF files are allowed",
+        )
+
+    with Session(engine) as session:
+
+        employee = session.get(
+            Employee,
+            employee_id,
+        )
+
+        if employee is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Employee not found",
+            )
+
+        nomina = Nomina(
+            employee_id=employee_id,
+            date=date.today(),
+            document_path=None,
+        )
+
+        session.add(nomina)
+        session.commit()
+        session.refresh(nomina)
+
+        upload_dir = Path(
+            "uploads/nominas"
+        )
+
+        upload_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        file_path = (
+            upload_dir
+            / f"nomina_{nomina.id}.pdf"
+        )
+
+        with file_path.open("wb") as buffer:
+            buffer.write(
+                file.file.read()
+            )
+
+        nomina.document_path = str(
+            file_path
+        )
+
+        session.commit()
+        session.refresh(nomina)
+
+        return nomina
 
 # ============================================================
 # DESCARGAR NÓMINA
