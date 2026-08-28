@@ -39,6 +39,10 @@ function App() {
   const [editingCompany, setEditingCompany] = useState(null)
   const [companySaving, setCompanySaving] = useState(false)
 
+  const [creatingCompany, setCreatingCompany] = useState(false)
+  const [companyCreateSaving, setCompanyCreateSaving] = useState(false)
+  const [companyCreateError, setCompanyCreateError] = useState('')
+
   // =========================================================
   // EMPLEADOS
   // =========================================================
@@ -54,6 +58,7 @@ function App() {
   // =========================================================
 
   const [editingEmployee, setEditingEmployee] = useState(null)
+
   const [employeeForm, setEmployeeForm] = useState({
     first_name: '',
     last_name: '',
@@ -62,8 +67,147 @@ function App() {
     nationality: '',
     username: '',
   })
+
   const [employeeSaving, setEmployeeSaving] = useState(false)
   const [employeeEditError, setEmployeeEditError] = useState('')
+
+  // =========================================================
+  // AÑADIR EMPLEADO
+  // =========================================================
+
+  const [creatingEmployee, setCreatingEmployee] = useState(false)
+  const [employeeCreateSaving, setEmployeeCreateSaving] = useState(false)
+  const [employeeCreateError, setEmployeeCreateError] = useState('')
+
+  const [newEmployeeForm, setNewEmployeeForm] = useState({
+    first_name: '',
+    last_name: '',
+    national_id: '',
+    nationality: '',
+    gender: '',
+    birth_date: '',
+    address: '',
+    job_category: '',
+    job_title: '',
+    seniority_date: '',
+    social_security_number: '',
+    username: '',
+    password: '',
+  })
+
+  // =========================================================
+  // AÑADIR EMPLEADO
+  // =========================================================
+
+  function handleAddEmployee() {
+    setCreatingEmployee(true)
+    setEmployeeCreateError('')
+
+    setNewEmployeeForm({
+      first_name: '',
+      last_name: '',
+      national_id: '',
+      nationality: '',
+      gender: '',
+      birth_date: '',
+      address: '',
+      job_category: '',
+      job_title: '',
+      seniority_date: '',
+      social_security_number: '',
+      username: '',
+      password: '',
+    })
+  }
+
+  function handleCancelCreateEmployee() {
+    setCreatingEmployee(false)
+    setEmployeeCreateError('')
+  }
+
+  async function handleCreateEmployee(event) {
+    event.preventDefault()
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setEmployeeCreateError('No hay una sesion valida')
+      return
+    }
+
+    if (!selectedCompany) {
+      setEmployeeCreateError('No se ha seleccionado una empresa')
+      return
+    }
+
+    setEmployeeCreateSaving(true)
+    setEmployeeCreateError('')
+
+    try {
+      const response = await fetch(
+        API_URL + '/api/employees',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token,
+          },
+          body: JSON.stringify({
+            company_id: selectedCompany.id,
+            first_name: newEmployeeForm.first_name,
+            last_name: newEmployeeForm.last_name,
+            national_id: newEmployeeForm.national_id,
+            nationality: newEmployeeForm.nationality,
+            gender: newEmployeeForm.gender,
+            birth_date: newEmployeeForm.birth_date,
+            address: newEmployeeForm.address,
+            job_category: newEmployeeForm.job_category,
+            job_title: newEmployeeForm.job_title,
+            seniority_date: newEmployeeForm.seniority_date,
+            social_security_number:
+              newEmployeeForm.social_security_number,
+            username: newEmployeeForm.username,
+            password: newEmployeeForm.password,
+          }),
+        },
+      )
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail || 'No se pudo crear el empleado',
+        )
+      }
+
+      setEmployees((previous) => [
+        ...previous,
+        data,
+      ])
+
+      setCreatingEmployee(false)
+
+      setNewEmployeeForm({
+        first_name: '',
+        last_name: '',
+        national_id: '',
+        nationality: '',
+        gender: '',
+        birth_date: '',
+        address: '',
+        job_category: '',
+        job_title: '',
+        seniority_date: '',
+        social_security_number: '',
+        username: '',
+        password: '',
+      })
+    } catch (err) {
+      setEmployeeCreateError(err.message)
+    } finally {
+      setEmployeeCreateSaving(false)
+    }
+  }
 
   // =========================================================
   // CONTRATOS
@@ -153,6 +297,89 @@ function App() {
     })
 
     setCompaniesError('')
+  }
+
+  // =========================================================
+  // AÑADIR EMPRESA
+  // =========================================================
+
+  function handleAddCompany() {
+    setCreatingCompany(true)
+    setCompanyCreateError('')
+
+    setCompanyForm({
+      name: '',
+      tax_id: '',
+      address: '',
+    })
+  }
+
+  function handleCancelCreateCompany() {
+    setCreatingCompany(false)
+    setCompanyCreateError('')
+
+    setCompanyForm({
+      name: '',
+      tax_id: '',
+      address: '',
+    })
+  }
+
+  async function handleCreateCompany(event) {
+    event.preventDefault()
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setCompanyCreateError('No hay una sesion valida')
+      return
+    }
+
+    setCompanyCreateSaving(true)
+    setCompanyCreateError('')
+
+    try {
+      const response = await fetch(
+        API_URL + '/api/companies',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token,
+          },
+          body: JSON.stringify({
+            name: companyForm.name,
+            tax_id: companyForm.tax_id,
+            address: companyForm.address,
+          }),
+        },
+      )
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail || 'No se pudo crear la empresa',
+        )
+      }
+
+      setCompanies((previous) => [
+        ...previous,
+        data,
+      ])
+
+      setCreatingCompany(false)
+
+      setCompanyForm({
+        name: '',
+        tax_id: '',
+        address: '',
+      })
+    } catch (err) {
+      setCompanyCreateError(err.message)
+    } finally {
+      setCompanyCreateSaving(false)
+    }
   }
 
   // =========================================================
@@ -250,6 +477,17 @@ function App() {
   // CARGAR EMPLEADOS
   // =========================================================
 
+  function getEmployeesForSelectedCompany() {
+    if (!selectedCompany) {
+      return employees
+    }
+
+    return employees.filter(
+      (employee) =>
+        employee.company_id === selectedCompany.id,
+    )
+  }
+
   async function loadEmployees(token) {
     setEmployeesLoading(true)
     setEmployeesError('')
@@ -296,6 +534,7 @@ function App() {
 
     setCompanyView('employees')
     setSelectedEmployee(null)
+    setCreatingEmployee(false)
     setContracts([])
     setNominas([])
     setSelectedFiles({})
@@ -309,6 +548,7 @@ function App() {
   function handleBackToCompany() {
     setCompanyView('company')
     setSelectedEmployee(null)
+    setCreatingEmployee(false)
     setContracts([])
     setNominas([])
     setSelectedFiles({})
@@ -380,11 +620,19 @@ function App() {
             Authorization: 'Bearer ' + token,
           },
           body: JSON.stringify({
+            company_id: editingEmployee.company_id,
             first_name: employeeForm.first_name,
             last_name: employeeForm.last_name,
-            job_title: employeeForm.job_title,
-            job_category: employeeForm.job_category,
+            national_id: editingEmployee.national_id,
             nationality: employeeForm.nationality,
+            gender: editingEmployee.gender,
+            birth_date: editingEmployee.birth_date,
+            address: editingEmployee.address,
+            job_category: employeeForm.job_category,
+            job_title: employeeForm.job_title,
+            seniority_date: editingEmployee.seniority_date,
+            social_security_number:
+              editingEmployee.social_security_number,
             username: employeeForm.username,
           }),
         },
@@ -567,7 +815,7 @@ function App() {
   }
 
   // =========================================================
-  // AÑADIR CONTRATOS - DIRECTO AL SELECTOR DE ARCHIVO
+  // AÑADIR CONTRATOS
   // =========================================================
 
   function handleAddContracts() {
@@ -592,7 +840,7 @@ function App() {
   }
 
   // =========================================================
-  // ARCHIVO DE CONTRATO SELECCIONADO DIRECTAMENTE
+  // ARCHIVO DE CONTRATO
   // =========================================================
 
   async function handleDirectContractFile(event) {
@@ -660,7 +908,7 @@ function App() {
   }
 
   // =========================================================
-  // AÑADIR NOMINAS - DIRECTO AL SELECTOR DE ARCHIVO
+  // AÑADIR NOMINAS
   // =========================================================
 
   function handleAddNominas() {
@@ -685,7 +933,7 @@ function App() {
   }
 
   // =========================================================
-  // ARCHIVO DE NOMINA SELECCIONADO DIRECTAMENTE
+  // ARCHIVO DE NOMINA
   // =========================================================
 
   async function handleDirectNominaFile(event) {
@@ -802,6 +1050,7 @@ function App() {
     setCompanyView('employees')
     setSelectedEmployee(null)
     setEditingEmployee(null)
+    setCreatingEmployee(false)
 
     setContracts([])
     setNominas([])
@@ -813,6 +1062,7 @@ function App() {
     setContractsError('')
     setNominasError('')
     setEmployeeEditError('')
+    setEmployeeCreateError('')
   }
 
   // =========================================================
@@ -1281,7 +1531,10 @@ function App() {
     setEmployeeSection('contracts')
 
     setEditingCompany(null)
+    setCreatingCompany(false)
+
     setEditingEmployee(null)
+    setCreatingEmployee(false)
 
     setCompanyForm({
       name: '',
@@ -1298,11 +1551,29 @@ function App() {
       username: '',
     })
 
+    setNewEmployeeForm({
+      first_name: '',
+      last_name: '',
+      national_id: '',
+      nationality: '',
+      gender: '',
+      birth_date: '',
+      address: '',
+      job_category: '',
+      job_title: '',
+      seniority_date: '',
+      social_security_number: '',
+      username: '',
+      password: '',
+    })
+
     setCompaniesError('')
+    setCompanyCreateError('')
     setContractsError('')
     setNominasError('')
     setEmployeesError('')
     setEmployeeEditError('')
+    setEmployeeCreateError('')
 
     setLoggedIn(false)
 
@@ -1319,8 +1590,6 @@ function App() {
       <main className="app">
         <section className="card">
 
-          {/* INPUTS OCULTOS PARA AÑADIR DIRECTAMENTE */}
-
           <input
             ref={contractFileInputRef}
             type="file"
@@ -1336,10 +1605,6 @@ function App() {
             style={{ display: 'none' }}
             onChange={handleDirectNominaFile}
           />
-
-          {/* ================================================= */}
-          {/* CABECERA */}
-          {/* ================================================= */}
 
           <div className="header">
             <div>
@@ -1371,7 +1636,9 @@ function App() {
 
           {companyView === 'companies' && (
             <div className="contracts">
+
               <div className="section-header">
+
                 <div>
                   <p className="eyebrow">
                     Gestion de empresas
@@ -1382,16 +1649,137 @@ function App() {
                   </h2>
                 </div>
 
-                {!companiesLoading &&
-                  companies.length > 0 && (
-                    <span className="contract-count">
-                      {companies.length}{' '}
-                      {companies.length === 1
-                        ? 'empresa'
-                        : 'empresas'}
-                    </span>
-                  )}
+                <div className="contract-document">
+
+                  {!companiesLoading &&
+                    companies.length > 0 && (
+                      <span className="contract-count">
+                        {companies.length}{' '}
+                        {companies.length === 1
+                          ? 'empresa'
+                          : 'empresas'}
+                      </span>
+                    )}
+
+                  <button
+                    type="button"
+                    onClick={handleAddCompany}
+                  >
+                    Añadir empresa
+                  </button>
+
+                </div>
+
               </div>
+
+              {/* ================================================= */}
+              {/* FORMULARIO AÑADIR EMPRESA */}
+              {/* ================================================= */}
+
+              {creatingCompany && (
+                <div className="profile">
+
+                  <div className="section-header">
+                    <div>
+                      <p className="eyebrow">
+                        Gestion de empresas
+                      </p>
+
+                      <h2>
+                        Añadir empresa
+                      </h2>
+                    </div>
+                  </div>
+
+                  <form
+                    onSubmit={handleCreateCompany}
+                  >
+
+                    <label htmlFor="new-company-name">
+                      Nombre
+                    </label>
+
+                    <input
+                      id="new-company-name"
+                      type="text"
+                      value={companyForm.name}
+                      onChange={(event) =>
+                        setCompanyForm({
+                          ...companyForm,
+                          name: event.target.value,
+                        })
+                      }
+                      required
+                    />
+
+                    <label htmlFor="new-company-tax-id">
+                      CIF / NIF
+                    </label>
+
+                    <input
+                      id="new-company-tax-id"
+                      type="text"
+                      value={companyForm.tax_id}
+                      onChange={(event) =>
+                        setCompanyForm({
+                          ...companyForm,
+                          tax_id: event.target.value,
+                        })
+                      }
+                      required
+                    />
+
+                    <label htmlFor="new-company-address">
+                      Direccion
+                    </label>
+
+                    <input
+                      id="new-company-address"
+                      type="text"
+                      value={companyForm.address}
+                      onChange={(event) =>
+                        setCompanyForm({
+                          ...companyForm,
+                          address: event.target.value,
+                        })
+                      }
+                      required
+                    />
+
+                    {companyCreateError && (
+                      <p className="error">
+                        {companyCreateError}
+                      </p>
+                    )}
+
+                    <div className="contract-document">
+
+                      <button
+                        type="submit"
+                        disabled={companyCreateSaving}
+                      >
+                        {companyCreateSaving
+                          ? 'Guardando...'
+                          : 'Guardar empresa'}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={
+                          handleCancelCreateCompany
+                        }
+                        disabled={companyCreateSaving}
+                      >
+                        Cancelar
+                      </button>
+
+                    </div>
+
+                  </form>
+
+                </div>
+              )}
 
               {companiesLoading && (
                 <p className="muted">
@@ -1410,6 +1798,7 @@ function App() {
                 !companiesError &&
                 companies.length === 0 && (
                   <div className="empty-state">
+
                     <strong>
                       No hay empresas
                     </strong>
@@ -1418,17 +1807,20 @@ function App() {
                       No se encontraron empresas
                       en el sistema.
                     </p>
+
                   </div>
                 )}
 
               {!companiesLoading &&
                 companies.length > 0 && (
                   <div className="contract-list">
+
                     {companies.map((company) => (
                       <article
                         className="contract-card"
                         key={company.id}
                       >
+
                         <div className="contract-info">
 
                           <div>
@@ -1478,10 +1870,13 @@ function App() {
                           </button>
 
                         </div>
+
                       </article>
                     ))}
+
                   </div>
                 )}
+
             </div>
           )}
 
@@ -1494,6 +1889,7 @@ function App() {
               <div className="contracts">
 
                 <div className="section-header">
+
                   <div>
                     <p className="eyebrow">
                       Empresa
@@ -1513,6 +1909,7 @@ function App() {
                   >
                     Volver
                   </button>
+
                 </div>
 
                 <div className="profile">
@@ -1574,6 +1971,7 @@ function App() {
                     </button>
 
                   </div>
+
                 </div>
 
                 {/* EDITAR EMPRESA */}
@@ -1598,6 +1996,7 @@ function App() {
                         handleUpdateCompany
                       }
                     >
+
                       <label htmlFor="company-name">
                         Nombre
                       </label>
@@ -1694,7 +2093,9 @@ function App() {
                         </button>
 
                       </div>
+
                     </form>
+
                   </div>
                 )}
 
@@ -1710,6 +2111,7 @@ function App() {
               <div className="contracts">
 
                 <div className="section-header">
+
                   <div>
                     <p className="eyebrow">
                       {selectedCompany.name}
@@ -1720,15 +2122,27 @@ function App() {
                     </h2>
                   </div>
 
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={
-                      handleBackToCompany
-                    }
-                  >
-                    Volver a empresa
-                  </button>
+                  <div className="contract-document">
+
+                    <button
+                      type="button"
+                      onClick={handleAddEmployee}
+                    >
+                      Añadir empleado
+                    </button>
+
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={
+                        handleBackToCompany
+                      }
+                    >
+                      Volver a empresa
+                    </button>
+
+                  </div>
+
                 </div>
 
                 <div className="profile">
@@ -1739,6 +2153,333 @@ function App() {
                     </strong>
                   </p>
                 </div>
+
+                {/* ================================================= */}
+                {/* FORMULARIO AÑADIR EMPLEADO */}
+                {/* ================================================= */}
+
+                {creatingEmployee && (
+                  <div className="profile">
+
+                    <div className="section-header">
+
+                      <div>
+                        <p className="eyebrow">
+                          Gestion de empleados
+                        </p>
+
+                        <h2>
+                          Añadir empleado
+                        </h2>
+                      </div>
+
+                    </div>
+
+                    <form
+                      onSubmit={
+                        handleCreateEmployee
+                      }
+                    >
+
+                      <label htmlFor="new-employee-first-name">
+                        Nombre
+                      </label>
+
+                      <input
+                        id="new-employee-first-name"
+                        type="text"
+                        value={
+                          newEmployeeForm.first_name
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            first_name:
+                              event.target.value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="new-employee-last-name">
+                        Apellidos
+                      </label>
+
+                      <input
+                        id="new-employee-last-name"
+                        type="text"
+                        value={
+                          newEmployeeForm.last_name
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            last_name:
+                              event.target.value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="new-employee-national-id">
+                        DNI / NIE
+                      </label>
+
+                      <input
+                        id="new-employee-national-id"
+                        type="text"
+                        value={
+                          newEmployeeForm.national_id
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            national_id:
+                              event.target.value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="new-employee-nationality">
+                        Nacionalidad
+                      </label>
+
+                      <input
+                        id="new-employee-nationality"
+                        type="text"
+                        value={
+                          newEmployeeForm.nationality
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            nationality:
+                              event.target.value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="new-employee-gender">
+                        Genero
+                      </label>
+
+                      <input
+                        id="new-employee-gender"
+                        type="text"
+                        value={
+                          newEmployeeForm.gender
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            gender:
+                              event.target.value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="new-employee-birth-date">
+                        Fecha de nacimiento
+                      </label>
+
+                      <input
+                        id="new-employee-birth-date"
+                        type="date"
+                        value={
+                          newEmployeeForm.birth_date
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            birth_date:
+                              event.target.value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="new-employee-address">
+                        Direccion
+                      </label>
+
+                      <input
+                        id="new-employee-address"
+                        type="text"
+                        value={
+                          newEmployeeForm.address
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            address:
+                              event.target.value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="new-employee-job-category">
+                        Categoria
+                      </label>
+
+                      <input
+                        id="new-employee-job-category"
+                        type="text"
+                        value={
+                          newEmployeeForm.job_category
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            job_category:
+                              event.target.value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="new-employee-job-title">
+                        Puesto
+                      </label>
+
+                      <input
+                        id="new-employee-job-title"
+                        type="text"
+                        value={
+                          newEmployeeForm.job_title
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            job_title:
+                              event.target.value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="new-employee-seniority-date">
+                        Fecha de antiguedad
+                      </label>
+
+                      <input
+                        id="new-employee-seniority-date"
+                        type="date"
+                        value={
+                          newEmployeeForm.seniority_date
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            seniority_date:
+                              event.target.value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="new-employee-social-security">
+                        Numero de Seguridad Social
+                      </label>
+
+                      <input
+                        id="new-employee-social-security"
+                        type="text"
+                        value={
+                          newEmployeeForm.social_security_number
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            social_security_number:
+                              event.target.value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="new-employee-username">
+                        Usuario
+                      </label>
+
+                      <input
+                        id="new-employee-username"
+                        type="text"
+                        value={
+                          newEmployeeForm.username
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            username:
+                              event.target.value,
+                          })
+                        }
+                        required
+                      />
+
+                      <label htmlFor="new-employee-password">
+                        Contraseña inicial
+                      </label>
+
+                      <input
+                        id="new-employee-password"
+                        type="password"
+                        value={
+                          newEmployeeForm.password
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            password:
+                              event.target.value,
+                          })
+                        }
+                        minLength={6}
+                        required
+                      />
+
+                      {employeeCreateError && (
+                        <p className="error">
+                          {employeeCreateError}
+                        </p>
+                      )}
+
+                      <div className="contract-document">
+
+                        <button
+                          type="submit"
+                          disabled={
+                            employeeCreateSaving
+                          }
+                        >
+                          {employeeCreateSaving
+                            ? 'Guardando...'
+                            : 'Guardar empleado'}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={
+                            handleCancelCreateEmployee
+                          }
+                          disabled={
+                            employeeCreateSaving
+                          }
+                        >
+                          Cancelar
+                        </button>
+
+                      </div>
+
+                    </form>
+
+                  </div>
+                )}
 
                 {employeesLoading && (
                   <p className="muted">
@@ -1755,8 +2496,9 @@ function App() {
 
                 {!employeesLoading &&
                   !employeesError &&
-                  employees.length === 0 && (
+                  getEmployeesForSelectedCompany().length === 0 && (
                     <div className="empty-state">
+
                       <strong>
                         No hay empleados
                       </strong>
@@ -1765,14 +2507,15 @@ function App() {
                         No se encontraron empleados
                         en el sistema.
                       </p>
+
                     </div>
                   )}
 
                 {!employeesLoading &&
-                  employees.length > 0 && (
+                  getEmployeesForSelectedCompany().length > 0 && (
                     <div className="contract-list">
 
-                      {employees.map(
+                      {getEmployeesForSelectedCompany().map(
                         (employee) => (
                           <article
                             className="contract-card"
@@ -1859,6 +2602,7 @@ function App() {
               <div className="contracts">
 
                 <div className="section-header">
+
                   <div>
                     <p className="eyebrow">
                       Empleado
@@ -1883,6 +2627,7 @@ function App() {
                   >
                     Volver
                   </button>
+
                 </div>
 
                 <div className="profile">
@@ -1977,6 +2722,7 @@ function App() {
                   <div className="profile">
 
                     <div className="section-header">
+
                       <div>
                         <p className="eyebrow">
                           Gestion de empleados
@@ -1986,6 +2732,7 @@ function App() {
                           Editar empleado
                         </h2>
                       </div>
+
                     </div>
 
                     <form
@@ -1993,6 +2740,7 @@ function App() {
                         handleUpdateEmployee
                       }
                     >
+
                       <label htmlFor="employee-first-name">
                         Nombre
                       </label>
@@ -2149,6 +2897,7 @@ function App() {
                         </button>
 
                       </div>
+
                     </form>
 
                   </div>
@@ -2400,8 +3149,7 @@ function App() {
 
               </div>
             )}
-
-          {/* ================================================= */}
+                      {/* ================================================= */}
           {/* MENU DE NOMINAS */}
           {/* ================================================= */}
 

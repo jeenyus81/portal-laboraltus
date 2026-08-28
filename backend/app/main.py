@@ -34,11 +34,15 @@ from app.schemas import (
     LoginRequest,
     NominaResponse,
 )
-from app.security import create_access_token, verify_password
+from app.security import (
+    create_access_token,
+    hash_password,
+    verify_password,
+)
 
 
 # ============================================================
-# APLICACION
+# CREAR APLICACIÓN
 # ============================================================
 
 app = FastAPI()
@@ -73,6 +77,7 @@ app.add_middleware(
 # HELLO
 # ============================================================
 
+
 @app.get("/api/hello")
 def hello():
     return {
@@ -84,11 +89,10 @@ def hello():
 # LOGIN
 # ============================================================
 
+
 @app.post("/api/auth/login")
 def login(data: LoginRequest):
-
     with Session(engine) as session:
-
         user = session.scalar(
             select(User).where(
                 User.username == data.username
@@ -126,13 +130,12 @@ def login(data: LoginRequest):
 # PERFIL DEL EMPLEADO LOGUEADO
 # ============================================================
 
+
 @app.get("/api/me")
 def get_me(
     current_user: User = Depends(get_current_user),
 ):
-
     with Session(engine) as session:
-
         employee = session.get(
             Employee,
             current_user.employee_id,
@@ -165,6 +168,7 @@ def get_me(
 # EMPRESAS
 # ============================================================
 
+
 @app.get(
     "/api/companies",
     response_model=list[CompanyResponse],
@@ -172,11 +176,11 @@ def get_me(
 def list_companies(
     current_user: User = Depends(require_hr),
 ):
-
     with Session(engine) as session:
-
         return session.scalars(
-            select(Company).order_by(Company.id)
+            select(Company).order_by(
+                Company.id
+            )
         ).all()
 
 
@@ -189,9 +193,7 @@ def create_company(
     data: CompanyCreate,
     current_user: User = Depends(require_hr),
 ):
-
     with Session(engine) as session:
-
         company = Company(
             **data.model_dump()
         )
@@ -226,9 +228,7 @@ def update_company(
     data: CompanyCreate,
     current_user: User = Depends(require_hr),
 ):
-
     with Session(engine) as session:
-
         company = session.get(
             Company,
             company_id,
@@ -267,6 +267,7 @@ def update_company(
 # EMPLEADOS
 # ============================================================
 
+
 @app.get(
     "/api/employees",
     response_model=list[EmployeeResponse],
@@ -274,18 +275,16 @@ def update_company(
 def list_employees(
     current_user: User = Depends(require_hr),
 ):
-
     with Session(engine) as session:
-
         employees = session.scalars(
-            select(Employee)
-            .order_by(Employee.id)
+            select(Employee).order_by(
+                Employee.id
+            )
         ).all()
 
         result = []
 
         for employee in employees:
-
             username = None
 
             if employee.user is not None:
@@ -294,24 +293,41 @@ def list_employees(
             result.append(
                 {
                     "id": employee.id,
-                    "company_id": employee.company_id,
-                    "first_name": employee.first_name,
-                    "last_name": employee.last_name,
-                    "national_id": employee.national_id,
-                    "nationality": employee.nationality,
-                    "gender": employee.gender,
-                    "birth_date": employee.birth_date,
-                    "address": employee.address,
-                    "job_category": employee.job_category,
-                    "job_title": employee.job_title,
-                    "seniority_date": employee.seniority_date,
+                    "company_id":
+                        employee.company_id,
+                    "first_name":
+                        employee.first_name,
+                    "last_name":
+                        employee.last_name,
+                    "national_id":
+                        employee.national_id,
+                    "nationality":
+                        employee.nationality,
+                    "gender":
+                        employee.gender,
+                    "birth_date":
+                        employee.birth_date,
+                    "address":
+                        employee.address,
+                    "job_category":
+                        employee.job_category,
+                    "job_title":
+                        employee.job_title,
+                    "seniority_date":
+                        employee.seniority_date,
                     "social_security_number":
                         employee.social_security_number,
-                    "username": username,
+                    "username":
+                        username,
                 }
             )
 
         return result
+
+
+# ============================================================
+# AÑADIR EMPLEADO
+# ============================================================
 
 
 @app.post(
@@ -323,7 +339,6 @@ def create_employee(
     data: EmployeeCreate,
     current_user: User = Depends(require_hr),
 ):
-
     with Session(engine) as session:
 
         company = session.get(
@@ -338,10 +353,32 @@ def create_employee(
             )
 
         employee = Employee(
-            **data.model_dump()
+            company_id=data.company_id,
+            first_name=data.first_name,
+            last_name=data.last_name,
+            national_id=data.national_id,
+            nationality=data.nationality,
+            gender=data.gender,
+            birth_date=data.birth_date,
+            address=data.address,
+            job_category=data.job_category,
+            job_title=data.job_title,
+            seniority_date=data.seniority_date,
+            social_security_number=
+                data.social_security_number,
+        )
+
+        user = User(
+            username=data.username,
+            password_hash=hash_password(
+                data.password
+            ),
+            role=UserRole.EMPLOYEE,
+            employee=employee,
         )
 
         session.add(employee)
+        session.add(user)
 
         try:
             session.commit()
@@ -352,35 +389,50 @@ def create_employee(
             raise HTTPException(
                 status_code=409,
                 detail=(
-                    "An employee with this national ID "
-                    "or social security number already exists"
+                    "An employee, social security "
+                    "number or username with these "
+                    "details already exists"
                 ),
             )
 
         session.refresh(employee)
+        session.refresh(user)
 
         return {
             "id": employee.id,
-            "company_id": employee.company_id,
-            "first_name": employee.first_name,
-            "last_name": employee.last_name,
-            "national_id": employee.national_id,
-            "nationality": employee.nationality,
-            "gender": employee.gender,
-            "birth_date": employee.birth_date,
-            "address": employee.address,
-            "job_category": employee.job_category,
-            "job_title": employee.job_title,
-            "seniority_date": employee.seniority_date,
+            "company_id":
+                employee.company_id,
+            "first_name":
+                employee.first_name,
+            "last_name":
+                employee.last_name,
+            "national_id":
+                employee.national_id,
+            "nationality":
+                employee.nationality,
+            "gender":
+                employee.gender,
+            "birth_date":
+                employee.birth_date,
+            "address":
+                employee.address,
+            "job_category":
+                employee.job_category,
+            "job_title":
+                employee.job_title,
+            "seniority_date":
+                employee.seniority_date,
             "social_security_number":
                 employee.social_security_number,
-            "username": None,
+            "username":
+                user.username,
         }
 
 
 # ============================================================
 # EDITAR EMPLEADO
 # ============================================================
+
 
 @app.put(
     "/api/employees/{employee_id}",
@@ -391,7 +443,6 @@ def update_employee(
     data: EmployeeUpdate,
     current_user: User = Depends(require_hr),
 ):
-
     with Session(engine) as session:
 
         employee = session.get(
@@ -405,17 +456,6 @@ def update_employee(
                 detail="Employee not found",
             )
 
-        company = session.get(
-            Company,
-            data.company_id,
-        )
-
-        if company is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Company not found",
-            )
-
         existing_user = session.scalar(
             select(User).where(
                 User.username == data.username
@@ -424,7 +464,8 @@ def update_employee(
 
         if (
             existing_user is not None
-            and existing_user.employee_id != employee_id
+            and existing_user.employee_id
+            != employee_id
         ):
             raise HTTPException(
                 status_code=409,
@@ -464,39 +505,53 @@ def update_employee(
             raise HTTPException(
                 status_code=409,
                 detail=(
-                    "An employee or username with these "
-                    "details already exists"
+                    "An employee or username with "
+                    "these details already exists"
                 ),
             )
 
         session.refresh(employee)
 
+        username = None
+
+        if user is not None:
+            username = user.username
+
         return {
             "id": employee.id,
-            "company_id": employee.company_id,
-            "first_name": employee.first_name,
-            "last_name": employee.last_name,
-            "national_id": employee.national_id,
-            "nationality": employee.nationality,
-            "gender": employee.gender,
-            "birth_date": employee.birth_date,
-            "address": employee.address,
-            "job_category": employee.job_category,
-            "job_title": employee.job_title,
-            "seniority_date": employee.seniority_date,
+            "company_id":
+                employee.company_id,
+            "first_name":
+                employee.first_name,
+            "last_name":
+                employee.last_name,
+            "national_id":
+                employee.national_id,
+            "nationality":
+                employee.nationality,
+            "gender":
+                employee.gender,
+            "birth_date":
+                employee.birth_date,
+            "address":
+                employee.address,
+            "job_category":
+                employee.job_category,
+            "job_title":
+                employee.job_title,
+            "seniority_date":
+                employee.seniority_date,
             "social_security_number":
                 employee.social_security_number,
-            "username": (
-                user.username
-                if user is not None
-                else None
-            ),
+            "username":
+                username,
         }
 
 
 # ============================================================
 # OBTENER EMPLEADO
 # ============================================================
+
 
 @app.get(
     "/api/employees/{employee_id}",
@@ -506,15 +561,14 @@ def get_employee(
     employee_id: int,
     current_user: User = Depends(get_current_user),
 ):
-
     if current_user.role == UserRole.EMPLOYEE:
 
         if current_user.employee_id != employee_id:
             raise HTTPException(
                 status_code=403,
                 detail=(
-                    "You can only access your own "
-                    "employee profile"
+                    "You can only access your "
+                    "own employee profile"
                 ),
             )
 
@@ -538,26 +592,39 @@ def get_employee(
 
         return {
             "id": employee.id,
-            "company_id": employee.company_id,
-            "first_name": employee.first_name,
-            "last_name": employee.last_name,
-            "national_id": employee.national_id,
-            "nationality": employee.nationality,
-            "gender": employee.gender,
-            "birth_date": employee.birth_date,
-            "address": employee.address,
-            "job_category": employee.job_category,
-            "job_title": employee.job_title,
-            "seniority_date": employee.seniority_date,
+            "company_id":
+                employee.company_id,
+            "first_name":
+                employee.first_name,
+            "last_name":
+                employee.last_name,
+            "national_id":
+                employee.national_id,
+            "nationality":
+                employee.nationality,
+            "gender":
+                employee.gender,
+            "birth_date":
+                employee.birth_date,
+            "address":
+                employee.address,
+            "job_category":
+                employee.job_category,
+            "job_title":
+                employee.job_title,
+            "seniority_date":
+                employee.seniority_date,
             "social_security_number":
                 employee.social_security_number,
-            "username": username,
+            "username":
+                username,
         }
 
 
 # ============================================================
 # CONTRATOS
 # ============================================================
+
 
 @app.get(
     "/api/employees/{employee_id}/contracts",
@@ -567,15 +634,14 @@ def list_employee_contracts(
     employee_id: int,
     current_user: User = Depends(get_current_user),
 ):
-
     if current_user.role == UserRole.EMPLOYEE:
 
         if current_user.employee_id != employee_id:
             raise HTTPException(
                 status_code=403,
                 detail=(
-                    "You can only access your own "
-                    "contracts"
+                    "You can only access your "
+                    "own contracts"
                 ),
             )
 
@@ -605,7 +671,6 @@ def create_contract(
     data: ContractCreate,
     current_user: User = Depends(require_hr),
 ):
-
     with Session(engine) as session:
 
         employee = session.get(
@@ -632,8 +697,9 @@ def create_contract(
 
 
 # ============================================================
-# SUBIR CONTRATO
+# SUBIR DOCUMENTO DEL CONTRATO
 # ============================================================
+
 
 @app.post(
     "/api/employees/{employee_id}/contracts/"
@@ -645,7 +711,6 @@ def upload_contract_document(
     file: UploadFile = File(...),
     current_user: User = Depends(require_hr),
 ):
-
     allowed_extensions = {
         ".pdf",
         ".doc",
@@ -666,7 +731,8 @@ def upload_contract_document(
         raise HTTPException(
             status_code=400,
             detail=(
-                "Only PDF, DOC and DOCX files are allowed"
+                "Only PDF, DOC and DOCX "
+                "files are allowed"
             ),
         )
 
@@ -679,7 +745,8 @@ def upload_contract_document(
 
         if (
             contract is None
-            or contract.employee_id != employee_id
+            or contract.employee_id
+            != employee_id
         ):
             raise HTTPException(
                 status_code=404,
@@ -720,8 +787,9 @@ def upload_contract_document(
 
 
 # ============================================================
-# DESCARGAR CONTRATO
+# DESCARGAR DOCUMENTO DEL CONTRATO
 # ============================================================
+
 
 @app.get(
     "/api/employees/{employee_id}/contracts/"
@@ -732,15 +800,14 @@ def download_contract_document(
     contract_id: int,
     current_user: User = Depends(get_current_user),
 ):
-
     if current_user.role == UserRole.EMPLOYEE:
 
         if current_user.employee_id != employee_id:
             raise HTTPException(
                 status_code=403,
                 detail=(
-                    "You can only access your own "
-                    "contracts"
+                    "You can only access your "
+                    "own contracts"
                 ),
             )
 
@@ -753,7 +820,8 @@ def download_contract_document(
 
         if (
             contract is None
-            or contract.employee_id != employee_id
+            or contract.employee_id
+            != employee_id
         ):
             raise HTTPException(
                 status_code=404,
@@ -763,7 +831,9 @@ def download_contract_document(
         if not contract.document_path:
             raise HTTPException(
                 status_code=404,
-                detail="Contract document not found",
+                detail=(
+                    "Contract document not found"
+                ),
             )
 
         file_path = Path(
@@ -773,16 +843,22 @@ def download_contract_document(
         if not file_path.exists():
             raise HTTPException(
                 status_code=404,
-                detail="Contract document not found",
+                detail=(
+                    "Contract document not found"
+                ),
             )
 
         media_types = {
-            ".pdf": "application/pdf",
-            ".doc": "application/msword",
-            ".docx": (
-                "application/vnd.openxmlformats-officedocument."
-                "wordprocessingml.document"
-            ),
+            ".pdf":
+                "application/pdf",
+            ".doc":
+                "application/msword",
+            ".docx":
+                (
+                    "application/vnd.openxmlformats-"
+                    "officedocument.wordprocessingml."
+                    "document"
+                ),
         }
 
         return FileResponse(
@@ -798,6 +874,7 @@ def download_contract_document(
 # NOMINAS
 # ============================================================
 
+
 @app.get(
     "/api/employees/{employee_id}/nominas",
     response_model=list[NominaResponse],
@@ -806,15 +883,14 @@ def list_employee_nominas(
     employee_id: int,
     current_user: User = Depends(get_current_user),
 ):
-
     if current_user.role == UserRole.EMPLOYEE:
 
         if current_user.employee_id != employee_id:
             raise HTTPException(
                 status_code=403,
                 detail=(
-                    "You can only access your own "
-                    "nominas"
+                    "You can only access your "
+                    "own nominas"
                 ),
             )
 
@@ -834,7 +910,8 @@ def list_employee_nominas(
         return session.scalars(
             select(Nomina)
             .where(
-                Nomina.employee_id == employee_id
+                Nomina.employee_id
+                == employee_id
             )
             .order_by(
                 Nomina.date.desc()
@@ -843,8 +920,9 @@ def list_employee_nominas(
 
 
 # ============================================================
-# SUBIR NOMINA
+# SUBIR NÓMINA
 # ============================================================
+
 
 @app.post(
     "/api/employees/{employee_id}/nominas/"
@@ -856,7 +934,6 @@ def upload_nomina_document(
     file: UploadFile = File(...),
     current_user: User = Depends(require_hr),
 ):
-
     if not file.filename:
         raise HTTPException(
             status_code=400,
@@ -882,7 +959,8 @@ def upload_nomina_document(
 
         if (
             nomina is None
-            or nomina.employee_id != employee_id
+            or nomina.employee_id
+            != employee_id
         ):
             raise HTTPException(
                 status_code=404,
@@ -923,8 +1001,9 @@ def upload_nomina_document(
 
 
 # ============================================================
-# DESCARGAR NOMINA
+# DESCARGAR NÓMINA
 # ============================================================
+
 
 @app.get(
     "/api/employees/{employee_id}/nominas/"
@@ -935,15 +1014,14 @@ def download_nomina_document(
     nomina_id: int,
     current_user: User = Depends(get_current_user),
 ):
-
     if current_user.role == UserRole.EMPLOYEE:
 
         if current_user.employee_id != employee_id:
             raise HTTPException(
                 status_code=403,
                 detail=(
-                    "You can only access your own "
-                    "nominas"
+                    "You can only access your "
+                    "own nominas"
                 ),
             )
 
@@ -956,7 +1034,8 @@ def download_nomina_document(
 
         if (
             nomina is None
-            or nomina.employee_id != employee_id
+            or nomina.employee_id
+            != employee_id
         ):
             raise HTTPException(
                 status_code=404,
@@ -966,7 +1045,9 @@ def download_nomina_document(
         if not nomina.document_path:
             raise HTTPException(
                 status_code=404,
-                detail="Nomina document not found",
+                detail=(
+                    "Nomina document not found"
+                ),
             )
 
         file_path = Path(
@@ -976,7 +1057,9 @@ def download_nomina_document(
         if not file_path.exists():
             raise HTTPException(
                 status_code=404,
-                detail="Nomina document not found",
+                detail=(
+                    "Nomina document not found"
+                ),
             )
 
         return FileResponse(

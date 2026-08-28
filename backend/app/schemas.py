@@ -60,6 +60,8 @@ class EmployeeCreate(BaseModel):
 
     social_security_number: str
 
+    username: str
+    password: str
 
 class EmployeeUpdate(BaseModel):
     company_id: int
