@@ -301,41 +301,42 @@ button:disabled {
 }
 
 /* =========================================================
-   PANEL RR. HH.
+   PANEL RR. HH. — DASHBOARD
    ========================================================= */
 
 .hr-app {
-  align-items: stretch;
-  justify-content: flex-start;
+  width: 100%;
+  min-height: 100vh;
+  display: block;
+  margin: 0;
   padding: 0;
-  background: #f4f3ee;
+  background: #f7f8fa;
 }
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
 
 .hr-sidebar {
   position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-
-  width: 250px;
-
+  inset: 0 auto 0 0;
+  width: 295px;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-
-  padding: 24px 16px;
-
-  background: #000000;
+  padding: 24px 13px 18px;
+  box-sizing: border-box;
+  background: #18324f;
   color: #ffffff;
-
-  z-index: 10;
+  z-index: 100;
 }
 
 .hr-brand {
   display: flex;
   align-items: center;
   justify-content: center;
-
-  padding: 8px 10px 28px;
+  min-height: 140px;
+  padding: 4px 10px 22px;
 }
 
 .hr-logo {
@@ -355,43 +356,36 @@ button:disabled {
 .hr-nav-button {
   display: flex;
   align-items: center;
-  gap: 12px;
-
+  gap: 14px;
   width: 100%;
-
   margin: 0;
-  padding: 12px 13px;
-
+  padding: 13px 14px;
   border: 0;
   border-radius: 9px;
-
   background: transparent;
   color: #ffffff;
-
+  font-size: 15px;
   font-weight: 600;
   text-align: left;
-
   box-shadow: none;
 }
 
 .hr-nav-button:hover {
-  background: #222222;
+  background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
-  box-shadow: none;
 }
 
 .hr-nav-button.active {
-  background: #f4f3ee;
-  color: #000000;
+  background: #2f75bd;
+  color: #ffffff;
 }
 
 .hr-nav-icon {
   width: 20px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
+  flex: 0 0 20px;
   font-size: 16px;
 }
 
@@ -402,46 +396,39 @@ button:disabled {
 .hr-user-box {
   display: flex;
   align-items: center;
-  gap: 10px;
-
-  margin-bottom: 12px;
-  padding: 12px;
-
-  border-top: 1px solid #333333;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 17px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .hr-user-avatar {
-  width: 42px;
-  height: 42px;
-
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   overflow: hidden;
-
   background: #f4f3ee;
-
-  flex-shrink: 0;
+  flex: 0 0 44px;
 }
 
 .hr-user-avatar img {
   width: 100%;
   height: 100%;
-
   display: block;
-
   object-fit: cover;
   object-position: center;
 }
 
 .hr-user-box strong {
   display: block;
+  color: #ffffff;
   font-size: 14px;
 }
 
 .hr-user-box span {
   display: block;
-  margin-top: 2px;
-
-  color: #cccccc;
+  margin-top: 3px;
+  color: #d7e0e9;
   font-size: 12px;
 }
 
@@ -449,317 +436,722 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 12px;
-
   width: 100%;
-
   margin: 0;
-
-  background: #1a1a1a;
+  padding: 13px 14px;
+  border-radius: 9px;
+  background: #122b45;
   color: #ffffff;
-
   text-align: left;
-
   box-shadow: none;
 }
 
 .hr-logout-button:hover {
-  background: #2a2a2a;
-  color: #ffffff;
-  box-shadow: none;
-}
-
-.hr-main {
-  width: calc(100% - 250px);
-  min-height: 100vh;
-
-  margin-left: 250px;
-
-  padding: 32px;
-}
-
-.hr-card {
-  width: 100%;
-  max-width: none;
-  min-height: calc(100vh - 64px);
+  background: #173957;
 }
 
 /* =========================================================
-   DASHBOARD RR. HH.
+   AREA PRINCIPAL
    ========================================================= */
 
-.hr-dashboard {
-  padding-top: 8px;
+.hr-main {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 295px;
+
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+
+  box-sizing: border-box;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  background: #f7f8fa;
 }
 
-.hr-dashboard-header {
-  margin-bottom: 28px;
+.hr-shell {
+  width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.hr-dashboard-header h2 {
-  margin-bottom: 8px;
-  font-size: 30px;
-  color: #000000;
-}
+/* =========================================================
+   CABECERA SUPERIOR
+   ========================================================= */
 
-.hr-dashboard-header p {
-  margin-bottom: 0;
-}
-
-.hr-dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.hr-dashboard-card {
-  position: relative;
-
-  padding: 24px;
-
-  border: 1px solid #deddd7;
-  border-radius: 16px;
-
+.hr-topbar {
+  width: 100%;
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 28px;
+  box-sizing: border-box;
   background: #ffffff;
-
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #e4e7ec;
 }
 
-.hr-dashboard-icon {
+.hr-topbar-title {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.hr-topbar-title .eyebrow {
+  margin-bottom: 4px;
+}
+
+.hr-topbar-title .hr-panel-title {
+  margin: 0 !important;
+  font-size: 18px !important;
+  line-height: 1.2 !important;
+  font-weight: 600 !important;
+}
+
+.hr-topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+}
+
+.hr-topbar-date {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.hr-topbar-date-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.hr-topbar-separator {
+  width: 1px;
+  height: 34px;
+  background: #e4e7ec;
+}
+
+.hr-topbar-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hr-topbar-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #f4f3ee;
+  flex: 0 0 42px;
+}
+
+.hr-topbar-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+
+.hr-topbar-profile strong {
+  display: block;
+  color: #101828;
+  font-size: 14px;
+}
+
+.hr-topbar-profile span {
+  display: block;
+  margin-top: 2px;
+  color: #667085;
+  font-size: 12px;
+}
+
+.hr-topbar-logout {
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0;
+  padding: 0;
+  border-radius: 10px;
+  background: #f4f3ee !important;
+  color: #344054 !important;
+  box-shadow: none;
+}
 
-  width: 42px;
-  height: 42px;
+.hr-topbar-logout:hover {
+  background: #ebe9e2 !important;
+}
 
-  margin-bottom: 18px;
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
 
-  border-radius: 11px;
+.hr-dashboard {
+  width: calc(100% - 48px);
+  max-width: none;
+  margin: 0 24px;
+  padding: 30px 0 38px;
+  box-sizing: border-box;
+}
 
-  background: #f4f3ee;
-  color: #000000;
+.hr-dashboard-welcome {
+  margin: 0 0 24px;
+}
 
-  font-size: 19px;
+.hr-dashboard-welcome .eyebrow {
+  margin-bottom: 7px;
+}
+
+.hr-dashboard-welcome h2 {
+  margin: 0 0 8px;
+  color: #172b45;
+  font-size: 30px;
+  line-height: 1.2;
   font-weight: 700;
 }
 
-.hr-dashboard-card span {
+.hr-dashboard-welcome .muted {
+  margin: 0;
+  color: #667085;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+/* =========================================================
+   CUATRO TARJETAS SUPERIORES
+   ========================================================= */
+
+.hr-dashboard-stats {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+  margin: 0 0 26px;
+}
+
+.hr-stat-card {
+  position: relative;
+  min-width: 0;
+  min-height: 146px;
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  align-items: center;
+  gap: 17px;
+  padding: 22px;
+  box-sizing: border-box;
+  border: 1px solid #e3e7ec;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.hr-stat-icon {
+  width: 74px;
+  height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: #eaf3fd;
+  color: #2f80ed;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.hr-stat-card:nth-child(2) .hr-stat-icon {
+  background: #eaf8f1;
+  color: #35b48b;
+}
+
+.hr-stat-card:nth-child(3) .hr-stat-icon {
+  background: #f2ecff;
+  color: #7b61e8;
+}
+
+.hr-stat-card:nth-child(4) .hr-stat-icon {
+  background: #fff5e2;
+  color: #f2a300;
+}
+
+.hr-stat-body {
+  min-width: 0;
+}
+
+.hr-stat-body span {
   display: block;
-
-  margin-bottom: 6px;
-
-  color: #666666;
-
-  font-size: 14px;
+  margin-bottom: 2px;
+  color: #172b45;
+  font-size: 15px;
   font-weight: 600;
 }
 
-.hr-dashboard-card strong {
+.hr-stat-body strong {
   display: block;
-
-  margin-bottom: 5px;
-
-  color: #000000;
-
+  margin-bottom: 4px;
+  color: #2f80ed;
   font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
 }
 
-.hr-dashboard-card p {
-  min-height: 40px;
+.hr-stat-card:nth-child(2) .hr-stat-body strong {
+  color: #20a77c;
+}
 
+.hr-stat-card:nth-child(3) .hr-stat-body strong {
+  color: #735be0;
+}
+
+.hr-stat-card:nth-child(4) .hr-stat-body strong {
+  color: #ef9d00;
+}
+
+.hr-stat-body p {
   margin: 0;
+  color: #344054;
+  font-size: 14px;
+  line-height: 1.35;
+}
 
-  color: #666666;
+/* Mantener funcionalidad sin cambiar el diseño de la referencia. */
+.hr-stat-card > button {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent !important;
+  color: transparent !important;
+  box-shadow: none !important;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
 
+/* =========================================================
+   DOS BLOQUES INFERIORES
+   ========================================================= */
+
+.hr-dashboard-bottom {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 24px;
+  margin: 0 0 24px;
+}
+
+.hr-dashboard-box {
+  min-width: 0;
+  min-height: 338px;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-sizing: border-box;
+  border: 1px solid #e3e7ec;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.hr-dashboard-box-header {
+  margin: 0 0 18px;
+}
+
+.hr-dashboard-box-header .eyebrow {
+  margin-bottom: 7px;
+}
+
+.hr-dashboard-box-header h2 {
+  margin: 0;
+  color: #172b45;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+/* =========================================================
+   ACTIVIDAD RECIENTE
+   ========================================================= */
+
+.hr-activity-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.hr-activity-item {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eaecf0;
+}
+
+.hr-activity-item:first-child {
+  padding-top: 2px;
+}
+
+.hr-activity-item:last-child {
+  border-bottom: 0;
+}
+
+.hr-activity-icon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: #eaf3fd;
+  color: #2f80ed;
+  font-size: 18px;
+}
+
+.hr-activity-item:nth-child(2) .hr-activity-icon {
+  background: #eaf8f1;
+  color: #35b48b;
+}
+
+.hr-activity-item:nth-child(3) .hr-activity-icon {
+  background: #f2ecff;
+  color: #7b61e8;
+}
+
+.hr-activity-item:nth-child(4) .hr-activity-icon {
+  background: #fff5e2;
+  color: #f2a300;
+}
+
+.hr-activity-content {
+  min-width: 0;
+}
+
+.hr-activity-content strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #172b45;
   font-size: 14px;
 }
 
-.hr-dashboard-card button {
-  width: 100%;
-
-  margin-top: 18px;
-
-  background: #000000;
-  color: #ffffff;
+.hr-activity-content span {
+  display: block;
+  color: #475467;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
-.hr-dashboard-card button:hover {
-  background: #222222;
+.hr-activity-item time {
+  color: #667085;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.hr-dashboard-view-all {
+  align-self: center;
+  margin-top: 10px;
+  padding: 7px 12px;
+  background: transparent !important;
+  color: #2f80ed !important;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: none !important;
 }
 
 /* =========================================================
    ACCESOS RAPIDOS
    ========================================================= */
 
-.hr-dashboard-actions {
+.hr-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.hr-quick-action {
+  min-width: 0;
+  min-height: 100px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-
-  margin-top: 28px;
-  padding: 24px;
-
-  border: 1px solid #deddd7;
-  border-radius: 16px;
-
-  background: #f4f3ee;
-}
-
-.hr-dashboard-actions h2 {
+  gap: 14px;
   margin: 0;
-  color: #000000;
+  padding: 16px;
+  box-sizing: border-box;
+  border: 1px solid #dbe4ee;
+  border-radius: 12px;
+  background: #eef6ff !important;
+  color: #172b45 !important;
+  text-align: left;
+  box-shadow: none;
 }
 
-.hr-dashboard-action-buttons {
+.hr-quick-action:nth-child(2) {
+  background: #edf9f4 !important;
+}
+
+.hr-quick-action:nth-child(3) {
+  background: #f4efff !important;
+}
+
+.hr-quick-action:nth-child(4) {
+  background: #fff7e8 !important;
+}
+
+.hr-quick-action:hover {
+  filter: brightness(0.985);
+}
+
+.hr-quick-action-icon {
+  width: 48px;
+  height: 48px;
   display: flex;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 48px;
+  border-radius: 13px;
+  background: #ffffff !important;
+  color: #2f80ed !important;
+  font-size: 18px;
 }
 
-.hr-dashboard-action-buttons button {
-  margin-top: 0;
-
-  background: #000000;
-  color: #ffffff;
+.hr-quick-action:nth-child(2) .hr-quick-action-icon {
+  color: #35b48b !important;
 }
 
-.hr-dashboard-action-buttons button:hover {
-  background: #222222;
+.hr-quick-action:nth-child(3) .hr-quick-action-icon {
+  color: #7b61e8 !important;
+}
+
+.hr-quick-action:nth-child(4) .hr-quick-action-icon {
+  color: #f2a300 !important;
+}
+
+.hr-quick-action-content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.hr-quick-action-content strong {
+  display: block;
+  margin: 0 0 5px;
+  color: #172b45 !important;
+  font-size: 14px;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.hr-quick-action-content span {
+  display: block;
+  margin: 0;
+  color: #667085 !important;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.hr-quick-action-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  width: 20px;
+  color: #2f80ed !important;
+  font-size: 20px !important;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 /* =========================================================
-   ELEMENTOS GENERALES RR. HH.
+   INFORMACION
    ========================================================= */
 
-.hr-card .eyebrow {
-  color: #000000;
+.hr-dashboard-information {
+  width: 100%;
+  min-height: 104px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  box-sizing: border-box;
+  border: 1px solid #e3e7ec;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
 }
 
-.hr-card .contract-count {
-  background: #f4f3ee;
-  color: #000000;
+.hr-information-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  border-radius: 50%;
+  background: #eaf3fd;
+  color: #2f80ed;
+  font-size: 18px;
 }
 
-.hr-card button:not(.secondary) {
-  background: #000000;
-  color: #ffffff;
+.hr-information-content {
+  min-width: 0;
 }
 
-.hr-card button:not(.secondary):hover {
-  background: #222222;
+.hr-information-content strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #172b45;
+  font-size: 15px;
 }
 
-.hr-card input:focus {
-  border-color: #000000;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+.hr-information-content p {
+  margin: 0;
+  color: #475467;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* =========================================================
+   TITULO DEL PANEL
+   ========================================================= */
+
+.hr-panel-title {
+  font-size: 18px !important;
+  line-height: 1.2 !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
 }
 
 /* =========================================================
    RESPONSIVE
    ========================================================= */
 
-@media (max-width: 800px) {
+@media (max-width: 1180px) {
+  .hr-dashboard {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .hr-dashboard-stats {
+    gap: 16px;
+  }
+
+  .hr-stat-card {
+    grid-template-columns: 60px minmax(0, 1fr);
+    padding: 18px;
+  }
+
+  .hr-stat-icon {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (max-width: 980px) {
   .hr-sidebar {
-    width: 210px;
+    width: 230px;
   }
 
   .hr-main {
-    width: calc(100% - 210px);
-    margin-left: 210px;
-    padding: 20px;
+    width: calc(100% - 230px);
+    margin-left: 230px;
   }
 
-  .hr-dashboard-grid {
+  .hr-dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hr-dashboard-bottom {
     grid-template-columns: 1fr;
   }
+}
 
-  .hr-dashboard-actions {
-    align-items: stretch;
-    flex-direction: column;
+@media (max-width: 760px) {
+  .hr-topbar {
+    min-height: 72px;
+    padding: 0 18px;
   }
 
-  .hr-dashboard-action-buttons {
-    flex-direction: column;
+  .hr-topbar-date,
+  .hr-topbar-separator {
+    display: none;
   }
 
-  .section-header {
-    flex-direction: column;
+  .hr-dashboard {
+    padding: 22px 18px 30px;
   }
 
-  .contract-info {
+  .hr-dashboard-stats {
     grid-template-columns: 1fr;
-  }
-
-  .contract-document {
-    justify-content: stretch;
-  }
-
-  .download-button {
-    width: 100%;
   }
 }
 
 @media (max-width: 600px) {
-  .app {
-    padding: 16px;
-  }
-
-  .login-card,
-  .card {
-    padding: 24px;
-  }
-
-  .header {
-    flex-direction: column;
-  }
-
-  .profile-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hr-sidebar {
-    position: relative;
-
-    width: 100%;
-    min-height: auto;
-  }
-
   .hr-app {
     display: block;
   }
 
-  .hr-main {
+  .hr-sidebar {
+    position: relative;
     width: 100%;
-    margin-left: 0;
-    padding: 16px;
-  }
-
-  .hr-card {
+    height: auto;
     min-height: auto;
   }
 
-  .hr-dashboard-grid {
+  .hr-main {
+    position: static;
+    width: 100%;
+    min-height: 100vh;
+    margin-left: 0;
+    overflow: visible;
+  }
+
+  .hr-topbar-profile div:last-child {
+    display: none;
+  }
+
+  .hr-dashboard {
+    padding: 18px 14px 24px;
+  }
+
+  .hr-dashboard-bottom {
     grid-template-columns: 1fr;
   }
-}
-.hr-panel-title {
-  font-size: 18px;
-  font-weight: 600;
-}
-.hr-panel-title {
-  font-size: 18px !important;
-  line-height: 1.3;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-.hr-panel-title {
-  font-size: 14px !important;
-  line-height: 1.2 !important;
-  font-weight: 600 !important;
-}
-.hr-panel-title {
-  font-size: 18px !important;
-  line-height: 1.2 !important;
-  font-weight: 600 !important;
-  margin: 0 !important;
+
+  .hr-quick-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .hr-dashboard-information {
+    align-items: flex-start;
+  }
 }

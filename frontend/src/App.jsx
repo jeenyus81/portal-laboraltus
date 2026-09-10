@@ -1784,8 +1784,8 @@ if (loggedIn && user && user.role === 'HR') {
 
       </aside>
 
-      <div className="hr-main">
-        <section className="card hr-card">
+<div className="hr-main">
+  <div className="hr-shell">
 
           <input
             ref={contractFileInputRef}
@@ -1803,29 +1803,69 @@ if (loggedIn && user && user.role === 'HR') {
             onChange={handleDirectNominaFile}
           />
 
-          <div className="header">
-            <div>
-              <p className="eyebrow">
-                Portal Laboraltus
-              </p>
+<div className="hr-topbar">
 
-<h1 className="hr-panel-title">
-  Panel de Administracion
-</h1>
+  <div className="hr-topbar-title">
+    <p className="eyebrow">
+      Portal Laboraltus
+    </p>
 
-              <p>
-                Bienvenido, {user.username}
-              </p>
-            </div>
+    <h1 className="hr-panel-title">
+      Panel de Administración
+    </h1>
+  </div>
 
-            <button
-              type="button"
-              className="secondary"
-              onClick={handleLogout}
-            >
-              Cerrar sesion
-            </button>
-          </div>
+  <div className="hr-topbar-user">
+
+    <div className="hr-topbar-date">
+      <span className="hr-topbar-date-icon">
+        ▣
+      </span>
+
+      <span>
+        {new Date().toLocaleDateString(
+          'es-ES',
+          {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          },
+        )}
+      </span>
+    </div>
+
+    <div className="hr-topbar-separator" />
+
+    <div className="hr-topbar-profile">
+      <div className="hr-topbar-avatar">
+        <img
+          src="/avatar-rrhh.jpg"
+          alt="RR. HH."
+        />
+      </div>
+
+      <div>
+        <strong>
+          {user.username}
+        </strong>
+
+        <span>
+          RR. HH.
+        </span>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      className="hr-topbar-logout"
+      onClick={handleLogout}
+    >
+      ↪
+    </button>
+
+  </div>
+
+</div>
 {/* ================================================= */}
 {/* DASHBOARD RR. HH. */}
 {/* ================================================= */}
@@ -1833,30 +1873,42 @@ if (loggedIn && user && user.role === 'HR') {
 {companyView === 'dashboard' && (
   <div className="hr-dashboard">
 
-    <div className="hr-dashboard-header">
+    {/* ================================================= */}
+    {/* BIENVENIDA */}
+    {/* ================================================= */}
+
+    <div className="hr-dashboard-welcome">
       <div>
         <p className="eyebrow">
           Resumen
         </p>
 
         <h2>
-          Buenos días, {user.username}
+          Bienvenido/a, {user.username} 👋
         </h2>
 
         <p className="muted">
-          Aquí tienes una visión general del portal de RR. HH.
+          Panel de control de Recursos Humanos
         </p>
       </div>
     </div>
 
-    <div className="hr-dashboard-grid">
 
-      <article className="hr-dashboard-card">
-        <div className="hr-dashboard-icon">
+    {/* ================================================= */}
+    {/* TARJETAS PRINCIPALES */}
+    {/* ================================================= */}
+
+    <div className="hr-dashboard-stats">
+
+      {/* EMPRESAS */}
+      <article className="hr-stat-card">
+
+        <div className="hr-stat-icon">
           ▣
         </div>
 
-        <div>
+        <div className="hr-stat-body">
+
           <span>
             Empresas
           </span>
@@ -1866,8 +1918,9 @@ if (loggedIn && user && user.role === 'HR') {
           </strong>
 
           <p>
-            Empresas registradas
+            Empresas activas
           </p>
+
         </div>
 
         <button
@@ -1879,15 +1932,21 @@ if (loggedIn && user && user.role === 'HR') {
           }}
         >
           Ver empresas
+          <span>→</span>
         </button>
+
       </article>
 
-      <article className="hr-dashboard-card">
-        <div className="hr-dashboard-icon">
+
+      {/* EMPLEADOS */}
+      <article className="hr-stat-card">
+
+        <div className="hr-stat-icon">
           ●
         </div>
 
-        <div>
+        <div className="hr-stat-body">
+
           <span>
             Empleados
           </span>
@@ -1897,8 +1956,9 @@ if (loggedIn && user && user.role === 'HR') {
           </strong>
 
           <p>
-            Empleados registrados
+            Empleados activos
           </p>
+
         </div>
 
         <button
@@ -1912,15 +1972,21 @@ if (loggedIn && user && user.role === 'HR') {
           }}
         >
           Ver empleados
+          <span>→</span>
         </button>
+
       </article>
 
-      <article className="hr-dashboard-card">
-        <div className="hr-dashboard-icon">
+
+      {/* CONTRATOS */}
+      <article className="hr-stat-card">
+
+        <div className="hr-stat-icon">
           ▤
         </div>
 
-        <div>
+        <div className="hr-stat-body">
+
           <span>
             Contratos
           </span>
@@ -1933,9 +1999,10 @@ if (loggedIn && user && user.role === 'HR') {
 
           <p>
             {selectedEmployee
-              ? 'Contratos del empleado seleccionado'
-              : 'Selecciona un empleado para gestionarlos'}
+              ? 'Contratos activos'
+              : 'Selecciona un empleado'}
           </p>
+
         </div>
 
         <button
@@ -1950,16 +2017,22 @@ if (loggedIn && user && user.role === 'HR') {
             }
           }}
         >
-          Gestionar contratos
+          Gestionar
+          <span>→</span>
         </button>
+
       </article>
 
-      <article className="hr-dashboard-card">
-        <div className="hr-dashboard-icon">
+
+      {/* NOMINAS */}
+      <article className="hr-stat-card">
+
+        <div className="hr-stat-icon">
           ▥
         </div>
 
-        <div>
+        <div className="hr-stat-body">
+
           <span>
             Nóminas
           </span>
@@ -1972,9 +2045,10 @@ if (loggedIn && user && user.role === 'HR') {
 
           <p>
             {selectedEmployee
-              ? 'Nóminas del empleado seleccionado'
-              : 'Selecciona un empleado para gestionarlas'}
+              ? 'Nóminas generadas'
+              : 'Selecciona un empleado'}
           </p>
+
         </div>
 
         <button
@@ -1989,49 +2063,358 @@ if (loggedIn && user && user.role === 'HR') {
             }
           }}
         >
-          Gestionar nóminas
+          Gestionar
+          <span>→</span>
         </button>
+
       </article>
 
     </div>
 
-    <div className="hr-dashboard-actions">
 
-      <div>
-        <p className="eyebrow">
-          Accesos rápidos
-        </p>
+    {/* ================================================= */}
+    {/* ZONA INFERIOR */}
+    {/* ================================================= */}
 
-        <h2>
-          Gestión habitual
-        </h2>
-      </div>
+    <div className="hr-dashboard-bottom">
 
-      <div className="hr-dashboard-action-buttons">
+      {/* ================================================= */}
+      {/* ACTIVIDAD RECIENTE */}
+      {/* ================================================= */}
+
+      <section className="hr-dashboard-box">
+
+        <div className="hr-dashboard-box-header">
+
+          <div>
+            <p className="eyebrow">
+              Actividad reciente
+            </p>
+
+            <h2>
+              Actividad reciente
+            </h2>
+          </div>
+
+        </div>
+
+
+        <div className="hr-activity-list">
+
+          <div className="hr-activity-item">
+
+            <div className="hr-activity-icon">
+              ▣
+            </div>
+
+            <div className="hr-activity-content">
+
+              <strong>
+                Empresa creada
+              </strong>
+
+              <span>
+                {companies.length > 0
+                  ? companies[companies.length - 1].name
+                  : 'No hay empresas registradas'}
+              </span>
+
+            </div>
+
+            <time>
+              Hoy
+            </time>
+
+          </div>
+
+
+          <div className="hr-activity-item">
+
+            <div className="hr-activity-icon">
+              ●
+            </div>
+
+            <div className="hr-activity-content">
+
+              <strong>
+                Empleado creado
+              </strong>
+
+              <span>
+                {employees.length > 0
+                  ? employees[employees.length - 1].first_name +
+                    ' ' +
+                    employees[employees.length - 1].last_name
+                  : 'No hay empleados registrados'}
+              </span>
+
+            </div>
+
+            <time>
+              Hoy
+            </time>
+
+          </div>
+
+
+          <div className="hr-activity-item">
+
+            <div className="hr-activity-icon">
+              ▤
+            </div>
+
+            <div className="hr-activity-content">
+
+              <strong>
+                Contratos
+              </strong>
+
+              <span>
+                Gestión de contratos laborales
+              </span>
+
+            </div>
+
+            <time>
+              Hoy
+            </time>
+
+          </div>
+
+
+          <div className="hr-activity-item">
+
+            <div className="hr-activity-icon">
+              ▥
+            </div>
+
+            <div className="hr-activity-content">
+
+              <strong>
+                Nóminas
+              </strong>
+
+              <span>
+                Gestión de nóminas de empleados
+              </span>
+
+            </div>
+
+            <time>
+              Hoy
+            </time>
+
+          </div>
+
+        </div>
+
 
         <button
           type="button"
-          onClick={handleAddCompany}
+          className="hr-dashboard-view-all"
+          onClick={() => setCompanyView('companies')}
         >
-          + Añadir empresa
+          Ver todo
         </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            if (selectedCompany) {
-              handleAddEmployee()
-            } else {
-              setCompanyView('companies')
-            }
-          }}
-        >
-          + Añadir empleado
-        </button>
+</section>
 
-      </div>
+
+      {/* ================================================= */}
+      {/* ACCESOS RAPIDOS */}
+      {/* ================================================= */}
+
+      <section className="hr-dashboard-box">
+
+        <div className="hr-dashboard-box-header">
+
+          <div>
+            <p className="eyebrow">
+              Accesos rápidos
+            </p>
+
+            <h2>
+              Gestión habitual
+            </h2>
+          </div>
+
+        </div>
+
+
+        <div className="hr-quick-actions">
+
+          <button
+            type="button"
+            className="hr-quick-action"
+            onClick={handleAddCompany}
+          >
+
+            <div className="hr-quick-action-icon">
+              ▣
+            </div>
+
+            <div className="hr-quick-action-content">
+
+              <strong>
+                Gestionar empresas
+              </strong>
+
+              <span>
+                Añadir o editar empresas
+              </span>
+
+            </div>
+
+            <span className="hr-quick-action-arrow">
+              →
+            </span>
+
+          </button>
+
+
+          <button
+            type="button"
+            className="hr-quick-action"
+            onClick={() => {
+              if (selectedCompany) {
+                handleAddEmployee()
+              } else {
+                setCompanyView('companies')
+              }
+            }}
+          >
+
+            <div className="hr-quick-action-icon">
+              ●
+            </div>
+
+            <div className="hr-quick-action-content">
+
+              <strong>
+                Gestionar empleados
+              </strong>
+
+              <span>
+                Añadir o editar empleados
+              </span>
+
+            </div>
+
+            <span className="hr-quick-action-arrow">
+              →
+            </span>
+
+          </button>
+
+
+          <button
+            type="button"
+            className="hr-quick-action"
+            onClick={() => {
+              if (selectedEmployee) {
+                handleViewContracts(selectedEmployee)
+              } else if (selectedCompany) {
+                handleEnterEmployees()
+              } else {
+                setCompanyView('companies')
+              }
+            }}
+          >
+
+            <div className="hr-quick-action-icon">
+              ▤
+            </div>
+
+            <div className="hr-quick-action-content">
+
+              <strong>
+                Gestionar contratos
+              </strong>
+
+              <span>
+                Consultar documentación
+              </span>
+
+            </div>
+
+            <span className="hr-quick-action-arrow">
+              →
+            </span>
+
+          </button>
+
+
+          <button
+            type="button"
+            className="hr-quick-action"
+            onClick={() => {
+              if (selectedEmployee) {
+                handleViewNominas(selectedEmployee)
+              } else if (selectedCompany) {
+                handleEnterEmployees()
+              } else {
+                setCompanyView('companies')
+              }
+            }}
+          >
+
+            <div className="hr-quick-action-icon">
+              ▥
+            </div>
+
+            <div className="hr-quick-action-content">
+
+              <strong>
+                Gestionar nóminas
+              </strong>
+
+              <span>
+                Consultar nóminas
+              </span>
+
+            </div>
+
+            <span className="hr-quick-action-arrow">
+              →
+            </span>
+
+          </button>
+
+        </div>
+
+      </section>
 
     </div>
+
+
+    {/* ================================================= */}
+    {/* INFORMACION */}
+    {/* ================================================= */}
+
+    <section className="hr-dashboard-information">
+
+      <div className="hr-information-icon">
+        ✓
+      </div>
+
+      <div className="hr-information-content">
+
+        <strong>
+          Portal Laboraltus · Área de Recursos Humanos
+        </strong>
+
+        <p>
+          Gestiona empresas, empleados, contratos y nóminas
+          de forma rápida y segura.
+        </p>
+
+      </div>
+
+    </section>
+
+    <footer className="hr-dashboard-footer">
+      © 2025 Portal Laboraltus. Todos los derechos reservados.
+    </footer>
 
   </div>
 )}
@@ -3786,7 +4169,7 @@ if (loggedIn && user && user.role === 'HR') {
               </div>
             )}
 
-          </section>
+</div>
         </div>
       </main>
     )
