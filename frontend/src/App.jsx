@@ -1666,9 +1666,14 @@ if (loggedIn && user && user.role === 'HR') {
 
 <div className="hr-brand">
   <img
-    src="/logo-laboraltus.png"
+    src="/laboraltus-mark.png"
     alt="Laboraltus"
-    className="hr-logo"
+    className="hr-brand-mark"
+  />
+  <img
+    src="/laboraltus-wordmark.png"
+    alt="Laboraltus"
+    className="hr-brand-wordmark"
   />
 </div>
 
@@ -1700,7 +1705,7 @@ if (loggedIn && user && user.role === 'HR') {
               )
             }}
           >
-            <span className="hr-nav-icon">▣</span>
+            <span className="hr-nav-icon">🏢</span>
             Empresas
           </button>
 
@@ -1715,7 +1720,7 @@ if (loggedIn && user && user.role === 'HR') {
               }
             }}
           >
-            <span className="hr-nav-icon">●</span>
+            <span className="hr-nav-icon">👥</span>
             Empleados
           </button>
 
@@ -1732,7 +1737,7 @@ if (loggedIn && user && user.role === 'HR') {
               }
             }}
           >
-            <span className="hr-nav-icon">▤</span>
+            <span className="hr-nav-icon">📄</span>
             Contratos
           </button>
 
@@ -1749,7 +1754,7 @@ if (loggedIn && user && user.role === 'HR') {
               }
             }}
           >
-            <span className="hr-nav-icon">▥</span>
+            <span className="hr-nav-icon">💳</span>
             Nóminas
           </button>
 
@@ -1904,7 +1909,7 @@ if (loggedIn && user && user.role === 'HR') {
       <article className="hr-stat-card">
 
         <div className="hr-stat-icon">
-          ▣
+          🏢
         </div>
 
         <div className="hr-stat-body">
@@ -1942,7 +1947,7 @@ if (loggedIn && user && user.role === 'HR') {
       <article className="hr-stat-card">
 
         <div className="hr-stat-icon">
-          ●
+          👥
         </div>
 
         <div className="hr-stat-body">
@@ -1982,7 +1987,7 @@ if (loggedIn && user && user.role === 'HR') {
       <article className="hr-stat-card">
 
         <div className="hr-stat-icon">
-          ▤
+          📄
         </div>
 
         <div className="hr-stat-body">
@@ -2028,7 +2033,7 @@ if (loggedIn && user && user.role === 'HR') {
       <article className="hr-stat-card">
 
         <div className="hr-stat-icon">
-          ▥
+          💳
         </div>
 
         <div className="hr-stat-body">
@@ -2104,7 +2109,7 @@ if (loggedIn && user && user.role === 'HR') {
           <div className="hr-activity-item">
 
             <div className="hr-activity-icon">
-              ▣
+              🏢
             </div>
 
             <div className="hr-activity-content">
@@ -2131,7 +2136,7 @@ if (loggedIn && user && user.role === 'HR') {
           <div className="hr-activity-item">
 
             <div className="hr-activity-icon">
-              ●
+              👥
             </div>
 
             <div className="hr-activity-content">
@@ -2160,7 +2165,7 @@ if (loggedIn && user && user.role === 'HR') {
           <div className="hr-activity-item">
 
             <div className="hr-activity-icon">
-              ▤
+              📄
             </div>
 
             <div className="hr-activity-content">
@@ -2185,7 +2190,7 @@ if (loggedIn && user && user.role === 'HR') {
           <div className="hr-activity-item">
 
             <div className="hr-activity-icon">
-              ▥
+              💳
             </div>
 
             <div className="hr-activity-content">
@@ -2250,7 +2255,7 @@ if (loggedIn && user && user.role === 'HR') {
           >
 
             <div className="hr-quick-action-icon">
-              ▣
+              🏢
             </div>
 
             <div className="hr-quick-action-content">
@@ -2285,7 +2290,7 @@ if (loggedIn && user && user.role === 'HR') {
           >
 
             <div className="hr-quick-action-icon">
-              ●
+              👥
             </div>
 
             <div className="hr-quick-action-content">
@@ -2322,7 +2327,7 @@ if (loggedIn && user && user.role === 'HR') {
           >
 
             <div className="hr-quick-action-icon">
-              ▤
+              📄
             </div>
 
             <div className="hr-quick-action-content">
@@ -2359,7 +2364,7 @@ if (loggedIn && user && user.role === 'HR') {
           >
 
             <div className="hr-quick-action-icon">
-              ▥
+              💳
             </div>
 
             <div className="hr-quick-action-content">

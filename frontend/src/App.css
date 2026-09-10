@@ -1155,3 +1155,174 @@ button:disabled {
     align-items: flex-start;
   }
 }
+
+/* =========================================================
+   MENUS INTERIORES RR. HH. — MISMA ESTÉTICA QUE EL DASHBOARD
+   ========================================================= */
+
+.hr-main .contracts {
+  width: calc(100% - 48px);
+  max-width: none;
+  margin: 0 24px;
+  padding: 30px 0 38px;
+  box-sizing: border-box;
+  border-top: 0;
+}
+
+.hr-main .section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+  margin: 0 0 24px;
+  padding: 0;
+  border: 0;
+}
+
+.hr-main .section-header > div:first-child {
+  min-width: 0;
+}
+
+.hr-main .section-header .eyebrow {
+  margin: 0 0 7px;
+}
+
+.hr-main .section-header h2 {
+  margin: 0;
+  color: #172b45;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.hr-main .section-header > .contract-document {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+}
+
+.hr-main .section-header > .contract-document button {
+  margin-top: 0;
+}
+
+.hr-main .contract-count {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #f4f3ee;
+  color: #172b45;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hr-main .profile {
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 18px;
+  padding: 24px;
+  box-sizing: border-box;
+  border: 1px solid #e3e7ec;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.hr-main .profile .section-header {
+  margin-bottom: 20px;
+}
+
+.hr-main .profile-grid {
+  width: 100%;
+}
+
+.hr-main .contract-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hr-main .contract-card {
+  width: 100%;
+  min-width: 0;
+  padding: 24px;
+  box-sizing: border-box;
+  border: 1px solid #e3e7ec;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.hr-main .contract-info {
+  width: 100%;
+  gap: 18px;
+}
+
+.hr-main .contract-info span {
+  margin-bottom: 6px;
+  color: #667085;
+  font-size: 13px;
+}
+
+.hr-main .contract-info strong {
+  color: #172b45;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.hr-main .contract-document {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eaecf0;
+}
+
+.hr-main .section-header .contract-document {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.hr-main .empty-state {
+  width: 100%;
+  padding: 24px;
+  border: 1px dashed #d0d5dd;
+  border-radius: 12px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.hr-main form {
+  gap: 10px;
+}
+
+.hr-main form label {
+  color: #172b45;
+}
+
+.hr-main form input {
+  border-color: #d0d5dd;
+  border-radius: 10px;
+}
+
+@media (max-width: 760px) {
+  .hr-main .contracts {
+    width: calc(100% - 36px);
+    margin: 0 18px;
+    padding: 22px 0 30px;
+  }
+
+  .hr-main .section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hr-main .section-header > .contract-document {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
