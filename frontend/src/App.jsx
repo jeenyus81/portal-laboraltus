@@ -1664,16 +1664,40 @@ if (loggedIn && user && user.role === 'HR') {
     <main className="app hr-app">
       <aside className="hr-sidebar">
 
-<div className="hr-brand">
+<div
+  className="hr-brand"
+  style={{
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '8px',
+    minHeight: '185px',
+    padding: '16px 10px 20px',
+    background: '#f4f3ee',
+    borderRadius: '10px',
+    marginBottom: '18px',
+  }}
+>
   <img
     src="/laboraltus-mark.png"
-    alt="Laboraltus"
-    className="hr-brand-mark"
+    alt="Logo Laboraltus"
+    style={{
+      display: 'block',
+      width: '72px',
+      height: '72px',
+      objectFit: 'contain',
+    }}
   />
   <img
     src="/laboraltus-wordmark.png"
     alt="Laboraltus"
-    className="hr-brand-wordmark"
+    style={{
+      display: 'block',
+      width: '205px',
+      maxWidth: '100%',
+      height: 'auto',
+      objectFit: 'contain',
+    }}
   />
 </div>
 
