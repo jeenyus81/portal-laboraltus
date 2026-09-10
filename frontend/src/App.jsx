@@ -1866,13 +1866,6 @@ if (loggedIn && user && user.role === 'HR') {
     <div className="hr-topbar-separator" />
 
     <div className="hr-topbar-profile">
-      <div className="hr-topbar-avatar">
-        <img
-          src="/avatar-rrhh.jpg"
-          alt="RR. HH."
-        />
-      </div>
-
       <div>
         <strong>
           {user.username}
@@ -1908,12 +1901,8 @@ if (loggedIn && user && user.role === 'HR') {
 
     <div className="hr-dashboard-welcome">
       <div>
-        <p className="eyebrow">
-          Resumen
-        </p>
-
         <h2>
-          Bienvenido/a, {user.username} 👋
+          Bienvenido/a, {user.username}
         </h2>
 
         <p className="muted">
