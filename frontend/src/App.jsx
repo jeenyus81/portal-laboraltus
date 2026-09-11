@@ -55,6 +55,7 @@ function App() {
   const [employeesError, setEmployeesError] = useState('')
 
   const [selectedEmployee, setSelectedEmployee] = useState(null)
+  const [employeeListMode, setEmployeeListMode] = useState('company')
 
   // =========================================================
   // EDICION DE EMPLEADO
@@ -763,6 +764,16 @@ function App() {
     )
   }
 
+  function getCompanyForEmployee(employee) {
+    if (!employee) {
+      return null
+    }
+
+    return companies.find(
+      (company) => company.id === employee.company_id,
+    ) || null
+  }
+
   async function loadEmployees(token) {
     setEmployeesLoading(true)
     setEmployeesError('')
@@ -794,11 +805,38 @@ function App() {
   }
 
   // =========================================================
+  // ENTRAR EN PANEL GENERAL DE EMPLEADOS
+  // =========================================================
+
+  async function handleEnterAllEmployees() {
+    setActiveMenu('employees')
+    setEmployeeListMode('all')
+    setSelectedCompany(null)
+    setSelectedEmployee(null)
+    setCreatingEmployee(false)
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setEmployeesError('No hay una sesion valida')
+      return
+    }
+
+    await loadEmployees(token)
+    setCompanyView('employeesAll')
+    setContracts([])
+    setNominas([])
+    setSelectedFiles({})
+    setSelectedNominaFiles({})
+  }
+
+  // =========================================================
   // ENTRAR EN EMPLEADOS DE LA EMPRESA
   // =========================================================
 
   async function handleEnterEmployees() {
     setActiveMenu('employees')
+    setEmployeeListMode('company')
     const token = localStorage.getItem('access_token')
 
     if (!token) {
@@ -1027,6 +1065,10 @@ function App() {
 
   async function handleEnterEmployee(employee) {
     setActiveMenu('employees')
+    const employeeCompany = getCompanyForEmployee(employee)
+    if (employeeCompany) {
+      setSelectedCompany(employeeCompany)
+    }
     const token = localStorage.getItem('access_token')
 
     if (!token) {
@@ -1405,7 +1447,11 @@ async function handleDirectNominaFile(event) {
 
   function handleBackToEmployees() {
     setActiveMenu('employees')
-    setCompanyView('employees')
+    setCompanyView(
+      employeeListMode === 'all'
+        ? 'employeesAll'
+        : 'employees',
+    )
     setSelectedEmployee(null)
     setEditingEmployee(null)
     setCreatingEmployee(false)
@@ -1935,7 +1981,8 @@ async function handleDirectNominaFile(event) {
     setEmployeeCreateError('')
 
     setLoggedIn(false)
-      setActiveMenu('companies')
+    setEmployeeListMode('company')
+    setActiveMenu('companies')
 
     setUsername('')
     setPassword('')
@@ -2053,12 +2100,7 @@ if (loggedIn && user && user.role === 'HR') {
                 : undefined
             }
             onClick={() => {
-              setActiveMenu('employees')
-              if (selectedCompany) {
-                handleEnterEmployees()
-              } else {
-                setCompanyView('companies')
-              }
+              handleEnterAllEmployees()
             }}
           >
             <span className="hr-nav-icon">👥</span>
@@ -2325,11 +2367,7 @@ if (loggedIn && user && user.role === 'HR') {
         <button
           type="button"
           onClick={() => {
-            if (selectedCompany) {
-              handleEnterEmployees()
-            } else {
-              setCompanyView('companies')
-            }
+            handleEnterAllEmployees()
           }}
         >
           Ver empleados
@@ -3375,6 +3413,130 @@ if (loggedIn && user && user.role === 'HR') {
 
               </div>
             )}
+
+          {/* ================================================= */}
+          {/* PANEL GENERAL DE EMPLEADOS */}
+          {/* ================================================= */}
+
+          {companyView === 'employeesAll' && (
+            <div className="contracts">
+
+              <div className="section-header hr-employees-section-header">
+
+                <div className="hr-employees-title-block">
+                  <p className="eyebrow">
+                    Gestión de empleados
+                  </p>
+
+                  <h2>
+                    Empleados
+                  </h2>
+                </div>
+
+
+              </div>
+
+              {employeesLoading && (
+                <p className="muted">
+                  Cargando empleados...
+                </p>
+              )}
+
+              {!employeesLoading && employeesError && (
+                <p className="error">
+                  {employeesError}
+                </p>
+              )}
+
+              {!employeesLoading &&
+                !employeesError &&
+                employees.length === 0 && (
+                  <div className="empty-state">
+                    <strong>
+                      No hay empleados
+                    </strong>
+                    <p>
+                      No se encontraron empleados en el sistema.
+                    </p>
+                  </div>
+                )}
+
+              {!employeesLoading &&
+                !employeesError &&
+                employees.length > 0 && (
+                  <div className="contract-list">
+                    {employees.map((employee) => {
+                      const employeeCompany =
+                        getCompanyForEmployee(employee)
+                      const employeeCompanyLogo =
+                        employeeCompany?.logo ||
+                        getStoredCompanyLogo(employee.company_id) ||
+                        ''
+
+                      return (
+                        <article
+                          className="contract-card hr-general-employee-card"
+                          key={employee.id}
+                        >
+                          <div className="hr-general-employee-row">
+
+                            <div className="hr-general-employee-field">
+                              <span>
+                                Empleado
+                              </span>
+                              <strong>
+                                {employee.first_name}{' '}
+                                {employee.last_name}
+                              </strong>
+                            </div>
+
+                            <div className="hr-general-employee-logo">
+                              {employeeCompanyLogo ? (
+                                <img
+                                  src={employeeCompanyLogo}
+                                  alt={
+                                    'Logo de ' +
+                                    (employeeCompany?.name || 'la empresa')
+                                  }
+                                />
+                              ) : (
+                                <span>
+                                  Logo
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="hr-general-employee-field">
+                              <span>
+                                Empresa
+                              </span>
+                              <strong>
+                                {employeeCompany?.name ||
+                                  'Empresa no encontrada'}
+                              </strong>
+                            </div>
+
+                            <div className="hr-general-employee-action">
+                              <button
+                                type="button"
+                                className="hr-employees-enter-button"
+                                onClick={() =>
+                                  handleEnterEmployee(employee)
+                                }
+                              >
+                                Entrar
+                              </button>
+                            </div>
+
+                          </div>
+                        </article>
+                      )
+                    })}
+                  </div>
+                )}
+
+            </div>
+          )}
 
           {/* ================================================= */}
           {/* EMPLEADOS DE EMPRESA */}
