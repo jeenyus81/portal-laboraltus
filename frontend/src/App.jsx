@@ -18,6 +18,7 @@ function App() {
 
   const contractFileInputRef = useRef(null)
   const nominaFileInputRef = useRef(null)
+  const companyLogoFileInputRef = useRef(null)
 
   // =========================================================
   // EMPRESAS
@@ -34,6 +35,7 @@ function App() {
     name: '',
     tax_id: '',
     address: '',
+    logo: '',
   })
 
   const [editingCompany, setEditingCompany] = useState(null)
@@ -236,6 +238,123 @@ function App() {
   const [employeeSection, setEmployeeSection] =
     useState('contracts')
 
+  const COMPANY_LOGOS_STORAGE_KEY =
+    'laboraltus_company_logos'
+
+  function readCompanyLogos() {
+    try {
+      const stored =
+        localStorage.getItem(
+          COMPANY_LOGOS_STORAGE_KEY,
+        )
+      return stored ? JSON.parse(stored) : {}
+    } catch {
+      return {}
+    }
+  }
+
+  function getStoredCompanyLogo(companyId) {
+    if (!companyId) {
+      return ''
+    }
+
+    const logos = readCompanyLogos()
+    return logos[String(companyId)] || ''
+  }
+
+  function saveStoredCompanyLogo(
+    companyId,
+    logoData,
+  ) {
+    if (!companyId) {
+      return
+    }
+
+    const logos = readCompanyLogos()
+    const key = String(companyId)
+
+    if (logoData) {
+      logos[key] = logoData
+    } else {
+      delete logos[key]
+    }
+
+    localStorage.setItem(
+      COMPANY_LOGOS_STORAGE_KEY,
+      JSON.stringify(logos),
+    )
+  }
+
+  function addStoredLogoToCompany(company) {
+    if (!company) {
+      return company
+    }
+
+    return {
+      ...company,
+      logo:
+        company.logo ||
+        getStoredCompanyLogo(company.id),
+    }
+  }
+
+  function handleCompanyLogoChange(event) {
+    const file = event.target.files?.[0]
+
+    if (!file) {
+      return
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setCompanyCreateError(
+        'El archivo debe ser una imagen',
+      )
+      setCompaniesError(
+        'El archivo debe ser una imagen',
+      )
+      event.target.value = ''
+      return
+    }
+
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') {
+        return
+      }
+
+      setCompanyCreateError('')
+      setCompaniesError('')
+
+      setCompanyForm((previous) => ({
+        ...previous,
+        logo: reader.result,
+      }))
+    }
+
+    reader.onerror = () => {
+      setCompanyCreateError(
+        'No se pudo cargar el logo',
+      )
+      setCompaniesError(
+        'No se pudo cargar el logo',
+      )
+    }
+
+    reader.readAsDataURL(file)
+  }
+
+  function handleRemoveCompanyLogo() {
+    setCompanyForm((previous) => ({
+      ...previous,
+      logo: '',
+    }))
+
+    if (companyLogoFileInputRef.current) {
+      companyLogoFileInputRef.current.value = ''
+    }
+  }
+
   // =========================================================
   // CARGAR EMPRESAS
   // =========================================================
@@ -262,7 +381,11 @@ function App() {
         )
       }
 
-      setCompanies(Array.isArray(data) ? data : [])
+      setCompanies(
+        Array.isArray(data)
+          ? data.map(addStoredLogoToCompany)
+          : [],
+      )
     } catch (err) {
       setCompaniesError(err.message)
     } finally {
@@ -294,6 +417,7 @@ function App() {
       name: '',
       tax_id: '',
       address: '',
+      logo: '',
     })
 
     setCompaniesError('')
@@ -311,6 +435,7 @@ function App() {
       name: '',
       tax_id: '',
       address: '',
+      logo: '',
     })
   }
 
@@ -322,6 +447,7 @@ function App() {
       name: '',
       tax_id: '',
       address: '',
+      logo: '',
     })
   }
 
@@ -363,9 +489,21 @@ function App() {
         )
       }
 
+      const createdCompany = {
+        ...addStoredLogoToCompany(data),
+        logo: companyForm.logo || '',
+      }
+
+      if (companyForm.logo) {
+        saveStoredCompanyLogo(
+          data.id,
+          companyForm.logo,
+        )
+      }
+
       setCompanies((previous) => [
         ...previous,
-        data,
+        createdCompany,
       ])
 
       setCreatingCompany(false)
@@ -393,6 +531,10 @@ function App() {
       name: company.name || '',
       tax_id: company.tax_id || '',
       address: company.address || '',
+      logo:
+        company.logo ||
+        getStoredCompanyLogo(company.id) ||
+        '',
     })
 
     setCompaniesError('')
@@ -405,6 +547,7 @@ function App() {
       name: '',
       tax_id: '',
       address: '',
+      logo: '',
     })
 
     setCompaniesError('')
@@ -452,13 +595,32 @@ function App() {
         )
       }
 
+      if (companyForm.logo) {
+        saveStoredCompanyLogo(
+          data.id,
+          companyForm.logo,
+        )
+      } else {
+        saveStoredCompanyLogo(
+          data.id,
+          '',
+        )
+      }
+
+      const updatedCompany = {
+        ...data,
+        logo: companyForm.logo || '',
+      }
+
       setCompanies((previous) =>
         previous.map((company) =>
-          company.id === data.id ? data : company,
+          company.id === data.id
+            ? updatedCompany
+            : company,
         ),
       )
 
-      setSelectedCompany(data)
+      setSelectedCompany(updatedCompany)
       setEditingCompany(null)
 
       setCompanyForm({
@@ -1614,6 +1776,7 @@ async function handleDirectNominaFile(event) {
       name: '',
       tax_id: '',
       address: '',
+      logo: '',
     })
 
     setEmployeeForm({
@@ -1660,6 +1823,11 @@ async function handleDirectNominaFile(event) {
   // =========================================================
 
 if (loggedIn && user && user.role === 'HR') {
+  const contextCompanyLogo =
+    selectedCompany?.logo ||
+    getStoredCompanyLogo(selectedCompany?.id) ||
+    ''
+
   return (
     <main className="app hr-app">
       <aside className="hr-sidebar">
@@ -1722,7 +1890,11 @@ if (loggedIn && user && user.role === 'HR') {
 
           <button
             type="button"
-            className="hr-nav-button"
+            className={
+              companyView === 'companies' || companyView === 'company'
+                ? 'hr-nav-button active'
+                : 'hr-nav-button'
+            }
             onClick={() => {
               setCompanyView(
                 selectedCompany ? 'company' : 'companies'
@@ -1735,7 +1907,11 @@ if (loggedIn && user && user.role === 'HR') {
 
           <button
             type="button"
-            className="hr-nav-button"
+            className={
+              companyView === 'employees' || companyView === 'employee'
+                ? 'hr-nav-button active'
+                : 'hr-nav-button'
+            }
             onClick={() => {
               if (selectedCompany) {
                 handleEnterEmployees()
@@ -1750,7 +1926,12 @@ if (loggedIn && user && user.role === 'HR') {
 
           <button
             type="button"
-            className="hr-nav-button"
+            className={
+              companyView === 'employeeContracts' ||
+              companyView === 'employeeContractStore'
+                ? 'hr-nav-button active'
+                : 'hr-nav-button'
+            }
             onClick={() => {
               if (selectedEmployee) {
                 handleViewContracts(selectedEmployee)
@@ -1767,7 +1948,12 @@ if (loggedIn && user && user.role === 'HR') {
 
           <button
             type="button"
-            className="hr-nav-button"
+            className={
+              companyView === 'employeeNominas' ||
+              companyView === 'employeeNominaStore'
+                ? 'hr-nav-button active'
+                : 'hr-nav-button'
+            }
             onClick={() => {
               if (selectedEmployee) {
                 handleViewNominas(selectedEmployee)
@@ -1789,8 +1975,8 @@ if (loggedIn && user && user.role === 'HR') {
           <div className="hr-user-box">
 <div className="hr-user-avatar">
   <img
-    src="/avatar-rrhh.jpg"
-    alt="RR. HH."
+    src="/laboraltus-mark.png"
+    alt="Laboraltus"
   />
 </div>
 
@@ -1862,28 +2048,6 @@ if (loggedIn && user && user.role === 'HR') {
         )}
       </span>
     </div>
-
-    <div className="hr-topbar-separator" />
-
-    <div className="hr-topbar-profile">
-      <div>
-        <strong>
-          {user.username}
-        </strong>
-
-        <span>
-          RR. HH.
-        </span>
-      </div>
-    </div>
-
-    <button
-      type="button"
-      className="hr-topbar-logout"
-      onClick={handleLogout}
-    >
-      ↪
-    </button>
 
   </div>
 
@@ -2018,7 +2182,7 @@ if (loggedIn && user && user.role === 'HR') {
           <p>
             {selectedEmployee
               ? 'Contratos activos'
-              : 'Selecciona un empleado'}
+              : 'Almacén de contratos'}
           </p>
 
         </div>
@@ -2064,7 +2228,7 @@ if (loggedIn && user && user.role === 'HR') {
           <p>
             {selectedEmployee
               ? 'Nóminas generadas'
-              : 'Selecciona un empleado'}
+              : 'almacen de nóminas'}
           </p>
 
         </div>
@@ -2457,18 +2621,9 @@ if (loggedIn && user && user.role === 'HR') {
 
                 <div className="contract-document">
 
-                  {!companiesLoading &&
-                    companies.length > 0 && (
-                      <span className="contract-count">
-                        {companies.length}{' '}
-                        {companies.length === 1
-                          ? 'empresa'
-                          : 'empresas'}
-                      </span>
-                    )}
-
                   <button
                     type="button"
+                    className="hr-companies-add-button"
                     onClick={handleAddCompany}
                   >
                     Añadir empresa
@@ -2552,6 +2707,58 @@ if (loggedIn && user && user.role === 'HR') {
                       required
                     />
 
+                    <label>
+                      Logo de la empresa
+                    </label>
+
+                    <div className="hr-company-logo-editor">
+                      <div className="hr-company-logo-preview">
+                        {companyForm.logo ? (
+                          <img
+                            src={companyForm.logo}
+                            alt="Vista previa del logo"
+                          />
+                        ) : (
+                          <span>
+                            Logo
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="hr-company-logo-controls">
+                        <input
+                          ref={companyLogoFileInputRef}
+                          id="new-company-logo"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCompanyLogoChange}
+                          className="hr-company-logo-file-input"
+                        />
+
+                        <label
+                          htmlFor="new-company-logo"
+                          className="hr-company-logo-button"
+                        >
+                          Seleccionar logo
+                        </label>
+
+                        {companyForm.logo && (
+                          <button
+                            type="button"
+                            className="secondary hr-company-logo-remove"
+                            onClick={handleRemoveCompanyLogo}
+                            disabled={companyCreateSaving}
+                          >
+                            Quitar logo
+                          </button>
+                        )}
+
+                        <span className="hr-company-logo-help">
+                          Imagen JPG, PNG, SVG o WEBP
+                        </span>
+                      </div>
+                    </div>
+
                     {companyCreateError && (
                       <p className="error">
                         {companyCreateError}
@@ -2623,13 +2830,13 @@ if (loggedIn && user && user.role === 'HR') {
 
                     {companies.map((company) => (
                       <article
-                        className="contract-card"
+                        className="contract-card hr-company-card"
                         key={company.id}
                       >
 
-                        <div className="contract-info">
+                        <div className="hr-company-row">
 
-                          <div>
+                          <div className="hr-company-field hr-company-name">
                             <span>
                               Empresa
                             </span>
@@ -2639,7 +2846,23 @@ if (loggedIn && user && user.role === 'HR') {
                             </strong>
                           </div>
 
-                          <div>
+                          <div className="hr-company-logo-slot">
+                            {company.logo ? (
+                              <img
+                                src={company.logo}
+                                alt={
+                                  'Logo de ' +
+                                  company.name
+                                }
+                              />
+                            ) : (
+                              <span>
+                                Logo
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="hr-company-field">
                             <span>
                               CIF / NIF
                             </span>
@@ -2649,7 +2872,7 @@ if (loggedIn && user && user.role === 'HR') {
                             </strong>
                           </div>
 
-                          <div>
+                          <div className="hr-company-field hr-company-address">
                             <span>
                               Direccion
                             </span>
@@ -2659,21 +2882,19 @@ if (loggedIn && user && user.role === 'HR') {
                             </strong>
                           </div>
 
-                        </div>
-
-                        <div className="contract-document">
-
-                          <button
-                            type="button"
-                            className="download-button"
-                            onClick={() =>
-                              handleEnterCompany(
-                                company,
-                              )
-                            }
-                          >
-                            Entrar
-                          </button>
+                          <div className="hr-company-action">
+                            <button
+                              type="button"
+                              className="download-button hr-companies-enter-button"
+                              onClick={() =>
+                                handleEnterCompany(
+                                  company,
+                                )
+                              }
+                            >
+                              Entrar
+                            </button>
+                          </div>
 
                         </div>
 
@@ -2720,7 +2941,29 @@ if (loggedIn && user && user.role === 'HR') {
 
                 <div className="profile">
 
-                  <div className="profile-grid">
+                  <div className="profile-grid hr-company-detail-grid">
+
+                    <div className="hr-company-detail-logo">
+                      <span>
+                        Logo
+                      </span>
+
+                      <div className="hr-company-detail-logo-box">
+                        {selectedCompany.logo ? (
+                          <img
+                            src={contextCompanyLogo}
+                            alt={
+                              'Logo de ' +
+                              selectedCompany.name
+                            }
+                          />
+                        ) : (
+                          <span>
+                            Sin logo
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
                     <div>
                       <span>
@@ -2754,10 +2997,11 @@ if (loggedIn && user && user.role === 'HR') {
 
                   </div>
 
-                  <div className="contract-document">
+                  <div className="contract-document hr-company-detail-actions">
 
                     <button
                       type="button"
+                      className="hr-company-detail-button"
                       onClick={() =>
                         handleEditCompany(
                           selectedCompany,
@@ -2769,6 +3013,7 @@ if (loggedIn && user && user.role === 'HR') {
 
                     <button
                       type="button"
+                      className="hr-company-detail-button"
                       onClick={
                         handleEnterEmployees
                       }
@@ -2866,16 +3111,58 @@ if (loggedIn && user && user.role === 'HR') {
                         required
                       />
 
+                      <label>
+                        Logo de la empresa
+                      </label>
+
+                      <div className="hr-company-logo-editor">
+                        <div className="hr-company-logo-preview">
+                          {companyForm.logo ? (
+                            <img
+                              src={companyForm.logo}
+                              alt="Vista previa del logo"
+                            />
+                          ) : (
+                            <span>
+                              Logo
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="hr-company-logo-controls">
+                          <input
+                            ref={companyLogoFileInputRef}
+                            id="company-logo"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleCompanyLogoChange}
+                            className="hr-company-logo-file-input"
+                          />
+
+                          <label
+                            htmlFor="company-logo"
+                            className="hr-company-logo-button"
+                          >
+                            Seleccionar logotipo
+                          </label>
+
+                          <span className="hr-company-logo-help">
+                            Imagen JPG, PNG, SVG o WEBP
+                          </span>
+                        </div>
+                      </div>
+
                       {companiesError && (
                         <p className="error">
                           {companiesError}
                         </p>
                       )}
 
-                      <div className="contract-document">
+                      <div className="contract-document hr-company-edit-actions">
 
                         <button
                           type="submit"
+                          className="hr-company-edit-save-button"
                           disabled={
                             companySaving
                           }
@@ -2887,7 +3174,7 @@ if (loggedIn && user && user.role === 'HR') {
 
                         <button
                           type="button"
-                          className="secondary"
+                          className="secondary hr-company-edit-cancel-button"
                           onClick={
                             handleCancelEditCompany
                           }
@@ -2916,9 +3203,9 @@ if (loggedIn && user && user.role === 'HR') {
             selectedCompany && (
               <div className="contracts">
 
-                <div className="section-header">
+                <div className="section-header hr-employees-section-header">
 
-                  <div>
+                  <div className="hr-employees-title-block">
                     <p className="eyebrow">
                       {selectedCompany.name}
                     </p>
@@ -2928,10 +3215,23 @@ if (loggedIn && user && user.role === 'HR') {
                     </h2>
                   </div>
 
+                  {contextCompanyLogo && (
+                    <div className="hr-context-company-logo">
+                      <img
+                        src={contextCompanyLogo}
+                        alt={
+                          'Logo de ' +
+                          selectedCompany.name
+                        }
+                      />
+                    </div>
+                  )}
+
                   <div className="contract-document">
 
                     <button
                       type="button"
+                      className="hr-employees-add-button"
                       onClick={handleAddEmployee}
                     >
                       Añadir empleado
@@ -2949,15 +3249,6 @@ if (loggedIn && user && user.role === 'HR') {
 
                   </div>
 
-                </div>
-
-                <div className="profile">
-                  <p>
-                    Empleados de{' '}
-                    <strong>
-                      {selectedCompany.name}
-                    </strong>
-                  </p>
                 </div>
 
                 {/* ================================================= */}
@@ -3377,7 +3668,7 @@ if (loggedIn && user && user.role === 'HR') {
 
                               <button
                                 type="button"
-                                className="download-button"
+                                className="download-button hr-employees-enter-button"
                                 onClick={() =>
                                   handleEnterEmployee(
                                     employee,
@@ -3407,9 +3698,9 @@ if (loggedIn && user && user.role === 'HR') {
             selectedEmployee && (
               <div className="contracts">
 
-                <div className="section-header">
+                <div className="section-header hr-employee-detail-header">
 
-                  <div>
+                  <div className="hr-employee-detail-title">
                     <p className="eyebrow">
                       Empleado
                     </p>
@@ -3423,6 +3714,18 @@ if (loggedIn && user && user.role === 'HR') {
                       }
                     </h2>
                   </div>
+
+                  {contextCompanyLogo && (
+                    <div className="hr-context-company-logo">
+                      <img
+                        src={contextCompanyLogo}
+                        alt={
+                          'Logo de ' +
+                          selectedCompany.name
+                        }
+                      />
+                    </div>
+                  )}
 
                   <button
                     type="button"
@@ -3483,10 +3786,11 @@ if (loggedIn && user && user.role === 'HR') {
 
                   </div>
 
-                  <div className="contract-document">
+                  <div className="contract-document hr-employee-detail-actions">
 
                     <button
                       type="button"
+                      className="hr-employee-detail-button"
                       onClick={() =>
                         handleEditEmployee(
                           selectedEmployee,
@@ -3498,6 +3802,7 @@ if (loggedIn && user && user.role === 'HR') {
 
                     <button
                       type="button"
+                      className="hr-employee-detail-button"
                       onClick={() =>
                         handleViewContracts(
                           selectedEmployee,
@@ -3509,6 +3814,7 @@ if (loggedIn && user && user.role === 'HR') {
 
                     <button
                       type="button"
+                      className="hr-employee-detail-button"
                       onClick={() =>
                         handleViewNominas(
                           selectedEmployee,
@@ -3676,10 +3982,17 @@ if (loggedIn && user && user.role === 'HR') {
                         </p>
                       )}
 
-                      <div className="contract-document">
+                      <div className="contract-document hr-employee-edit-actions">
 
                         <button
                           type="submit"
+                          className="hr-employee-edit-save-button"
+                          style={{
+                            background: '#f4f3ee',
+                            color: '#172b45',
+                            border: '1px solid #f4f3ee',
+                            boxShadow: 'none',
+                          }}
                           disabled={
                             employeeSaving
                           }
@@ -3691,7 +4004,13 @@ if (loggedIn && user && user.role === 'HR') {
 
                         <button
                           type="button"
-                          className="secondary"
+                          className="secondary hr-employee-edit-cancel-button"
+                          style={{
+                            background: '#f4f3ee',
+                            color: '#172b45',
+                            border: '1px solid #f4f3ee',
+                            boxShadow: 'none',
+                          }}
                           onClick={
                             handleCancelEditEmployee
                           }
@@ -3720,9 +4039,9 @@ if (loggedIn && user && user.role === 'HR') {
             selectedEmployee && (
               <div className="contracts">
 
-                <div className="section-header">
+                <div className="section-header hr-contracts-header">
 
-                  <div>
+                  <div className="hr-contracts-title-block">
                     <p className="eyebrow">
                       Documentacion laboral
                     </p>
@@ -3737,6 +4056,18 @@ if (loggedIn && user && user.role === 'HR') {
                       }
                     </h2>
                   </div>
+
+                  {contextCompanyLogo && (
+                    <div className="hr-context-company-logo">
+                      <img
+                        src={contextCompanyLogo}
+                        alt={
+                          'Logo de ' +
+                          selectedCompany.name
+                        }
+                      />
+                    </div>
+                  )}
 
                   <button
                     type="button"
@@ -3781,10 +4112,17 @@ if (loggedIn && user && user.role === 'HR') {
 
                   </div>
 
-                  <div className="contract-document">
+                  <div className="contract-document hr-contracts-employee-actions">
 
                     <button
                       type="button"
+                      className="hr-contracts-action-button"
+                      style={{
+                        background: '#f4f3ee',
+                        color: '#172b45',
+                        border: '1px solid #f4f3ee',
+                        boxShadow: 'none',
+                      }}
                       onClick={
                         handleAddContracts
                       }
@@ -3794,6 +4132,13 @@ if (loggedIn && user && user.role === 'HR') {
 
                     <button
                       type="button"
+                      className="hr-contracts-action-button"
+                      style={{
+                        background: '#f4f3ee',
+                        color: '#172b45',
+                        border: '1px solid #f4f3ee',
+                        boxShadow: 'none',
+                      }}
                       onClick={
                         handleContractStore
                       }
@@ -3816,9 +4161,9 @@ if (loggedIn && user && user.role === 'HR') {
             selectedEmployee && (
               <div className="contracts">
 
-                <div className="section-header">
+                <div className="section-header hr-contracts-header">
 
-                  <div>
+                  <div className="hr-contracts-title-block">
                     <p className="eyebrow">
                       Almacén de contratos
                     </p>
@@ -3827,6 +4172,18 @@ if (loggedIn && user && user.role === 'HR') {
                       Contratos almacenados
                     </h2>
                   </div>
+
+                  {contextCompanyLogo && (
+                    <div className="hr-context-company-logo">
+                      <img
+                        src={contextCompanyLogo}
+                        alt={
+                          'Logo de ' +
+                          selectedCompany.name
+                        }
+                      />
+                    </div>
+                  )}
 
                   <button
                     type="button"
@@ -3933,7 +4290,13 @@ if (loggedIn && user && user.role === 'HR') {
 
                                 <button
                                   type="button"
-                                  className="download-button"
+                                  className="download-button hr-contracts-download-button"
+                                  style={{
+                                    background: '#f4f3ee',
+                                    color: '#172b45',
+                                    border: '1px solid #f4f3ee',
+                                    boxShadow: 'none',
+                                  }}
                                   onClick={() =>
                                     handleDownload(
                                       contract,
@@ -3963,9 +4326,9 @@ if (loggedIn && user && user.role === 'HR') {
             selectedEmployee && (
               <div className="contracts">
 
-                <div className="section-header">
+                <div className="section-header hr-nominas-header">
 
-                  <div>
+                  <div className="hr-nominas-title-block">
                     <p className="eyebrow">
                       Documentacion laboral
                     </p>
@@ -3980,6 +4343,18 @@ if (loggedIn && user && user.role === 'HR') {
                       }
                     </h2>
                   </div>
+
+                  {contextCompanyLogo && (
+                    <div className="hr-context-company-logo">
+                      <img
+                        src={contextCompanyLogo}
+                        alt={
+                          'Logo de ' +
+                          selectedCompany.name
+                        }
+                      />
+                    </div>
+                  )}
 
                   <button
                     type="button"
@@ -4024,10 +4399,17 @@ if (loggedIn && user && user.role === 'HR') {
 
                   </div>
 
-                  <div className="contract-document">
+                  <div className="contract-document hr-nominas-actions">
 
                     <button
                       type="button"
+                      className="hr-nominas-action-button"
+                      style={{
+                        background: '#f4f3ee',
+                        color: '#172b45',
+                        border: '1px solid #f4f3ee',
+                        boxShadow: 'none',
+                      }}
                       onClick={
                         handleAddNominas
                       }
@@ -4037,6 +4419,13 @@ if (loggedIn && user && user.role === 'HR') {
 
                     <button
                       type="button"
+                      className="hr-nominas-action-button"
+                      style={{
+                        background: '#f4f3ee',
+                        color: '#172b45',
+                        border: '1px solid #f4f3ee',
+                        boxShadow: 'none',
+                      }}
                       onClick={
                         handleNominaStore
                       }
@@ -4059,9 +4448,9 @@ if (loggedIn && user && user.role === 'HR') {
             selectedEmployee && (
               <div className="contracts">
 
-                <div className="section-header">
+                <div className="section-header hr-nominas-header">
 
-                  <div>
+                  <div className="hr-nominas-title-block">
                     <p className="eyebrow">
                       Almacén de nóminas
                     </p>
@@ -4070,6 +4459,18 @@ if (loggedIn && user && user.role === 'HR') {
                       Nóminas almacenadas
                     </h2>
                   </div>
+
+                  {contextCompanyLogo && (
+                    <div className="hr-context-company-logo">
+                      <img
+                        src={contextCompanyLogo}
+                        alt={
+                          'Logo de ' +
+                          selectedCompany.name
+                        }
+                      />
+                    </div>
+                  )}
 
                   <button
                     type="button"
@@ -4164,7 +4565,13 @@ if (loggedIn && user && user.role === 'HR') {
 
                                 <button
                                   type="button"
-                                  className="download-button"
+                                  className="download-button hr-nominas-download-button"
+                                  style={{
+                                    background: '#f4f3ee',
+                                    color: '#172b45',
+                                    border: '1px solid #f4f3ee',
+                                    boxShadow: 'none',
+                                  }}
                                   onClick={() =>
                                     handleDownloadNomina(
                                       nomina,
@@ -4526,12 +4933,18 @@ if (loggedIn && user && user.role === 'HR') {
 
                         </div>
 
-                        <div className="contract-document">
+                        <div className="contract-document hr-nominas-download-area">
 
                           {nomina.document_path ? (
                             <button
                               type="button"
-                              className="download-button"
+                              className="download-button hr-nominas-download-button"
+                              style={{
+                                background: '#f4f3ee',
+                                color: '#172b45',
+                                border: '1px solid #f4f3ee',
+                                boxShadow: 'none',
+                              }}
                               onClick={() =>
                                 handleDownloadNomina(
                                   nomina,

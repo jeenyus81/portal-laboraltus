@@ -375,9 +375,10 @@ button:disabled {
   color: #ffffff;
 }
 
-.hr-nav-button.active {
-  background: #2f75bd;
-  color: #ffffff;
+.hr-nav-button.active,
+.hr-nav-button.active:hover {
+  background: #f4f3ee;
+  color: #172b45;
 }
 
 .hr-nav-icon {
@@ -415,8 +416,10 @@ button:disabled {
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
+  padding: 7px;
+  box-sizing: border-box;
 }
 
 .hr-user-box strong {
@@ -524,6 +527,7 @@ button:disabled {
   align-items: center;
   gap: 18px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .hr-topbar-date {
@@ -1260,7 +1264,7 @@ button:disabled {
 
 .hr-main .contract-info {
   width: 100%;
-  gap: 18px;
+  gap: 22px;
 }
 
 .hr-main .contract-info span {
@@ -1324,5 +1328,974 @@ button:disabled {
   .hr-main .section-header > .contract-document {
     width: 100%;
     justify-content: flex-start;
+  }
+}
+
+
+/* =========================================================
+   EMPRESAS — DISEÑO Y LOGO
+   SOLO afecta al panel de Empresas.
+   ========================================================= */
+
+.hr-main .hr-company-card {
+  min-height: 154px;
+  padding: 22px 24px;
+}
+
+.hr-main .hr-company-row {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns:
+    minmax(170px, 1.15fr)
+    110px
+    minmax(130px, 0.8fr)
+    minmax(270px, 1.6fr)
+    110px;
+  align-items: center;
+  column-gap: 24px;
+  min-height: 108px;
+}
+
+.hr-main .hr-company-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hr-main .hr-company-field span {
+  display: block;
+  margin-bottom: 8px;
+  color: #667085;
+  font-size: 13px;
+}
+
+.hr-main .hr-company-field strong {
+  display: block;
+  color: #172b45;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.hr-main .hr-company-address strong {
+  text-align: left;
+}
+
+.hr-main .hr-company-logo-slot {
+  width: 82px;
+  height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid #e3e7ec;
+  background: #f8fafc;
+  color: #98a2b3;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hr-main .hr-company-logo-slot img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.hr-main .hr-company-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.hr-main .hr-company-action .hr-companies-enter-button {
+  margin: 0;
+}
+
+.hr-main .hr-companies-add-button,
+.hr-main .hr-companies-enter-button {
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+}
+
+.hr-main .hr-companies-add-button:hover,
+.hr-main .hr-companies-enter-button:hover {
+  background: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+.hr-main .hr-company-logo-editor {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 2px;
+}
+
+.hr-main .hr-company-logo-preview {
+  width: 110px;
+  height: 110px;
+  flex: 0 0 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #e3e7ec;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: #98a2b3;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hr-main .hr-company-logo-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  padding: 10px;
+}
+
+.hr-main .hr-company-logo-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.hr-main .hr-company-logo-file-input {
+  display: none;
+}
+
+.hr-main .hr-company-logo-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 9px;
+  background: #f4f3ee;
+  color: #172b45;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #f4f3ee;
+}
+
+.hr-main .hr-company-logo-button:hover {
+  background: #ebe9e2;
+  border-color: #ebe9e2;
+}
+
+.hr-main .hr-company-logo-remove {
+  margin: 0;
+  padding: 9px 12px;
+}
+
+.hr-main .hr-company-logo-help {
+  color: #667085;
+  font-size: 12px;
+}
+
+.hr-main .hr-company-detail-grid {
+  grid-template-columns: 120px 230px 230px 290px;
+  justify-content: center;
+  gap: 16px;
+}
+
+.hr-main .hr-company-detail-grid > div {
+  text-align: center;
+}
+
+.hr-main .hr-company-detail-grid > div > span,
+.hr-main .hr-company-detail-grid > div > strong {
+  text-align: center;
+}
+
+.hr-main .hr-company-detail-grid > div:not(.hr-company-detail-logo) {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.hr-main .hr-company-detail-logo {
+  display: flex;
+  flex-direction: column;
+}
+
+.hr-main .hr-company-detail-logo > span {
+  display: block;
+  margin-bottom: 6px;
+  color: #667085;
+  font-size: 13px;
+}
+
+.hr-main .hr-company-detail-logo-box {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #e3e7ec;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #98a2b3;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hr-main .hr-company-detail-logo-box img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  padding: 8px;
+}
+
+@media (max-width: 1100px) {
+  .hr-main .hr-company-row {
+    grid-template-columns:
+      minmax(140px, 1.05fr)
+      90px
+      minmax(120px, 0.8fr)
+      minmax(210px, 1.3fr)
+      100px;
+    column-gap: 14px;
+  }
+
+  .hr-main .hr-company-logo-slot {
+    width: 70px;
+    height: 70px;
+  }
+
+  .hr-main .hr-company-detail-grid {
+    grid-template-columns: 100px 190px 190px 240px;
+    justify-content: center;
+    gap: 12px;
+  }
+}
+
+/* =========================================================
+   FICHA DE EMPRESA — BOTONES
+   Solo afecta al panel de detalle de Empresas.
+   ========================================================= */
+
+.hr-main .hr-company-detail-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.hr-main .hr-company-detail-actions .hr-company-detail-button {
+  margin: 0;
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.hr-main .hr-company-detail-actions .hr-company-detail-button:hover {
+  background: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+/* =========================================================
+   EMPRESAS — FORMULARIO EDITAR EMPRESA
+   ========================================================= */
+
+.hr-main .hr-company-edit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+}
+
+.hr-main .hr-company-edit-actions .hr-company-edit-save-button,
+.hr-main .hr-company-edit-actions .hr-company-edit-cancel-button {
+  margin: 0;
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.hr-main .hr-company-edit-actions .hr-company-edit-save-button:hover,
+.hr-main .hr-company-edit-actions .hr-company-edit-cancel-button:hover {
+  background: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+.hr-main .hr-company-logo-controls {
+  gap: 14px;
+}
+
+.hr-main .hr-company-logo-button,
+.hr-main .hr-company-logo-remove {
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  border-color: #f4f3ee !important;
+}
+
+.hr-main .hr-company-logo-button:hover,
+.hr-main .hr-company-logo-remove:hover {
+  background: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+/* =========================================================
+   EMPLEADOS — AJUSTES VISUALES
+   SOLO afecta al panel Empleados.
+   ========================================================= */
+
+.hr-main .hr-employees-section-header {
+  display: grid;
+  grid-template-columns: minmax(150px, 170px) 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.hr-main .hr-employees-title-block {
+  min-width: 0;
+  justify-self: start;
+}
+
+.hr-main .hr-employees-company-logo {
+  width: 62px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  justify-self: start;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.hr-main .hr-employees-company-logo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.hr-main .hr-employees-section-header > .contract-document {
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hr-main .hr-employees-add-button,
+.hr-main .hr-employees-enter-button {
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.hr-main .hr-employees-add-button:hover,
+.hr-main .hr-employees-enter-button:hover {
+  background: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+@media (max-width: 1100px) {
+  .hr-main .hr-employees-section-header {
+    grid-template-columns: minmax(140px, 160px) 64px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .hr-main .hr-employees-company-logo {
+    width: 56px;
+    height: 62px;
+  }
+}
+
+@media (max-width: 760px) {
+  .hr-main .hr-employees-section-header {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hr-main .hr-employees-company-logo {
+    align-self: flex-start;
+    width: 62px;
+    height: 64px;
+  }
+
+  .hr-main .hr-employees-section-header > .contract-document {
+    width: 100%;
+    justify-self: auto;
+    justify-content: flex-start;
+  }
+}
+
+/* =========================================================
+   EMPLEADOS — FICHA DEL EMPLEADO
+   ========================================================= */
+
+.hr-main .hr-employee-detail-header {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 90px auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.hr-main .hr-employee-detail-title {
+  min-width: 0;
+  justify-self: start;
+}
+
+.hr-main .hr-employee-detail-company-logo {
+  width: 72px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  justify-self: start;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.hr-main .hr-employee-detail-company-logo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.hr-main .hr-employee-detail-header > button {
+  margin: 0;
+  justify-self: end;
+}
+
+.hr-main .hr-employee-detail-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.hr-main .hr-employee-detail-actions .hr-employee-detail-button {
+  margin: 0;
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.hr-main .hr-employee-detail-actions .hr-employee-detail-button:hover {
+  background: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+@media (max-width: 1100px) {
+  .hr-main .hr-employee-detail-header {
+    grid-template-columns: minmax(180px, 1fr) 76px auto;
+    gap: 14px;
+  }
+
+  .hr-main .hr-employee-detail-company-logo {
+    width: 62px;
+    height: 60px;
+  }
+
+  .hr-main .hr-employee-detail-actions {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 760px) {
+  .hr-main .hr-employee-detail-header {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hr-main .hr-employee-detail-company-logo {
+    align-self: flex-start;
+    width: 62px;
+    height: 60px;
+  }
+
+  .hr-main .hr-employee-detail-header > button {
+    align-self: flex-start;
+  }
+
+  .hr-main .hr-employee-detail-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+/* =========================================================
+   EMPLEADOS — FORMULARIO EDITAR EMPLEADO
+   SOLO afecta a la pantalla de edición del empleado.
+   ========================================================= */
+
+.hr-main .hr-employee-edit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+}
+
+.hr-main .hr-employee-edit-actions .hr-employee-edit-save-button,
+.hr-main .hr-employee-edit-actions .hr-employee-edit-cancel-button {
+  margin: 0;
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.hr-main .hr-employee-edit-actions .hr-employee-edit-save-button:hover,
+.hr-main .hr-employee-edit-actions .hr-employee-edit-cancel-button:hover {
+  background: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+/* =========================================================
+   NOMINAS — AJUSTES VISUALES
+   Solo afecta a los paneles de Nóminas.
+   ========================================================= */
+
+.hr-main .hr-nominas-header {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 76px auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.hr-main .hr-nominas-title-block {
+  min-width: 0;
+  justify-self: start;
+}
+
+.hr-main .hr-nominas-company-logo {
+  width: 62px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  justify-self: start;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.hr-main .hr-nominas-company-logo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.hr-main .hr-nominas-header > button {
+  margin: 0;
+  justify-self: end;
+}
+
+.hr-main .hr-nominas-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.hr-main .hr-nominas-action-button,
+.hr-main .hr-nominas-download-button {
+  margin: 0;
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.hr-main .hr-nominas-action-button:hover,
+.hr-main .hr-nominas-download-button:hover {
+  background: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+.hr-main .hr-nominas-download-button {
+  margin-left: 10px;
+}
+
+@media (max-width: 1100px) {
+  .hr-main .hr-nominas-header {
+    grid-template-columns: minmax(200px, 1fr) 68px auto;
+    gap: 14px;
+  }
+
+  .hr-main .hr-nominas-company-logo {
+    width: 56px;
+    height: 54px;
+  }
+
+  .hr-main .hr-nominas-actions {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 760px) {
+  .hr-main .hr-nominas-header {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hr-main .hr-nominas-company-logo {
+    align-self: flex-start;
+    width: 62px;
+    height: 58px;
+  }
+
+  .hr-main .hr-nominas-header > button {
+    align-self: flex-start;
+  }
+
+  .hr-main .hr-nominas-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+/* =========================================================
+   CONTRATOS Y NOMINAS — BOTONES FINALES
+   ========================================================= */
+
+.hr-main .hr-contracts-actions,
+.hr-main .hr-nominas-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 22px;
+}
+
+.hr-main .hr-contracts-action-button,
+.hr-main .hr-contracts-download-button,
+.hr-main .hr-nominas-action-button,
+.hr-main .hr-nominas-download-button {
+  margin: 0 !important;
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.hr-main .hr-contracts-action-button:hover,
+.hr-main .hr-contracts-download-button:hover,
+.hr-main .hr-nominas-action-button:hover,
+.hr-main .hr-nominas-download-button:hover {
+  background: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+
+/* =========================================================
+   CORRECCION FINAL — CONTRATOS Y NOMINAS
+   ========================================================= */
+
+/* Solo los botones del panel del empleado para Contratos. */
+.hr-main .hr-contracts-employee-actions {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 22px !important;
+  flex-wrap: nowrap;
+}
+
+.hr-main .hr-contracts-employee-actions .hr-contracts-action-button {
+  margin: 0 !important;
+  background: #f4f3ee !important;
+  background-color: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.hr-main .hr-contracts-employee-actions .hr-contracts-action-button:hover {
+  background: #ebe9e2 !important;
+  background-color: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+/* Descargar dentro de Almacen de nominas. */
+.hr-main .hr-nominas-download-area {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.hr-main .hr-nominas-download-area .hr-nominas-download-button {
+  margin: 0 !important;
+  background: #f4f3ee !important;
+  background-color: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+  appearance: none;
+}
+
+.hr-main .hr-nominas-download-area .hr-nominas-download-button:hover {
+  background: #ebe9e2 !important;
+  background-color: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+
+/* =========================================================
+   CORRECCION EXACTA — DESCARGAR EN ALMACEN DE NOMINAS
+   ========================================================= */
+.hr-main .contracts .contract-document .hr-nominas-download-button {
+  background: #f4f3ee !important;
+  background-color: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.hr-main .contracts .contract-document .hr-nominas-download-button:hover {
+  background: #ebe9e2 !important;
+  background-color: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+
+/* =========================================================
+   LOGOTIPO DE EMPRESA — TAMAÑO UNIFICADO
+   Mismo tamaño visual en Empleados, ficha, Contratos y Nóminas.
+   ========================================================= */
+
+.hr-main .hr-context-company-logo {
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  min-height: 64px !important;
+  max-width: 64px !important;
+  max-height: 64px !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  justify-self: start;
+  align-self: center;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.hr-main .hr-context-company-logo img {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  display: block;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+/* Cabeceras de Contratos: mismo esquema que Nóminas, con logo centrado entre título y Volver. */
+.hr-main .hr-contracts-header {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 64px auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.hr-main .hr-contracts-title-block {
+  min-width: 0;
+  justify-self: start;
+}
+
+.hr-main .hr-contracts-header > button {
+  margin: 0;
+  justify-self: end;
+}
+
+@media (max-width: 1100px) {
+  .hr-main .hr-contracts-header {
+    grid-template-columns: minmax(200px, 1fr) 64px auto;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 760px) {
+  .hr-main .hr-contracts-header {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hr-main .hr-context-company-logo {
+    align-self: flex-start;
+  }
+
+  .hr-main .hr-contracts-header > button,
+  .hr-main .hr-nominas-header > button {
+    align-self: flex-start;
+  }
+}
+
+
+/* =========================================================
+   LOGOS DE EMPRESA — TAMAÑO FINAL UNIFICADO
+   ========================================================= */
+.hr-main .hr-context-company-logo,
+.hr-main .hr-context-company-logo img {
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  min-height: 64px !important;
+  max-width: 64px !important;
+  max-height: 64px !important;
+}
+
+.hr-main .hr-context-company-logo img {
+  display: block;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+/* =========================================================
+   CABECERAS RR. HH. — LOGO Y BOTÓN UNIFICADOS
+   Misma estructura y misma distancia en Empleados,
+   Ficha del empleado, Contratos, Almacén de contratos,
+   Nóminas y Almacén de nóminas.
+   ========================================================= */
+
+.hr-main .hr-employees-section-header,
+.hr-main .hr-employee-detail-header,
+.hr-main .hr-contracts-header,
+.hr-main .hr-nominas-header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 64px auto !important;
+  align-items: center !important;
+  column-gap: 18px !important;
+  row-gap: 0 !important;
+}
+
+.hr-main .hr-employees-section-header .hr-context-company-logo,
+.hr-main .hr-employee-detail-header .hr-context-company-logo,
+.hr-main .hr-contracts-header .hr-context-company-logo,
+.hr-main .hr-nominas-header .hr-context-company-logo {
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  min-height: 64px !important;
+  max-width: 64px !important;
+  max-height: 64px !important;
+  margin: 0 !important;
+  justify-self: start !important;
+  align-self: center !important;
+}
+
+.hr-main .hr-employees-section-header .hr-context-company-logo img,
+.hr-main .hr-employee-detail-header .hr-context-company-logo img,
+.hr-main .hr-contracts-header .hr-context-company-logo img,
+.hr-main .hr-nominas-header .hr-context-company-logo img {
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  min-height: 64px !important;
+  max-width: 64px !important;
+  max-height: 64px !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+.hr-main .hr-employees-section-header > .contract-document,
+.hr-main .hr-employee-detail-header > button,
+.hr-main .hr-contracts-header > button,
+.hr-main .hr-nominas-header > button {
+  margin: 0 !important;
+  justify-self: end !important;
+}
+
+@media (max-width: 1100px) {
+  .hr-main .hr-employees-section-header,
+  .hr-main .hr-employee-detail-header,
+  .hr-main .hr-contracts-header,
+  .hr-main .hr-nominas-header {
+    grid-template-columns: minmax(0, 1fr) 64px auto !important;
+    column-gap: 14px !important;
+  }
+
+  .hr-main .hr-employees-section-header .hr-context-company-logo,
+  .hr-main .hr-employee-detail-header .hr-context-company-logo,
+  .hr-main .hr-contracts-header .hr-context-company-logo,
+  .hr-main .hr-nominas-header .hr-context-company-logo,
+  .hr-main .hr-employees-section-header .hr-context-company-logo img,
+  .hr-main .hr-employee-detail-header .hr-context-company-logo img,
+  .hr-main .hr-contracts-header .hr-context-company-logo img,
+  .hr-main .hr-nominas-header .hr-context-company-logo img {
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+    min-height: 64px !important;
+    max-width: 64px !important;
+    max-height: 64px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .hr-main .hr-employees-section-header,
+  .hr-main .hr-employee-detail-header,
+  .hr-main .hr-contracts-header,
+  .hr-main .hr-nominas-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .hr-main .hr-employees-section-header .hr-context-company-logo,
+  .hr-main .hr-employee-detail-header .hr-context-company-logo,
+  .hr-main .hr-contracts-header .hr-context-company-logo,
+  .hr-main .hr-nominas-header .hr-context-company-logo {
+    align-self: flex-start !important;
+  }
+
+  .hr-main .hr-employees-section-header > .contract-document,
+  .hr-main .hr-employee-detail-header > button,
+  .hr-main .hr-contracts-header > button,
+  .hr-main .hr-nominas-header > button {
+    align-self: flex-start !important;
   }
 }
