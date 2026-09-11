@@ -3465,7 +3465,15 @@ if (loggedIn && user && user.role === 'HR') {
                 !employeesError &&
                 employees.length > 0 && (
                   <div className="contract-list">
-                    {employees.map((employee) => {
+                    {[...employees]
+                      .sort((a, b) => {
+                        const nameA = `${a.first_name || ''} ${a.last_name || ''}`.trim()
+                        const nameB = `${b.first_name || ''} ${b.last_name || ''}`.trim()
+                        return nameA.localeCompare(nameB, 'es', {
+                          sensitivity: 'base',
+                        })
+                      })
+                      .map((employee) => {
                       const employeeCompany =
                         getCompanyForEmployee(employee)
                       const employeeCompanyLogo =
