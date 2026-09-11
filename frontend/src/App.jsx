@@ -30,6 +30,7 @@ function App() {
 
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [companyView, setCompanyView] = useState('companies')
+  const [activeMenu, setActiveMenu] = useState('companies')
 
   const [companyForm, setCompanyForm] = useState({
     name: '',
@@ -298,6 +299,101 @@ function App() {
     }
   }
 
+  async function loadBackendCompanyLogo(
+    companyId,
+    token,
+  ) {
+    if (!companyId || !token) {
+      return ''
+    }
+
+    try {
+      const response = await fetch(
+        API_URL +
+          '/api/companies/' +
+          companyId +
+          '/logo',
+        {
+          headers: {
+            Authorization: 'Bearer ' + token,
+          },
+        },
+      )
+
+      if (response.status === 404) {
+        return ''
+      }
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        return ''
+      }
+
+      return data?.logo || ''
+    } catch {
+      return ''
+    }
+  }
+
+  async function saveCompanyLogoToBackend(
+    companyId,
+    logoData,
+    token,
+  ) {
+    if (!companyId || !token) {
+      throw new Error(
+        'No se puede guardar el logo sin una sesion valida',
+      )
+    }
+
+    const url =
+      API_URL +
+      '/api/companies/' +
+      companyId +
+      '/logo'
+
+    if (!logoData) {
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          Authorization: 'Bearer ' + token,
+        },
+      })
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail || 'No se pudo eliminar el logo de la empresa',
+        )
+      }
+
+      return ''
+    }
+
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token,
+      },
+      body: JSON.stringify({
+        logo: logoData,
+      }),
+    })
+
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail || 'No se pudo guardar el logo de la empresa',
+      )
+    }
+
+    return data?.logo || logoData
+  }
+
   function handleCompanyLogoChange(event) {
     const file = event.target.files?.[0]
 
@@ -381,11 +477,29 @@ function App() {
         )
       }
 
-      setCompanies(
+      const companiesWithLogos =
         Array.isArray(data)
-          ? data.map(addStoredLogoToCompany)
-          : [],
-      )
+          ? await Promise.all(
+              data.map(async (company) => {
+                const backendLogo =
+                  await loadBackendCompanyLogo(
+                    company.id,
+                    token,
+                  )
+
+                return {
+                  ...addStoredLogoToCompany(company),
+                  logo:
+                    backendLogo ||
+                    company.logo ||
+                    getStoredCompanyLogo(company.id) ||
+                    '',
+                }
+              }),
+            )
+          : []
+
+      setCompanies(companiesWithLogos)
     } catch (err) {
       setCompaniesError(err.message)
     } finally {
@@ -398,6 +512,7 @@ function App() {
   // =========================================================
 
   function handleEnterCompany(company) {
+    setActiveMenu('companies')
     setSelectedCompany(company)
     setCompanyView('company')
     setEditingCompany(null)
@@ -489,16 +604,17 @@ function App() {
         )
       }
 
-      const createdCompany = {
-        ...addStoredLogoToCompany(data),
-        logo: companyForm.logo || '',
-      }
+      const savedLogo = companyForm.logo
+        ? await saveCompanyLogoToBackend(
+            data.id,
+            companyForm.logo,
+            token,
+          )
+        : ''
 
-      if (companyForm.logo) {
-        saveStoredCompanyLogo(
-          data.id,
-          companyForm.logo,
-        )
+      const createdCompany = {
+        ...data,
+        logo: savedLogo,
       }
 
       setCompanies((previous) => [
@@ -512,6 +628,7 @@ function App() {
         name: '',
         tax_id: '',
         address: '',
+        logo: '',
       })
     } catch (err) {
       setCompanyCreateError(err.message)
@@ -595,21 +712,16 @@ function App() {
         )
       }
 
-      if (companyForm.logo) {
-        saveStoredCompanyLogo(
+      const savedLogo =
+        await saveCompanyLogoToBackend(
           data.id,
-          companyForm.logo,
+          companyForm.logo || '',
+          token,
         )
-      } else {
-        saveStoredCompanyLogo(
-          data.id,
-          '',
-        )
-      }
 
       const updatedCompany = {
         ...data,
-        logo: companyForm.logo || '',
+        logo: savedLogo,
       }
 
       setCompanies((previous) =>
@@ -627,6 +739,7 @@ function App() {
         name: '',
         tax_id: '',
         address: '',
+        logo: '',
       })
     } catch (err) {
       setCompaniesError(err.message)
@@ -685,6 +798,7 @@ function App() {
   // =========================================================
 
   async function handleEnterEmployees() {
+    setActiveMenu('employees')
     const token = localStorage.getItem('access_token')
 
     if (!token) {
@@ -708,6 +822,7 @@ function App() {
   // =========================================================
 
   function handleBackToCompany() {
+    setActiveMenu('companies')
     setCompanyView('company')
     setSelectedEmployee(null)
     setCreatingEmployee(false)
@@ -911,6 +1026,7 @@ function App() {
   // =========================================================
 
   async function handleEnterEmployee(employee) {
+    setActiveMenu('employees')
     const token = localStorage.getItem('access_token')
 
     if (!token) {
@@ -937,6 +1053,7 @@ function App() {
   // =========================================================
 
   async function handleViewContracts(employee) {
+    setActiveMenu('contracts')
     const token = localStorage.getItem('access_token')
 
     if (!token) {
@@ -959,6 +1076,7 @@ function App() {
   // =========================================================
 
   async function handleViewNominas(employee) {
+    setActiveMenu('nominas')
     const token = localStorage.getItem('access_token')
 
     if (!token) {
@@ -1241,6 +1359,7 @@ async function handleDirectNominaFile(event) {
   // =========================================================
 
   function handleBackToEmployee() {
+    setActiveMenu('employees')
     setCompanyView('employee')
     setEmployeeSection('employee')
 
@@ -1259,6 +1378,7 @@ async function handleDirectNominaFile(event) {
   // =========================================================
 
   function handleBackToContractsMenu() {
+    setActiveMenu('contracts')
     setCompanyView('employeeContracts')
     setEmployeeSection('contracts')
 
@@ -1271,6 +1391,7 @@ async function handleDirectNominaFile(event) {
   // =========================================================
 
   function handleBackToNominasMenu() {
+    setActiveMenu('nominas')
     setCompanyView('employeeNominas')
     setEmployeeSection('nominas')
 
@@ -1283,6 +1404,7 @@ async function handleDirectNominaFile(event) {
   // =========================================================
 
   function handleBackToEmployees() {
+    setActiveMenu('employees')
     setCompanyView('employees')
     setSelectedEmployee(null)
     setEditingEmployee(null)
@@ -1813,6 +1935,7 @@ async function handleDirectNominaFile(event) {
     setEmployeeCreateError('')
 
     setLoggedIn(false)
+      setActiveMenu('companies')
 
     setUsername('')
     setPassword('')
@@ -1874,11 +1997,17 @@ if (loggedIn && user && user.role === 'HR') {
 <button
   type="button"
   className={
-    companyView === 'dashboard'
+    activeMenu === 'dashboard'
       ? 'hr-nav-button active'
       : 'hr-nav-button'
   }
+  style={
+    activeMenu === 'dashboard'
+      ? { background: '#f4f3ee', color: '#172b45' }
+      : undefined
+  }
   onClick={() => {
+    setActiveMenu('dashboard')
     setCompanyView('dashboard')
     setSelectedCompany(null)
     setSelectedEmployee(null)
@@ -1891,11 +2020,17 @@ if (loggedIn && user && user.role === 'HR') {
           <button
             type="button"
             className={
-              companyView === 'companies' || companyView === 'company'
+              activeMenu === 'companies'
                 ? 'hr-nav-button active'
                 : 'hr-nav-button'
             }
+            style={
+              activeMenu === 'companies'
+                ? { background: '#f4f3ee', color: '#172b45' }
+                : undefined
+            }
             onClick={() => {
+              setActiveMenu('companies')
               setCompanyView(
                 selectedCompany ? 'company' : 'companies'
               )
@@ -1908,11 +2043,17 @@ if (loggedIn && user && user.role === 'HR') {
           <button
             type="button"
             className={
-              companyView === 'employees' || companyView === 'employee'
+              activeMenu === 'employees'
                 ? 'hr-nav-button active'
                 : 'hr-nav-button'
             }
+            style={
+              activeMenu === 'employees'
+                ? { background: '#f4f3ee', color: '#172b45' }
+                : undefined
+            }
             onClick={() => {
+              setActiveMenu('employees')
               if (selectedCompany) {
                 handleEnterEmployees()
               } else {
@@ -1927,19 +2068,18 @@ if (loggedIn && user && user.role === 'HR') {
           <button
             type="button"
             className={
-              companyView === 'employeeContracts' ||
-              companyView === 'employeeContractStore'
+              activeMenu === 'contracts'
                 ? 'hr-nav-button active'
                 : 'hr-nav-button'
             }
+            style={
+              activeMenu === 'contracts'
+                ? { background: '#f4f3ee', color: '#172b45' }
+                : undefined
+            }
             onClick={() => {
-              if (selectedEmployee) {
-                handleViewContracts(selectedEmployee)
-              } else if (selectedCompany) {
-                handleEnterEmployees()
-              } else {
-                setCompanyView('companies')
-              }
+              setActiveMenu('contracts')
+              setCompanyView('contractsBlank')
             }}
           >
             <span className="hr-nav-icon">📄</span>
@@ -1949,19 +2089,18 @@ if (loggedIn && user && user.role === 'HR') {
           <button
             type="button"
             className={
-              companyView === 'employeeNominas' ||
-              companyView === 'employeeNominaStore'
+              activeMenu === 'nominas'
                 ? 'hr-nav-button active'
                 : 'hr-nav-button'
             }
+            style={
+              activeMenu === 'nominas'
+                ? { background: '#f4f3ee', color: '#172b45' }
+                : undefined
+            }
             onClick={() => {
-              if (selectedEmployee) {
-                handleViewNominas(selectedEmployee)
-              } else if (selectedCompany) {
-                handleEnterEmployees()
-              } else {
-                setCompanyView('companies')
-              }
+              setActiveMenu('nominas')
+              setCompanyView('nominasBlank')
             }}
           >
             <span className="hr-nav-icon">💳</span>
@@ -2052,6 +2191,46 @@ if (loggedIn && user && user.role === 'HR') {
   </div>
 
 </div>
+{/* ================================================= */}
+{/* PANEL VACÍO DE CONTRATOS */}
+{/* ================================================= */}
+
+{companyView === 'contractsBlank' && (
+  <div className="contracts">
+    <div className="section-header">
+      <div>
+        <p className="eyebrow">
+          Gestion de contratos
+        </p>
+
+        <h2>
+          Contratos
+        </h2>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* ================================================= */}
+{/* PANEL VACÍO DE NÓMINAS */}
+{/* ================================================= */}
+
+{companyView === 'nominasBlank' && (
+  <div className="contracts">
+    <div className="section-header">
+      <div>
+        <p className="eyebrow">
+          Gestion de nóminas
+        </p>
+
+        <h2>
+          Nóminas
+        </h2>
+      </div>
+    </div>
+  </div>
+)}
+
 {/* ================================================= */}
 {/* DASHBOARD RR. HH. */}
 {/* ================================================= */}
@@ -2493,6 +2672,7 @@ if (loggedIn && user && user.role === 'HR') {
             type="button"
             className="hr-quick-action"
             onClick={() => {
+              setActiveMenu('contracts')
               if (selectedEmployee) {
                 handleViewContracts(selectedEmployee)
               } else if (selectedCompany) {
@@ -2530,6 +2710,7 @@ if (loggedIn && user && user.role === 'HR') {
             type="button"
             className="hr-quick-action"
             onClick={() => {
+              setActiveMenu('nominas')
               if (selectedEmployee) {
                 handleViewNominas(selectedEmployee)
               } else if (selectedCompany) {

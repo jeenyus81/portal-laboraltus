@@ -1,4 +1,5 @@
-from datetime import date
+import base64
+
 from pathlib import Path
 
 from fastapi import (
@@ -47,6 +48,51 @@ from app.security import (
 # ============================================================
 
 app = FastAPI()
+
+
+# ============================================================
+# LOGOS DE EMPRESA
+# ============================================================
+
+COMPANY_LOGOS_DIR = Path("uploads/company_logos")
+COMPANY_LOGOS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _company_logo_files(company_id: int):
+    return COMPANY_LOGOS_DIR.glob(f"company_{company_id}.*")
+
+
+def _decode_company_logo(logo_data: str):
+    if not isinstance(logo_data, str) or not logo_data.startswith("data:"):
+        raise HTTPException(status_code=400, detail="El logo debe ser una imagen en formato data URL")
+
+    try:
+        header, encoded = logo_data.split(",", 1)
+        mime_type = header[5:].split(";", 1)[0].lower()
+        allowed_types = {
+            "image/jpeg": ".jpg",
+            "image/png": ".png",
+            "image/webp": ".webp",
+            "image/svg+xml": ".svg",
+        }
+        extension = allowed_types.get(mime_type)
+        if extension is None:
+            raise HTTPException(status_code=400, detail="El logo debe ser JPG, PNG, WEBP o SVG")
+        content = base64.b64decode(encoded, validate=True)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=400, detail="El logo no es valido")
+
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="El logo no puede superar los 5 MB")
+
+    return mime_type, extension, content
+
+
+def _logo_data_url(path: Path, mime_type: str):
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
 
 
 # ============================================================
@@ -262,6 +308,72 @@ def update_company(
         session.refresh(company)
 
         return company
+
+
+@app.get("/api/companies/{company_id}/logo")
+def get_company_logo(
+    company_id: int,
+    current_user: User = Depends(require_hr),
+):
+    with Session(engine) as session:
+        company = session.get(Company, company_id)
+        if company is None:
+            raise HTTPException(status_code=404, detail="Company not found")
+
+    files = list(_company_logo_files(company_id))
+    if not files:
+        raise HTTPException(status_code=404, detail="Company logo not found")
+
+    path = files[0]
+    mime_types = {
+        ".jpg": "image/jpeg",
+        ".png": "image/png",
+        ".webp": "image/webp",
+        ".svg": "image/svg+xml",
+    }
+    mime_type = mime_types.get(path.suffix.lower())
+    if mime_type is None:
+        raise HTTPException(status_code=500, detail="Company logo format not supported")
+
+    return {"logo": _logo_data_url(path, mime_type)}
+
+
+@app.put("/api/companies/{company_id}/logo")
+def save_company_logo(
+    company_id: int,
+    data: dict,
+    current_user: User = Depends(require_hr),
+):
+    with Session(engine) as session:
+        company = session.get(Company, company_id)
+        if company is None:
+            raise HTTPException(status_code=404, detail="Company not found")
+
+    logo_data = data.get("logo")
+    _mime_type, extension, content = _decode_company_logo(logo_data)
+
+    for old_path in _company_logo_files(company_id):
+        old_path.unlink(missing_ok=True)
+
+    path = COMPANY_LOGOS_DIR / f"company_{company_id}{extension}"
+    path.write_bytes(content)
+    return {"logo": logo_data}
+
+
+@app.delete("/api/companies/{company_id}/logo")
+def delete_company_logo(
+    company_id: int,
+    current_user: User = Depends(require_hr),
+):
+    with Session(engine) as session:
+        company = session.get(Company, company_id)
+        if company is None:
+            raise HTTPException(status_code=404, detail="Company not found")
+
+    for old_path in _company_logo_files(company_id):
+        old_path.unlink(missing_ok=True)
+
+    return {"logo": ""}
 
 
 # ============================================================

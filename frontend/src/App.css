@@ -2299,3 +2299,17 @@ button:disabled {
     align-self: flex-start !important;
   }
 }
+
+
+/* =========================================================
+   MENU LATERAL — ESTADO ACTIVO FINAL
+   ========================================================= */
+.hr-sidebar .hr-nav-button.active,
+.hr-sidebar .hr-nav-button.active:hover,
+.hr-sidebar .hr-nav-button.active:focus,
+.hr-sidebar .hr-nav-button.active:focus-visible {
+  background: #f4f3ee !important;
+  background-color: #f4f3ee !important;
+  color: #172b45 !important;
+  box-shadow: none !important;
+}
