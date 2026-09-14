@@ -56,6 +56,9 @@ function App() {
 
   const [selectedEmployee, setSelectedEmployee] = useState(null)
   const [employeeListMode, setEmployeeListMode] = useState('company')
+  const [employeePortalView, setEmployeePortalView] = useState('dashboard')
+  const [employeeActiveMenu, setEmployeeActiveMenu] = useState('dashboard')
+  const [downloadedContractIds, setDownloadedContractIds] = useState([])
 
   // =========================================================
   // EDICION DE EMPLEADO
@@ -224,6 +227,87 @@ function App() {
   const [selectedFiles, setSelectedFiles] = useState({})
 
   // =========================================================
+  // CONTRATOS DESCARGADOS POR EL EMPLEADO
+  // =========================================================
+
+  async function loadDownloadedContracts(employeeId, token) {
+    if (!employeeId || !token) {
+      setDownloadedContractIds([])
+      return
+    }
+
+    try {
+      const response = await fetch(
+        API_URL +
+          '/api/employees/' +
+          employeeId +
+          '/contracts/downloaded',
+        {
+          headers: {
+            Authorization: 'Bearer ' + token,
+          },
+        },
+      )
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setDownloadedContractIds([])
+        return
+      }
+
+      setDownloadedContractIds(
+        Array.isArray(data?.contract_ids)
+          ? data.contract_ids
+          : [],
+      )
+    } catch {
+      setDownloadedContractIds([])
+    }
+  }
+
+  async function markContractAsDownloaded(employeeId, contractId) {
+    const token = localStorage.getItem('access_token')
+
+    if (!token || !employeeId || !contractId) {
+      return false
+    }
+
+    try {
+      const response = await fetch(
+        API_URL +
+          '/api/employees/' +
+          employeeId +
+          '/contracts/' +
+          contractId +
+          '/downloaded',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+          },
+        },
+      )
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok || data?.downloaded !== true) {
+        return false
+      }
+
+      setDownloadedContractIds((previous) =>
+        previous.includes(contractId)
+          ? previous
+          : [...previous, contractId],
+      )
+
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  // =========================================================
   // NOMINAS
   // =========================================================
 
@@ -331,6 +415,32 @@ function App() {
         return ''
       }
 
+      return data?.logo || ''
+    } catch {
+      return ''
+    }
+  }
+
+  async function loadEmployeeCompanyLogo(companyId, token) {
+    if (!companyId || !token) {
+      return ''
+    }
+
+    try {
+      const response = await fetch(
+        API_URL + '/api/companies/' + companyId + '/logo',
+        {
+          headers: {
+            Authorization: 'Bearer ' + token,
+          },
+        },
+      )
+
+      if (!response.ok) {
+        return ''
+      }
+
+      const data = await response.json()
       return data?.logo || ''
     } catch {
       return ''
@@ -1535,6 +1645,13 @@ async function handleDirectNominaFile(event) {
       link.remove()
 
       window.URL.revokeObjectURL(downloadUrl)
+
+      if (user?.role === 'EMPLOYEE') {
+        await markContractAsDownloaded(
+          targetEmployeeId,
+          contract.id,
+        )
+      }
     } catch (err) {
       setContractsError(err.message)
     }
@@ -1886,16 +2003,33 @@ async function handleDirectNominaFile(event) {
           )
         }
 
+        const employeeCompanyLogo =
+          (await loadEmployeeCompanyLogo(
+            me.company_id,
+            data.access_token,
+          )) ||
+          me.company_logo ||
+          getStoredCompanyLogo(me.company_id) ||
+          ''
+
         const loggedUser = {
           ...me,
+          company_logo: employeeCompanyLogo,
           role: data.role,
           username: username,
         }
 
         setUser(loggedUser)
         setLoggedIn(true)
+        setEmployeePortalView('dashboard')
+        setEmployeeActiveMenu('dashboard')
 
         await loadContracts(
+          me.id,
+          data.access_token,
+        )
+
+        await loadDownloadedContracts(
           me.id,
           data.access_token,
         )
@@ -4781,7 +4915,7 @@ if (loggedIn && user && user.role === 'HR') {
                         handleNominaStore
                       }
                     >
-                      Almacén de nóminas
+                      Almacén de contratos
                     </button>
 
                   </div>
@@ -4956,121 +5090,455 @@ if (loggedIn && user && user.role === 'HR') {
   // =========================================================
 
   if (loggedIn && user) {
+    const employeeFullName =
+      `${user.first_name || ''} ${user.last_name || ''}`.trim()
+    const employeeCompanyName =
+      user.company_name || 'Empresa'
+    const employeeCompanyLogo =
+      user.company_logo || ''
+    const employeePortalName =
+      'PORTAL ' + employeeCompanyName
+
     return (
-      <main className="app">
-        <section className="card">
+      <main className="app employee-app">
+        <aside className="employee-sidebar">
 
-          <div className="header">
+          <div className="employee-brand">
+            <div className="employee-brand-logo">
+              {employeeCompanyLogo ? (
+                <img
+                  src={employeeCompanyLogo}
+                  alt={'Logo de ' + employeeCompanyName}
+                />
+              ) : (
+                <span>Sin logo</span>
+              )}
+            </div>
 
-            <div>
-              <p className="eyebrow">
-                Portal Laboraltus
-              </p>
+            <div className="employee-brand-name">
+              {employeeCompanyName}
+            </div>
+          </div>
 
-              <h1>
-                Bienvenido, {user.first_name}
-              </h1>
+          <nav className="employee-nav">
+            <button
+              type="button"
+              className={
+                employeeActiveMenu === 'dashboard'
+                  ? 'employee-nav-button active'
+                  : 'employee-nav-button'
+              }
+              onClick={() => {
+                setEmployeePortalView('dashboard')
+                setEmployeeActiveMenu('dashboard')
+              }}
+            >
+              <span className="employee-nav-icon">⌂</span>
+              Inicio
+            </button>
+
+            <button
+              type="button"
+              className={
+                employeeActiveMenu === 'profile'
+                  ? 'employee-nav-button active'
+                  : 'employee-nav-button'
+              }
+              onClick={() => {
+                setEmployeePortalView('dashboard')
+                setEmployeeActiveMenu('profile')
+              }}
+            >
+              <span className="employee-nav-icon">👤</span>
+              Mi perfil
+            </button>
+
+            <button
+              type="button"
+              className={
+                employeeActiveMenu === 'contracts'
+                  ? 'employee-nav-button active'
+                  : 'employee-nav-button'
+              }
+              onClick={() => {
+                setEmployeePortalView('contracts')
+                setEmployeeActiveMenu('contracts')
+              }}
+            >
+              <span className="employee-nav-icon">📄</span>
+              Contratos
+            </button>
+
+            <button
+              type="button"
+              className={
+                employeeActiveMenu === 'nominas'
+                  ? 'employee-nav-button active'
+                  : 'employee-nav-button'
+              }
+              onClick={() => {
+                setEmployeePortalView('nominas')
+                setEmployeeActiveMenu('nominas')
+              }}
+            >
+              <span className="employee-nav-icon">💳</span>
+              Nóminas
+            </button>
+          </nav>
+
+          <div className="employee-sidebar-bottom">
+            <div className="employee-user-box">
+              <div className="employee-user-avatar">
+                <span>👤</span>
+              </div>
+
+              <div>
+                <strong>{employeeFullName}</strong>
+                <span>Empleado/a</span>
+              </div>
             </div>
 
             <button
               type="button"
-              className="secondary"
+              className="employee-logout-button"
               onClick={handleLogout}
             >
-              Cerrar sesion
+              <span className="employee-nav-icon">↪</span>
+              Cerrar sesión
             </button>
-
           </div>
 
-          {/* PERFIL */}
+        </aside>
 
-          <div className="profile">
+        <div className="employee-main">
+          <div className="employee-topbar">
+            <div className="employee-topbar-title">
+              <p className="eyebrow">
+                {employeePortalName}
+              </p>
 
-            <h2>
-              Mi perfil
-            </h2>
-
-            <div className="profile-grid">
-
-              <div>
-                <span>
-                  Nombre
-                </span>
-
-                <strong>
-                  {user.first_name}{' '}
-                  {user.last_name}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Usuario
-                </span>
-
-                <strong>
-                  {user.username}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Rol
-                </span>
-
-                <strong>
-                  {user.role}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Puesto
-                </span>
-
-                <strong>
-                  {user.job_title}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Categoria
-                </span>
-
-                <strong>
-                  {user.job_category}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Nacionalidad
-                </span>
-
-                <strong>
-                  {user.nationality}
-                </strong>
-              </div>
-
+              <h1 className="employee-panel-title">
+                Panel de control del empleado
+              </h1>
             </div>
 
+            <div className="employee-topbar-date">
+              <span className="employee-topbar-date-icon">
+                ▣
+              </span>
+
+              <span>
+                {new Date().toLocaleDateString(
+                  'es-ES',
+                  {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  },
+                )}
+              </span>
+            </div>
           </div>
 
-          {/* CONTRATOS */}
+          {employeePortalView === 'dashboard' && (
+            <div className="employee-dashboard">
+              <div className="employee-dashboard-welcome">
+                <div>
+                  <h2>
+                    Bienvenido/a, {employeeFullName}
+                  </h2>
 
-          <div className="contracts">
+                  <p className="muted">
+                    Panel de control del empleado
+                  </p>
+                </div>
+              </div>
 
-            <div className="section-header">
+              <div className="employee-dashboard-stats">
 
-              <div>
+                <article className="employee-stat-card employee-stat-profile">
+                  <div className="employee-stat-icon">
+                    👥
+                  </div>
+
+                  <div className="employee-stat-body">
+                    <span>Mi perfil</span>
+                    <strong>Datos</strong>
+                    <p>Mis datos</p>
+                  </div>
+                </article>
+
+                <article
+                  className="employee-stat-card"
+                  onClick={() =>
+                    setEmployeePortalView('contracts')
+                  }
+                >
+                  <div className="employee-stat-icon">
+                    📄
+                  </div>
+
+                  <div className="employee-stat-body">
+                    <span>Contratos</span>
+                    <strong>
+                      {contracts.length}
+                    </strong>
+                    <p>Almacén de contratos</p>
+                  </div>
+                </article>
+
+                <article
+                  className="employee-stat-card"
+                  onClick={() =>
+                    setEmployeePortalView('nominas')
+                  }
+                >
+                  <div className="employee-stat-icon">
+                    💳
+                  </div>
+
+                  <div className="employee-stat-body">
+                    <span>Nóminas</span>
+                    <strong>
+                      {nominas.length}
+                    </strong>
+                    <p>Almacén de nóminas</p>
+                  </div>
+                </article>
+              </div>
+
+              <div className="employee-dashboard-bottom">
+                <section className="employee-dashboard-box">
+                  <div className="employee-dashboard-box-header">
+                    <p className="eyebrow">
+                      INFORMACIÓN PERSONAL
+                    </p>
+                    <h2>Mis datos</h2>
+                  </div>
+
+                  <div className="employee-info-list">
+                    <div>
+                      <span>Nombre completo</span>
+                      <strong>{employeeFullName}</strong>
+                    </div>
+
+                    <div>
+                      <span>Puesto</span>
+                      <strong>
+                        {user.job_title || 'Sin puesto'}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>Categoría</span>
+                      <strong>
+                        {user.job_category || 'Sin categoría'}
+                      </strong>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="employee-dashboard-box">
+                  <div className="employee-dashboard-box-header">
+                    <p className="eyebrow">
+                      ACCESOS RÁPIDOS
+                    </p>
+                    <h2>Gestión habitual</h2>
+                  </div>
+
+                  <div className="employee-quick-actions">
+                    <button
+                      type="button"
+                      className="employee-quick-action"
+                      onClick={() =>
+                        setEmployeePortalView('contracts')
+                      }
+                    >
+                      <span className="employee-quick-action-icon">
+                        📄
+                      </span>
+                      <span className="employee-quick-action-content">
+                        <strong>Mis contratos</strong>
+                        <span>
+                          Consultar documentación laboral
+                        </span>
+                      </span>
+                      <span className="employee-quick-action-arrow">
+                        →
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="employee-quick-action"
+                      onClick={() =>
+                        setEmployeePortalView('nominas')
+                      }
+                    >
+                      <span className="employee-quick-action-icon">
+                        💳
+                      </span>
+                      <span className="employee-quick-action-content">
+                        <strong>Mis nóminas</strong>
+                        <span>
+                          Consultar tus nóminas
+                        </span>
+                      </span>
+                      <span className="employee-quick-action-arrow">
+                        →
+                      </span>
+                    </button>
+                  </div>
+                </section>
+              </div>
+            </div>
+          )}
+
+          {employeePortalView === 'contracts' && (
+            <div className="employee-content-panel employee-contracts-landing">
+
+              <div className="employee-content-header employee-contracts-landing-header">
+                <div>
+                  <p className="eyebrow">
+                    DOCUMENTACIÓN LABORAL
+                  </p>
+
+                  <h2>
+                    Mis contratos
+                  </h2>
+                </div>
+
+                <div className="employee-contracts-landing-header-actions">
+                  {employeeCompanyLogo ? (
+                    <div className="employee-contracts-company-logo">
+                      <img
+                        src={employeeCompanyLogo}
+                        alt={'Logo de ' + employeeCompanyName}
+                      />
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    className="employee-back-button"
+                    onClick={() => {
+                      setEmployeePortalView('dashboard')
+                      setEmployeeActiveMenu('dashboard')
+                    }}
+                  >
+                    Volver
+                  </button>
+                </div>
+              </div>
+
+              <div className="employee-landing-identity">
                 <p className="eyebrow">
-                  Documentacion laboral
+                  EMPLEADO
                 </p>
 
-                <h2>
-                  Mis contratos
-                </h2>
+                <h3>
+                  {employeeFullName}
+                </h3>
+              </div>
+
+              <section className="employee-contracts-menu-card">
+                <div className="employee-contracts-identity-card">
+                  <span>
+                    Nombre
+                  </span>
+
+                  <strong>
+                    {employeeFullName}
+                  </strong>
+                </div>
+
+                <div className="employee-contracts-menu-actions">
+                  <button
+                    type="button"
+                    className="employee-contracts-menu-button"
+                    onClick={async () => {
+                      const token = localStorage.getItem('access_token')
+
+                      if (selectedEmployee && token) {
+                        await loadContracts(
+                          selectedEmployee.id,
+                          token,
+                        )
+                        await loadDownloadedContracts(
+                          selectedEmployee.id,
+                          token,
+                        )
+                      }
+
+                      setEmployeePortalView('contractsStore')
+                      setEmployeeActiveMenu('contracts')
+                    }}
+                  >
+                    Contratos nuevos
+                  </button>
+
+                  <button
+                    type="button"
+                    className="employee-contracts-menu-button employee-contracts-menu-button-nominas"
+                    onClick={async () => {
+                      const token = localStorage.getItem('access_token')
+
+                      if (selectedEmployee && token) {
+                        await loadContracts(
+                          selectedEmployee.id,
+                          token,
+                        )
+                        await loadDownloadedContracts(
+                          selectedEmployee.id,
+                          token,
+                        )
+                      }
+
+                      setEmployeePortalView('contractArchive')
+                      setEmployeeActiveMenu('contracts')
+                    }}
+                  >
+                    Almacén de contratos
+                  </button>
+                </div>
+              </section>
+
+            </div>
+          )}
+
+          {employeePortalView === 'contractsStore' && (
+            <div className="employee-content-panel">
+              <div className="employee-content-header">
+                <div>
+                  <p className="eyebrow">
+                    DOCUMENTACIÓN LABORAL
+                  </p>
+                  <h2>
+                    Mis contratos
+                  </h2>
+                </div>
+
+                <div className="employee-contracts-landing-header-actions">
+                  {employeeCompanyLogo ? (
+                    <div className="employee-contracts-company-logo">
+                      <img
+                        src={employeeCompanyLogo}
+                        alt={'Logo de ' + employeeCompanyName}
+                      />
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    className="employee-back-button"
+                    onClick={() => {
+                      setEmployeePortalView('contracts')
+                      setEmployeeActiveMenu('contracts')
+                    }}
+                  >
+                    Volver
+                  </button>
+                </div>
               </div>
 
               {!contractsLoading &&
@@ -5083,68 +5551,49 @@ if (loggedIn && user && user.role === 'HR') {
                   </span>
                 )}
 
-            </div>
+              {contractsLoading && (
+                <p className="muted">
+                  Cargando contratos...
+                </p>
+              )}
 
-            {contractsLoading && (
-              <p className="muted">
-                Cargando contratos...
-              </p>
-            )}
-
-            {!contractsLoading &&
-              contractsError && (
+              {!contractsLoading && contractsError && (
                 <p className="error">
                   {contractsError}
                 </p>
               )}
 
-            {!contractsLoading &&
-              !contractsError &&
-              contracts.length === 0 && (
-                <div className="empty-state">
+              {!contractsLoading &&
+                !contractsError &&
+                contracts.length === 0 && (
+                  <div className="empty-state">
+                    <strong>
+                      No hay contratos disponibles
+                    </strong>
+                    <p>
+                      Todavía no hay contratos asociados a tu perfil.
+                    </p>
+                  </div>
+                )}
 
-                  <strong>
-                    No hay contratos disponibles
-                  </strong>
-
-                  <p>
-                    Todavia no hay contratos
-                    asociados a tu perfil.
-                  </p>
-
-                </div>
-              )}
-
-            {!contractsLoading &&
-              contracts.length > 0 && (
-                <div className="contract-list">
-
-                  {contracts.map(
-                    (contract) => (
+              {!contractsLoading &&
+                contracts.length > 0 && (
+                  <div className="contract-list">
+                    {contracts.map((contract) => (
                       <article
                         className="contract-card"
                         key={contract.id}
                       >
-
                         <div className="contract-info">
-
                           <div>
-                            <span>
-                              Tipo de contrato
-                            </span>
-
+                            <span>Tipo de contrato</span>
                             <strong>
-                              {
-                                contract.contract_type
-                              }
+                              {contract.contract_type}
                             </strong>
                           </div>
 
                           <div>
-                            <span>
-                              Inicio
-                            </span>
-
+                            <span>Inicio</span>
                             <strong>
                               {formatDate(
                                 contract.start_date,
@@ -5153,10 +5602,7 @@ if (loggedIn && user && user.role === 'HR') {
                           </div>
 
                           <div>
-                            <span>
-                              Fin
-                            </span>
-
+                            <span>Fin</span>
                             <strong>
                               {contract.end_date
                                 ? formatDate(
@@ -5165,141 +5611,215 @@ if (loggedIn && user && user.role === 'HR') {
                                 : 'Indefinido'}
                             </strong>
                           </div>
-
                         </div>
 
                         <div className="contract-document">
-
                           {contract.document_path ? (
                             <button
                               type="button"
-                              className="download-button"
+                              className="download-button employee-contract-download-button"
                               onClick={() =>
-                                handleDownload(
-                                  contract,
-                                )
+                                downloadedContractIds.includes(contract.id)
+                                  ? undefined
+                                  : handleDownload(contract)
                               }
+                              disabled={downloadedContractIds.includes(contract.id)}
                             >
-                              Descargar documento
+                              {downloadedContractIds.includes(contract.id)
+                                ? 'Documento descargado'
+                                : 'Descargar documento'}
                             </button>
                           ) : (
                             <span className="no-document">
                               Documento no disponible
                             </span>
                           )}
-
                         </div>
-
                       </article>
-                    ),
-                  )}
+                    ))}
+                  </div>
+                )}
+            </div>
+          )}
 
+
+          {employeePortalView === 'contractArchive' && (
+            <div className="employee-content-panel">
+              <div className="employee-content-header">
+                <div>
+                  <p className="eyebrow">
+                    DOCUMENTACIÓN LABORAL
+                  </p>
+                  <h2>
+                    Almacén de contratos
+                  </h2>
                 </div>
-              )}
 
-          </div>
+                <div className="employee-contracts-landing-header-actions">
+                  {employeeCompanyLogo ? (
+                    <div className="employee-contracts-company-logo">
+                      <img
+                        src={employeeCompanyLogo}
+                        alt={'Logo de ' + employeeCompanyName}
+                      />
+                    </div>
+                  ) : null}
 
-          {/* NOMINAS */}
-
-          <div className="contracts">
-
-            <div className="section-header">
-
-              <div>
-                <p className="eyebrow">
-                  Documentacion laboral
-                </p>
-
-                <h2>
-                  Mis nominas
-                </h2>
+                  <button
+                    type="button"
+                    className="employee-back-button"
+                    onClick={() => {
+                      setEmployeePortalView('contracts')
+                      setEmployeeActiveMenu('contracts')
+                    }}
+                  >
+                    Volver
+                  </button>
+                </div>
               </div>
 
-              {!nominasLoading &&
-                nominas.length > 0 && (
-                  <span className="contract-count">
-                    {nominas.length}{' '}
-                    {nominas.length === 1
-                      ? 'nomina'
-                      : 'nominas'}
-                  </span>
+              {!contractsLoading &&
+                !contractsError &&
+                contracts.filter(
+                  (contract) =>
+                    contract.document_path &&
+                    downloadedContractIds.includes(contract.id),
+                ).length === 0 && (
+                  <div className="empty-state">
+                    <strong>
+                      No hay contratos almacenados
+                    </strong>
+                    <p>
+                      Los contratos aparecen aquí después de ser descargados.
+                    </p>
+                  </div>
                 )}
 
+              {!contractsLoading &&
+                contracts.length > 0 && (
+                  <div className="contract-list">
+                    {contracts
+                      .filter(
+                        (contract) =>
+                          contract.document_path &&
+                          downloadedContractIds.includes(contract.id),
+                      )
+                      .map((contract) => (
+                        <article
+                          className="contract-card"
+                          key={contract.id}
+                        >
+                          <div className="contract-info">
+                            <div>
+                              <span>Tipo de contrato</span>
+                              <strong>
+                                {contract.contract_type}
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>Inicio</span>
+                              <strong>
+                                {formatDate(contract.start_date)}
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>Fin</span>
+                              <strong>
+                                {contract.end_date
+                                  ? formatDate(contract.end_date)
+                                  : 'Indefinido'}
+                              </strong>
+                            </div>
+                          </div>
+
+                          <div className="contract-document">
+                            <button
+                              type="button"
+                              className="download-button employee-contract-download-button"
+                              disabled
+                            >
+                              Documento descargado
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                  </div>
+                )}
             </div>
+          )}
 
-            {nominasLoading && (
-              <p className="muted">
-                Cargando nominas...
-              </p>
-            )}
+          {employeePortalView === 'nominas' && (
+            <div className="employee-content-panel">
+              <div className="employee-content-header">
+                <div>
+                  <p className="eyebrow">
+                    DOCUMENTACIÓN LABORAL
+                  </p>
+                  <h2>Mis nóminas</h2>
+                </div>
 
-            {!nominasLoading &&
-              nominasError && (
+                {!nominasLoading &&
+                  nominas.length > 0 && (
+                    <span className="contract-count">
+                      {nominas.length}{' '}
+                      {nominas.length === 1
+                        ? 'nómina'
+                        : 'nóminas'}
+                    </span>
+                  )}
+              </div>
+
+              {nominasLoading && (
+                <p className="muted">
+                  Cargando nóminas...
+                </p>
+              )}
+
+              {!nominasLoading && nominasError && (
                 <p className="error">
                   {nominasError}
                 </p>
               )}
 
-            {!nominasLoading &&
-              !nominasError &&
-              nominas.length === 0 && (
-                <div className="empty-state">
+              {!nominasLoading &&
+                !nominasError &&
+                nominas.length === 0 && (
+                  <div className="empty-state">
+                    <strong>
+                      No hay nóminas disponibles
+                    </strong>
+                    <p>
+                      Todavía no hay nóminas asociadas a tu perfil.
+                    </p>
+                  </div>
+                )}
 
-                  <strong>
-                    No hay nominas disponibles
-                  </strong>
-
-                  <p>
-                    Todavia no hay nominas
-                    asociadas a tu perfil.
-                  </p>
-
-                </div>
-              )}
-
-            {!nominasLoading &&
-              nominas.length > 0 && (
-                <div className="contract-list">
-
-                  {nominas.map(
-                    (nomina) => (
+              {!nominasLoading &&
+                nominas.length > 0 && (
+                  <div className="contract-list">
+                    {nominas.map((nomina) => (
                       <article
                         className="contract-card"
                         key={nomina.id}
                       >
-
                         <div className="contract-info">
-
                           <div>
-                            <span>
-                              Fecha
-                            </span>
-
+                            <span>Fecha</span>
                             <strong>
-                              {formatDate(
-                                nomina.date,
-                              )}
+                              {formatDate(nomina.date)}
                             </strong>
                           </div>
-
                         </div>
 
                         <div className="contract-document hr-nominas-download-area">
-
                           {nomina.document_path ? (
                             <button
                               type="button"
                               className="download-button hr-nominas-download-button"
-                              style={{
-                                background: '#f4f3ee',
-                                color: '#172b45',
-                                border: '1px solid #f4f3ee',
-                                boxShadow: 'none',
-                              }}
                               onClick={() =>
-                                handleDownloadNomina(
-                                  nomina,
-                                )
+                                handleDownloadNomina(nomina)
                               }
                             >
                               Descargar documento
@@ -5309,19 +5829,14 @@ if (loggedIn && user && user.role === 'HR') {
                               Documento no disponible
                             </span>
                           )}
-
                         </div>
-
                       </article>
-                    ),
-                  )}
-
-                </div>
-              )}
-
-          </div>
-
-        </section>
+                    ))}
+                  </div>
+                )}
+            </div>
+          )}
+        </div>
       </main>
     )
   }

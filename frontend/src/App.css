@@ -2420,3 +2420,1006 @@ button:disabled {
     justify-content: flex-start;
   }
 }
+
+
+/* =========================================================
+   PORTAL DEL EMPLEADO — INICIO
+   Solo afecta al perfil individual del empleado.
+   No modifica los estilos del Portal RR. HH.
+   ========================================================= */
+
+.employee-app {
+  width: 100%;
+  min-height: 100vh;
+  display: block;
+  margin: 0;
+  padding: 0;
+  background: #f7f8fa;
+}
+
+.employee-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 295px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 13px 18px;
+  box-sizing: border-box;
+  background: #18324f;
+  color: #ffffff;
+  z-index: 100;
+}
+
+.employee-brand {
+  min-height: 185px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 14px 20px;
+  box-sizing: border-box;
+  background: #f4f3ee;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  color: #172b45;
+}
+
+.employee-brand-logo {
+  width: 78px;
+  height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.employee-brand-logo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.employee-brand-logo span {
+  color: #98a2b3;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.employee-brand-name {
+  max-width: 100%;
+  color: #172b45;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: break-word;
+}
+
+.employee-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.employee-nav-button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin: 0;
+  padding: 13px 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  box-shadow: none;
+}
+
+.employee-nav-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.employee-nav-button.active,
+.employee-nav-button.active:hover,
+.employee-nav-button.active:focus,
+.employee-nav-button.active:focus-visible {
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  box-shadow: none !important;
+}
+
+.employee-nav-icon {
+  width: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  font-size: 16px;
+}
+
+.employee-sidebar-bottom {
+  margin-top: auto;
+}
+
+.employee-user-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 17px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.employee-user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f3ee;
+  color: #172b45;
+  flex: 0 0 44px;
+  font-size: 18px;
+}
+
+.employee-user-box strong {
+  display: block;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.employee-user-box span {
+  display: block;
+  margin-top: 3px;
+  color: #d7e0e9;
+  font-size: 12px;
+}
+
+.employee-logout-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 13px 14px;
+  border-radius: 9px;
+  background: #122b45;
+  color: #ffffff;
+  text-align: left;
+  box-shadow: none;
+}
+
+.employee-logout-button:hover {
+  background: #173957;
+}
+
+.employee-main {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 295px;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #f7f8fa;
+}
+
+.employee-topbar {
+  width: 100%;
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 28px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-bottom: 1px solid #e4e7ec;
+}
+
+.employee-topbar-title {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.employee-topbar-title .eyebrow {
+  margin-bottom: 4px;
+}
+
+.employee-panel-title {
+  margin: 0 !important;
+  color: #172b45;
+  font-size: 18px !important;
+  line-height: 1.2 !important;
+  font-weight: 600 !important;
+}
+
+.employee-topbar-date {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.employee-topbar-date-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.employee-dashboard {
+  width: calc(100% - 48px);
+  max-width: none;
+  margin: 0 24px;
+  padding: 30px 0 38px;
+  box-sizing: border-box;
+}
+
+.employee-dashboard-welcome {
+  margin: 0 0 24px;
+}
+
+.employee-dashboard-welcome h2 {
+  margin: 0 0 8px;
+  color: #172b45;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.employee-dashboard-welcome .muted {
+  margin: 0;
+  color: #667085;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.employee-dashboard-stats {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  margin: 0 0 26px;
+}
+
+.employee-stat-card {
+  min-width: 0;
+  min-height: 146px;
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  align-items: center;
+  gap: 17px;
+  padding: 22px;
+  box-sizing: border-box;
+  border: 1px solid #e3e7ec;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+  cursor: default;
+}
+
+.employee-stat-card:not(.employee-stat-profile) {
+  cursor: pointer;
+}
+
+.employee-stat-card:not(.employee-stat-profile):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 16px rgba(16, 24, 40, 0.07);
+}
+
+.employee-stat-icon {
+  width: 74px;
+  height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: #f2ecff;
+  color: #7b61e8;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.employee-stat-card:nth-child(2) .employee-stat-icon {
+  background: #f2ecff;
+  color: #7b61e8;
+}
+
+.employee-stat-card:nth-child(3) .employee-stat-icon {
+  background: #fff5e2;
+  color: #f2a300;
+}
+
+.employee-stat-body {
+  min-width: 0;
+}
+
+.employee-stat-body span {
+  display: block;
+  margin-bottom: 2px;
+  color: #172b45;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.employee-stat-body strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #735be0;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.employee-stat-card:nth-child(3) .employee-stat-body strong {
+  color: #ef9d00;
+}
+
+.employee-stat-profile .employee-stat-body strong {
+  font-size: 21px;
+}
+
+.employee-stat-body p {
+  margin: 0;
+  color: #344054;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.employee-dashboard-bottom {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 24px;
+  margin: 0 0 24px;
+}
+
+.employee-dashboard-box {
+  min-width: 0;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-sizing: border-box;
+  border: 1px solid #e3e7ec;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.employee-dashboard-box-header {
+  margin: 0 0 18px;
+}
+
+.employee-dashboard-box-header .eyebrow {
+  margin-bottom: 7px;
+}
+
+.employee-dashboard-box-header h2 {
+  margin: 0;
+  color: #172b45;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.employee-info-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.employee-info-list > div {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 18px;
+  padding: 13px 0;
+  border-bottom: 1px solid #eaecf0;
+}
+
+.employee-info-list > div:last-child {
+  border-bottom: 0;
+}
+
+.employee-info-list span {
+  color: #667085;
+  font-size: 13px;
+}
+
+.employee-info-list strong {
+  color: #172b45;
+  font-size: 14px;
+}
+
+.employee-quick-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.employee-quick-action {
+  min-width: 0;
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  padding: 16px;
+  box-sizing: border-box;
+  border: 1px solid #dbe4ee;
+  border-radius: 12px;
+  background: #eef6ff !important;
+  color: #172b45 !important;
+  text-align: left;
+  box-shadow: none;
+}
+
+.employee-quick-action:nth-child(2) {
+  background: #fff7e8 !important;
+}
+
+.employee-quick-action:hover {
+  filter: brightness(0.985);
+}
+
+.employee-quick-action-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 48px;
+  border-radius: 13px;
+  background: #ffffff !important;
+  color: #7b61e8 !important;
+  font-size: 18px;
+}
+
+.employee-quick-action:nth-child(2) .employee-quick-action-icon {
+  color: #f2a300 !important;
+}
+
+.employee-quick-action-content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.employee-quick-action-content strong {
+  display: block;
+  margin: 0 0 5px;
+  color: #172b45 !important;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.employee-quick-action-content span {
+  display: block;
+  margin: 0;
+  color: #667085 !important;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.employee-quick-action-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  width: 20px;
+  color: #2f80ed !important;
+  font-size: 20px !important;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.employee-content-panel {
+  width: calc(100% - 48px);
+  margin: 0 24px;
+  padding: 30px 0 38px;
+  box-sizing: border-box;
+}
+
+.employee-content-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.employee-content-header h2 {
+  margin: 0;
+  color: #172b45;
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+@media (max-width: 1180px) {
+  .employee-dashboard {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .employee-dashboard-stats {
+    gap: 18px;
+  }
+
+  .employee-dashboard-bottom {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .employee-sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    min-height: auto;
+  }
+
+  .employee-main {
+    position: static;
+    left: auto;
+    width: 100%;
+    min-height: auto;
+  }
+
+  .employee-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px 22px;
+  }
+
+  .employee-dashboard,
+  .employee-content-panel {
+    width: calc(100% - 32px);
+    margin: 0 16px;
+  }
+
+  .employee-dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .employee-info-list > div {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
+
+/* =========================================================
+   PORTAL EMPLEADO — LOGO DE LA EMPRESA
+   ========================================================= */
+.employee-brand-logo {
+  width: 78px !important;
+  height: 78px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  background: transparent !important;
+}
+
+.employee-brand-logo img {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+/* =========================================================
+   PORTAL EMPLEADO — CONTRATOS Y NÓMINAS
+   Nueva estructura visual de documentación.
+   Solo afecta al Portal del Empleado.
+   ========================================================= */
+
+.employee-documents-panel {
+  padding-top: 30px;
+}
+
+.employee-documents-header {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.employee-documents-header-title {
+  min-width: 0;
+}
+
+.employee-documents-header-title .eyebrow {
+  margin-bottom: 8px;
+}
+
+.employee-documents-header-title h2 {
+  margin: 0;
+  color: #172b45;
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.employee-documents-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+}
+
+.employee-documents-company-logo {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: transparent;
+}
+
+.employee-documents-company-logo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+}
+
+.employee-documents-back-button {
+  margin: 0;
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.employee-documents-back-button:hover {
+  background: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+.employee-document-employee-block {
+  width: 100%;
+  margin: 0 0 24px;
+}
+
+.employee-document-employee-block .eyebrow {
+  margin-bottom: 8px;
+}
+
+.employee-document-employee-block h3 {
+  margin: 0;
+  color: #172b45;
+  font-size: 34px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.employee-document-navigation {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 26px;
+  padding: 0;
+}
+
+.employee-document-nav-button {
+  margin: 0;
+  background: #ffffff !important;
+  color: #172b45 !important;
+  border: 1px solid #e3e7ec !important;
+  box-shadow: none !important;
+}
+
+.employee-document-nav-button:hover {
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  border-color: #f4f3ee !important;
+}
+
+.employee-document-nav-button.active,
+.employee-document-nav-button.active:hover,
+.employee-document-nav-button.active:focus,
+.employee-document-nav-button.active:focus-visible {
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  border-color: #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.employee-document-list-section {
+  width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  border: 1px solid #e3e7ec;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.employee-document-list-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.employee-document-list-header .eyebrow {
+  margin-bottom: 7px;
+}
+
+.employee-document-list-header h3 {
+  margin: 0;
+  color: #172b45;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.employee-document-list-section .contract-list {
+  margin-top: 0;
+}
+
+@media (max-width: 760px) {
+  .employee-documents-header {
+    flex-direction: column;
+  }
+
+  .employee-documents-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .employee-document-employee-block h3 {
+    font-size: 28px;
+  }
+
+  .employee-document-navigation {
+    flex-wrap: wrap;
+  }
+
+  .employee-document-list-section {
+    padding: 18px;
+  }
+}
+
+
+/* =========================================================
+   PORTAL EMPLEADO — PANTALLA DE CONTRATOS
+   ========================================================= */
+
+.employee-contracts-landing {
+  padding-top: 28px;
+}
+
+.employee-contracts-landing-header {
+  align-items: flex-start;
+  margin-bottom: 28px;
+}
+
+.employee-contracts-landing-header h2 {
+  margin: 0;
+  color: #172b45;
+  font-size: 36px;
+  line-height: 1.15;
+  font-weight: 500;
+}
+
+.employee-contracts-landing-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+}
+
+.employee-contracts-company-logo {
+  width: 80px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: transparent;
+}
+
+.employee-contracts-company-logo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.employee-back-button {
+  margin: 0 !important;
+  padding: 16px 22px !important;
+  border: 1px solid #f4f3ee !important;
+  border-radius: 12px !important;
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+
+.employee-back-button:hover {
+  background: #ebe9e2 !important;
+  border-color: #ebe9e2 !important;
+}
+
+.employee-landing-identity {
+  margin: 0 0 30px;
+  padding: 0 10px;
+}
+
+.employee-landing-identity .eyebrow {
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.employee-landing-identity h3 {
+  margin: 0;
+  color: #172b45;
+  font-size: 38px;
+  line-height: 1.15;
+  font-weight: 700;
+  text-align: left;
+}
+
+.employee-contracts-menu-card {
+  width: 100%;
+  min-height: 180px;
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(420px, 1fr);
+  gap: 22px;
+  padding: 30px;
+  box-sizing: border-box;
+  border: 1px solid #e3e7ec;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.employee-contracts-identity-card {
+  min-height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  box-sizing: border-box;
+  border: 1px solid #e3e7ec;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.employee-contracts-identity-card span {
+  margin-bottom: 12px;
+  color: #667085;
+  font-size: 14px;
+}
+
+.employee-contracts-identity-card strong {
+  color: #5f6c86;
+  font-size: 21px;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.employee-contracts-menu-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 18px;
+}
+
+.employee-contracts-menu-button {
+  min-height: 112px;
+  margin: 0 !important;
+  padding: 20px !important;
+  border: 1px solid #f4f3ee !important;
+  border-radius: 12px !important;
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.employee-contracts-menu-button:hover {
+  background: #ebe9e2 !important;
+  border-color: #ebe9e2 !important;
+}
+
+.employee-contracts-menu-button-nominas {
+  background: #f4f3ee !important;
+}
+
+@media (max-width: 900px) {
+  .employee-contracts-menu-card {
+    grid-template-columns: 1fr;
+  }
+
+  .employee-contracts-menu-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .employee-contracts-landing-header-actions {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+}
+
+@media (max-width: 760px) {
+  .employee-contracts-landing-header {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .employee-contracts-landing-header-actions {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .employee-contracts-landing-header h2 {
+    font-size: 30px;
+  }
+
+  .employee-landing-identity h3 {
+    font-size: 30px;
+  }
+}
+
+/* =========================================================
+   PORTAL EMPLEADO — DESCARGA DE CONTRATOS
+   ========================================================= */
+.employee-contract-download-button {
+  margin-top: 0 !important;
+  background: #f4f3ee !important;
+  background-color: #f4f3ee !important;
+  color: #172b45 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+  font-weight: 700;
+}
+
+.employee-contract-download-button:hover:not(:disabled) {
+  background: #ebe9e2 !important;
+  background-color: #ebe9e2 !important;
+  color: #172b45 !important;
+  border-color: #ebe9e2 !important;
+}
+
+.employee-contract-download-button:disabled {
+  opacity: 1 !important;
+  cursor: default !important;
+  background: #f4f3ee !important;
+  background-color: #f4f3ee !important;
+  color: #172b45 !important;
+  border-color: #f4f3ee !important;
+}

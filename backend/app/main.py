@@ -1,4 +1,5 @@
 import base64
+import json
 
 from pathlib import Path
 
@@ -93,6 +94,33 @@ def _decode_company_logo(logo_data: str):
 def _logo_data_url(path: Path, mime_type: str):
     encoded = base64.b64encode(path.read_bytes()).decode("ascii")
     return f"data:{mime_type};base64,{encoded}"
+
+
+def _contract_downloads_path() -> Path:
+    path = Path("uploads/contracts/downloaded_contracts.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _read_downloaded_contracts() -> dict:
+    path = _contract_downloads_path()
+
+    if not path.exists():
+        return {}
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _write_downloaded_contracts(data: dict):
+    path = _contract_downloads_path()
+    path.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
 
 
 # ============================================================
@@ -194,8 +222,36 @@ def get_me(
                 detail="Employee not found",
             )
 
+        company = session.get(Company, employee.company_id)
+
+        company_name = ''
+        company_logo = ''
+
+        if company is not None:
+            company_name = company.name
+
+            logo_files = list(_company_logo_files(company.id))
+            if logo_files:
+                logo_path = logo_files[0]
+                mime_types = {
+                    ".jpg": "image/jpeg",
+                    ".png": "image/png",
+                    ".webp": "image/webp",
+                    ".svg": "image/svg+xml",
+                }
+                mime_type = mime_types.get(
+                    logo_path.suffix.lower()
+                )
+
+                if mime_type is not None:
+                    company_logo = _logo_data_url(
+                        logo_path,
+                        mime_type,
+                    )
+
         return {
             "id": employee.id,
+            "company_id": employee.company_id,
             "first_name": employee.first_name,
             "last_name": employee.last_name,
             "national_id": employee.national_id,
@@ -208,6 +264,8 @@ def get_me(
             "seniority_date": employee.seniority_date,
             "social_security_number":
                 employee.social_security_number,
+            "company_name": company_name,
+            "company_logo": company_logo,
         }
 
 
@@ -313,12 +371,20 @@ def update_company(
 @app.get("/api/companies/{company_id}/logo")
 def get_company_logo(
     company_id: int,
-    current_user: User = Depends(require_hr),
+    current_user: User = Depends(get_current_user),
 ):
     with Session(engine) as session:
         company = session.get(Company, company_id)
         if company is None:
             raise HTTPException(status_code=404, detail="Company not found")
+
+        if current_user.role == UserRole.EMPLOYEE:
+            employee = session.get(Employee, current_user.employee_id)
+            if employee is None or employee.company_id != company_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="You can only access your own company logo",
+                )
 
     files = list(_company_logo_files(company_id))
     if not files:
@@ -976,6 +1042,87 @@ def upload_contract_document(
             "document_path":
                 contract.document_path,
         }
+
+
+# ============================================================
+# ESTADO DE DESCARGA DE CONTRATOS DEL EMPLEADO
+# ============================================================
+
+
+@app.get("/api/employees/{employee_id}/contracts/downloaded")
+def list_downloaded_contracts(
+    employee_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role == UserRole.EMPLOYEE and current_user.employee_id != employee_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only access your own downloaded contracts",
+        )
+
+    with Session(engine) as session:
+        employee = session.get(Employee, employee_id)
+        if employee is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Employee not found",
+            )
+
+    downloads = _read_downloaded_contracts()
+    employee_ids = set(
+        int(contract_id)
+        for contract_id in downloads.get(str(employee_id), [])
+    )
+
+    return {
+        "contract_ids": sorted(employee_ids),
+    }
+
+
+@app.post("/api/employees/{employee_id}/contracts/{contract_id}/downloaded")
+def mark_contract_downloaded(
+    employee_id: int,
+    contract_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role == UserRole.EMPLOYEE and current_user.employee_id != employee_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only mark your own contracts as downloaded",
+        )
+
+    with Session(engine) as session:
+        contract = session.get(Contract, contract_id)
+
+        if (
+            contract is None
+            or contract.employee_id != employee_id
+        ):
+            raise HTTPException(
+                status_code=404,
+                detail="Contract not found",
+            )
+
+        if not contract.document_path:
+            raise HTTPException(
+                status_code=404,
+                detail="Contract document not found",
+            )
+
+    downloads = _read_downloaded_contracts()
+    key = str(employee_id)
+    current_ids = {
+        int(value)
+        for value in downloads.get(key, [])
+    }
+    current_ids.add(contract_id)
+    downloads[key] = sorted(current_ids)
+    _write_downloaded_contracts(downloads)
+
+    return {
+        "contract_id": contract_id,
+        "downloaded": True,
+    }
 
 
 # ============================================================
