@@ -59,6 +59,7 @@ function App() {
   const [employeePortalView, setEmployeePortalView] = useState('dashboard')
   const [employeeActiveMenu, setEmployeeActiveMenu] = useState('dashboard')
   const [downloadedContractIds, setDownloadedContractIds] = useState([])
+  const [downloadedNominaIds, setDownloadedNominaIds] = useState([])
 
   // =========================================================
   // EDICION DE EMPLEADO
@@ -299,6 +300,87 @@ function App() {
         previous.includes(contractId)
           ? previous
           : [...previous, contractId],
+      )
+
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  // =========================================================
+  // NÓMINAS DESCARGADAS POR EL EMPLEADO
+  // =========================================================
+
+  async function loadDownloadedNominas(employeeId, token) {
+    if (!employeeId || !token) {
+      setDownloadedNominaIds([])
+      return
+    }
+
+    try {
+      const response = await fetch(
+        API_URL +
+          '/api/employees/' +
+          employeeId +
+          '/nominas/downloaded',
+        {
+          headers: {
+            Authorization: 'Bearer ' + token,
+          },
+        },
+      )
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        setDownloadedNominaIds([])
+        return
+      }
+
+      setDownloadedNominaIds(
+        Array.isArray(data?.nomina_ids)
+          ? data.nomina_ids
+          : [],
+      )
+    } catch {
+      setDownloadedNominaIds([])
+    }
+  }
+
+  async function markNominaAsDownloaded(employeeId, nominaId) {
+    const token = localStorage.getItem('access_token')
+
+    if (!token || !employeeId || !nominaId) {
+      return false
+    }
+
+    try {
+      const response = await fetch(
+        API_URL +
+          '/api/employees/' +
+          employeeId +
+          '/nominas/' +
+          nominaId +
+          '/downloaded',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+          },
+        },
+      )
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok || data?.downloaded !== true) {
+        return false
+      }
+
+      setDownloadedNominaIds((previous) =>
+        previous.includes(nominaId)
+          ? previous
+          : [...previous, nominaId],
       )
 
       return true
@@ -1873,7 +1955,91 @@ async function handleDirectNominaFile(event) {
       link.remove()
 
       window.URL.revokeObjectURL(downloadUrl)
+
+      if (user?.role === 'EMPLOYEE') {
+        await markNominaAsDownloaded(
+          targetEmployeeId,
+          nomina.id,
+        )
+      }
     } catch (err) {
+      setNominasError(err.message)
+    }
+  }
+
+
+  // =========================================================
+  // VER NÓMINA EN ALMACÉN
+  // =========================================================
+
+  async function handleViewNomina(
+    nomina,
+    employeeId = null,
+  ) {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setNominasError('No hay una sesion valida')
+      return
+    }
+
+    const targetEmployeeId =
+      employeeId || user?.id
+
+    if (!targetEmployeeId) {
+      setNominasError(
+        'No se ha podido identificar al empleado',
+      )
+      return
+    }
+
+    setNominasError('')
+
+    const previewWindow = window.open('', '_blank')
+
+    try {
+      const url =
+        API_URL +
+        '/api/employees/' +
+        targetEmployeeId +
+        '/nominas/' +
+        nomina.id +
+        '/document'
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: 'Bearer ' + token,
+        },
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+
+        throw new Error(
+          data?.detail ||
+            'No se pudo abrir la nómina',
+        )
+      }
+
+      const blob = await response.blob()
+
+      const viewUrl =
+        window.URL.createObjectURL(blob)
+
+      if (previewWindow) {
+        previewWindow.location.href = viewUrl
+      } else {
+        window.open(viewUrl, '_blank')
+      }
+
+      window.setTimeout(() => {
+        window.URL.revokeObjectURL(viewUrl)
+      }, 60000)
+    } catch (err) {
+      if (previewWindow) {
+        previewWindow.close()
+      }
+
       setNominasError(err.message)
     }
   }
@@ -2116,6 +2282,10 @@ async function handleDirectNominaFile(event) {
           me.id,
           data.access_token,
         )
+        await loadDownloadedNominas(
+          me.id,
+          data.access_token,
+        )
       }
     } catch (err) {
       setError(err.message)
@@ -2198,6 +2368,8 @@ async function handleDirectNominaFile(event) {
 
     setUsername('')
     setPassword('')
+    setDownloadedContractIds([])
+    setDownloadedNominaIds([])
   }
 
   // =========================================================
@@ -5831,25 +6003,161 @@ if (loggedIn && user && user.role === 'HR') {
           )}
 
           {employeePortalView === 'nominas' && (
+            <div className="employee-content-panel employee-contracts-landing">
+
+              <div className="employee-content-header employee-contracts-landing-header">
+                <div>
+                  <p className="eyebrow">
+                    DOCUMENTACIÓN LABORAL
+                  </p>
+
+                  <h2>
+                    Mis nóminas
+                  </h2>
+                </div>
+
+                <div className="employee-contracts-landing-header-actions">
+                  {employeeCompanyLogo ? (
+                    <div className="employee-contracts-company-logo">
+                      <img
+                        src={employeeCompanyLogo}
+                        alt={'Logo de ' + employeeCompanyName}
+                      />
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    className="employee-back-button"
+                    onClick={() => {
+                      setEmployeePortalView('dashboard')
+                      setEmployeeActiveMenu('dashboard')
+                    }}
+                  >
+                    Volver
+                  </button>
+                </div>
+              </div>
+
+              <div className="employee-landing-identity">
+                <p className="eyebrow">
+                  EMPLEADO
+                </p>
+
+                <h3>
+                  {employeeFullName}
+                </h3>
+              </div>
+
+              <section className="employee-contracts-menu-card">
+                <div className="employee-contracts-identity-card">
+                  <span>
+                    Nombre
+                  </span>
+
+                  <strong>
+                    {employeeFullName}
+                  </strong>
+                </div>
+
+                <div className="employee-contracts-menu-actions">
+                  <button
+                    type="button"
+                    className="employee-contracts-menu-button"
+                    onClick={async () => {
+                      const token = localStorage.getItem('access_token')
+
+                      if (selectedEmployee && token) {
+                        await loadNominas(
+                          selectedEmployee.id,
+                          token,
+                        )
+                        await loadDownloadedNominas(
+                          selectedEmployee.id,
+                          token,
+                        )
+                      }
+
+                      setEmployeePortalView('nominasStore')
+                      setEmployeeActiveMenu('nominas')
+                    }}
+                  >
+                    Nóminas nuevas
+                  </button>
+
+                  <button
+                    type="button"
+                    className="employee-contracts-menu-button employee-contracts-menu-button-nominas"
+                    onClick={async () => {
+                      const token = localStorage.getItem('access_token')
+
+                      if (selectedEmployee && token) {
+                        await loadNominas(
+                          selectedEmployee.id,
+                          token,
+                        )
+                        await loadDownloadedNominas(
+                          selectedEmployee.id,
+                          token,
+                        )
+                      }
+
+                      setEmployeePortalView('nominaArchive')
+                      setEmployeeActiveMenu('nominas')
+                    }}
+                  >
+                    Almacén de nóminas
+                  </button>
+                </div>
+              </section>
+
+            </div>
+          )}
+
+          {employeePortalView === 'nominasStore' && (
             <div className="employee-content-panel">
               <div className="employee-content-header">
                 <div>
                   <p className="eyebrow">
                     DOCUMENTACIÓN LABORAL
                   </p>
-                  <h2>Mis nóminas</h2>
+                  <h2>
+                    Mis nóminas
+                  </h2>
                 </div>
 
-                {!nominasLoading &&
-                  nominas.length > 0 && (
-                    <span className="contract-count">
-                      {nominas.length}{' '}
-                      {nominas.length === 1
-                        ? 'nómina'
-                        : 'nóminas'}
-                    </span>
-                  )}
+                <div className="employee-contracts-landing-header-actions">
+                  {employeeCompanyLogo ? (
+                    <div className="employee-contracts-company-logo">
+                      <img
+                        src={employeeCompanyLogo}
+                        alt={'Logo de ' + employeeCompanyName}
+                      />
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    className="employee-back-button"
+                    onClick={() => {
+                      setEmployeePortalView('nominas')
+                      setEmployeeActiveMenu('nominas')
+                    }}
+                  >
+                    Volver
+                  </button>
+                </div>
               </div>
+
+              {!nominasLoading &&
+                nominas.length > 0 && (
+                  <span className="contract-count">
+                    {nominas.length}{' '}
+                    {nominas.length === 1
+                      ? 'nómina'
+                      : 'nóminas'}
+                  </span>
+                )}
 
               {nominasLoading && (
                 <p className="muted">
@@ -5893,16 +6201,21 @@ if (loggedIn && user && user.role === 'HR') {
                           </div>
                         </div>
 
-                        <div className="contract-document hr-nominas-download-area">
+                        <div className="contract-document">
                           {nomina.document_path ? (
                             <button
                               type="button"
-                              className="download-button hr-nominas-download-button"
+                              className="download-button employee-contract-download-button"
                               onClick={() =>
-                                handleDownloadNomina(nomina)
+                                downloadedNominaIds.includes(nomina.id)
+                                  ? undefined
+                                  : handleDownloadNomina(nomina)
                               }
+                              disabled={downloadedNominaIds.includes(nomina.id)}
                             >
-                              Descargar documento
+                              {downloadedNominaIds.includes(nomina.id)
+                                ? 'Documento descargado'
+                                : 'Descargar documento'}
                             </button>
                           ) : (
                             <span className="no-document">
@@ -5916,6 +6229,100 @@ if (loggedIn && user && user.role === 'HR') {
                 )}
             </div>
           )}
+
+          {employeePortalView === 'nominaArchive' && (
+            <div className="employee-content-panel">
+              <div className="employee-content-header">
+                <div>
+                  <p className="eyebrow">
+                    DOCUMENTACIÓN LABORAL
+                  </p>
+                  <h2>
+                    Almacén de nóminas
+                  </h2>
+                </div>
+
+                <div className="employee-contracts-landing-header-actions">
+                  {employeeCompanyLogo ? (
+                    <div className="employee-contracts-company-logo">
+                      <img
+                        src={employeeCompanyLogo}
+                        alt={'Logo de ' + employeeCompanyName}
+                      />
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    className="employee-back-button"
+                    onClick={() => {
+                      setEmployeePortalView('nominas')
+                      setEmployeeActiveMenu('nominas')
+                    }}
+                  >
+                    Volver
+                  </button>
+                </div>
+              </div>
+
+              {!nominasLoading &&
+                !nominasError &&
+                nominas.filter(
+                  (nomina) =>
+                    nomina.document_path &&
+                    downloadedNominaIds.includes(nomina.id),
+                ).length === 0 && (
+                  <div className="empty-state">
+                    <strong>
+                      No hay nóminas almacenadas
+                    </strong>
+                    <p>
+                      Las nóminas aparecen aquí después de ser descargadas.
+                    </p>
+                  </div>
+                )}
+
+              {!nominasLoading &&
+                nominas.length > 0 && (
+                  <div className="contract-list">
+                    {nominas
+                      .filter(
+                        (nomina) =>
+                          nomina.document_path &&
+                          downloadedNominaIds.includes(nomina.id),
+                      )
+                      .map((nomina) => (
+                        <article
+                          className="contract-card"
+                          key={nomina.id}
+                        >
+                          <div className="contract-info">
+                            <div>
+                              <span>Fecha</span>
+                              <strong>
+                                {formatDate(nomina.date)}
+                              </strong>
+                            </div>
+                          </div>
+
+                          <div className="contract-document">
+                            <button
+                              type="button"
+                              className="download-button employee-contract-download-button"
+                              onClick={() =>
+                                handleViewNomina(nomina)
+                              }
+                            >
+                              Ver nómina
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                  </div>
+                )}
+            </div>
+          )}
+
         </div>
       </main>
     )

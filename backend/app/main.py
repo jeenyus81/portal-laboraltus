@@ -123,6 +123,35 @@ def _write_downloaded_contracts(data: dict):
     )
 
 
+def _nomina_downloads_path() -> Path:
+    path = Path("uploads/nominas/downloaded_nominas.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _read_downloaded_nominas() -> dict:
+    path = _nomina_downloads_path()
+
+    if not path.exists():
+        return {}
+
+    try:
+        data = json.loads(
+            path.read_text(encoding="utf-8")
+        )
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _write_downloaded_nominas(data: dict):
+    path = _nomina_downloads_path()
+    path.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
 # ============================================================
 # CREAR TABLAS
 # ============================================================
@@ -1415,6 +1444,109 @@ def create_nomina_with_document(
         session.refresh(nomina)
 
         return nomina
+
+# ============================================================
+# ESTADO DE DESCARGA DE NÓMINAS DEL EMPLEADO
+# ============================================================
+
+
+@app.get("/api/employees/{employee_id}/nominas/downloaded")
+def list_downloaded_nominas(
+    employee_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    if (
+        current_user.role == UserRole.EMPLOYEE
+        and current_user.employee_id != employee_id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="You can only access your own downloaded nominas",
+        )
+
+    with Session(engine) as session:
+        employee = session.get(Employee, employee_id)
+
+        if employee is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Employee not found",
+            )
+
+    downloads = _read_downloaded_nominas()
+
+    employee_ids = set(
+        int(nomina_id)
+        for nomina_id in downloads.get(str(employee_id), [])
+    )
+
+    return {
+        "nomina_ids": sorted(employee_ids),
+    }
+
+
+@app.post(
+    "/api/employees/{employee_id}/nominas/"
+    "{nomina_id}/downloaded"
+)
+def mark_nomina_downloaded(
+    employee_id: int,
+    nomina_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    if (
+        current_user.role == UserRole.EMPLOYEE
+        and current_user.employee_id != employee_id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="You can only mark your own nominas as downloaded",
+        )
+
+    with Session(engine) as session:
+        nomina = session.get(Nomina, nomina_id)
+
+        if (
+            nomina is None
+            or nomina.employee_id != employee_id
+        ):
+            raise HTTPException(
+                status_code=404,
+                detail="Nomina not found",
+            )
+
+        if not nomina.document_path:
+            raise HTTPException(
+                status_code=404,
+                detail="Nomina document not found",
+            )
+
+        file_path = Path(nomina.document_path)
+
+        if not file_path.exists():
+            raise HTTPException(
+                status_code=404,
+                detail="Nomina document not found",
+            )
+
+    downloads = _read_downloaded_nominas()
+    key = str(employee_id)
+
+    current_ids = {
+        int(value)
+        for value in downloads.get(key, [])
+    }
+
+    current_ids.add(nomina_id)
+    downloads[key] = sorted(current_ids)
+
+    _write_downloaded_nominas(downloads)
+
+    return {
+        "nomina_id": nomina_id,
+        "downloaded": True,
+    }
+
 
 # ============================================================
 # DESCARGAR NÓMINA
