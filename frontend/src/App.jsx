@@ -1658,6 +1658,84 @@ async function handleDirectNominaFile(event) {
   }
 
   // =========================================================
+  // VER CONTRATO EN ALMACEN
+  // =========================================================
+
+  async function handleViewContract(
+    contract,
+    employeeId = null,
+  ) {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setContractsError('No hay una sesion valida')
+      return
+    }
+
+    const targetEmployeeId =
+      employeeId || user?.id
+
+    if (!targetEmployeeId) {
+      setContractsError(
+        'No se ha podido identificar al empleado',
+      )
+      return
+    }
+
+    setContractsError('')
+
+    // Abrimos la pestaña de forma síncrona, antes del await,
+    // para evitar que el navegador la bloquee.
+    const previewWindow = window.open('', '_blank')
+
+    try {
+      const url =
+        API_URL +
+        '/api/employees/' +
+        targetEmployeeId +
+        '/contracts/' +
+        contract.id +
+        '/document'
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: 'Bearer ' + token,
+        },
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+
+        throw new Error(
+          data?.detail ||
+            'No se pudo abrir el contrato',
+        )
+      }
+
+      const blob = await response.blob()
+
+      const viewUrl =
+        window.URL.createObjectURL(blob)
+
+      if (previewWindow) {
+        previewWindow.location.href = viewUrl
+      } else {
+        window.open(viewUrl, '_blank')
+      }
+
+      window.setTimeout(() => {
+        window.URL.revokeObjectURL(viewUrl)
+      }, 60000)
+    } catch (err) {
+      if (previewWindow) {
+        previewWindow.close()
+      }
+
+      setContractsError(err.message)
+    }
+  }
+
+  // =========================================================
   // SUBIR CONTRATO
   // =========================================================
 
@@ -5738,9 +5816,11 @@ if (loggedIn && user && user.role === 'HR') {
                             <button
                               type="button"
                               className="download-button employee-contract-download-button"
-                              disabled
+                              onClick={() =>
+                                handleViewContract(contract)
+                              }
                             >
-                              Documento descargado
+                              Ver contrato
                             </button>
                           </div>
                         </article>
