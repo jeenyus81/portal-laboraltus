@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 const API_URL = 'http://127.0.0.1:8000'
@@ -8,6 +8,15 @@ function App() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [currentDateTime, setCurrentDateTime] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date())
+    }, 30000)
+
+    return () => clearInterval(timer)
+  }, [])
 
   const [loggedIn, setLoggedIn] = useState(false)
   const [user, setUser] = useState(null)
@@ -2603,12 +2612,21 @@ if (loggedIn && user && user.role === 'HR') {
       </span>
 
       <span>
-        {new Date().toLocaleDateString(
+        {currentDateTime.toLocaleDateString(
           'es-ES',
           {
             day: 'numeric',
             month: 'long',
             year: 'numeric',
+            timeZone: 'Europe/Madrid',
+          },
+        )}{' · '}
+        {currentDateTime.toLocaleTimeString(
+          'es-ES',
+          {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Europe/Madrid',
           },
         )}
       </span>
@@ -5478,12 +5496,21 @@ if (loggedIn && user && user.role === 'HR') {
               </span>
 
               <span>
-                {new Date().toLocaleDateString(
+                {currentDateTime.toLocaleDateString(
                   'es-ES',
                   {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric',
+                    timeZone: 'Europe/Madrid',
+                  },
+                )}{' · '}
+                {currentDateTime.toLocaleTimeString(
+                  'es-ES',
+                  {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Madrid',
                   },
                 )}
               </span>
