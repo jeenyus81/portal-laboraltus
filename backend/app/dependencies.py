@@ -70,3 +70,16 @@ def require_hr(
         )
 
     return current_user
+
+
+def require_company(
+    current_user: User = Depends(get_current_user),
+) -> User:
+
+    if current_user.role != "COMPANY":
+        raise HTTPException(
+            status_code=403,
+            detail="Company access required",
+        )
+
+    return current_user

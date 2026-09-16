@@ -13,14 +13,14 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from sqlalchemy import select
+from sqlalchemy import inspect, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 from app.database import Base, add_missing_code_columns, engine
-from app.dependencies import get_current_user, require_hr
+from app.dependencies import get_current_user, require_company, require_hr
 from app.models import (
     Company,
     Contract,
@@ -32,6 +32,7 @@ from app.models import (
 from app.schemas import (
     CompanyCreate,
     CompanyResponse,
+    CompanyCredentialsCreate,
     ContractCreate,
     ContractResponse,
     EmployeeCreate,
@@ -220,6 +221,23 @@ add_missing_code_columns()
 Base.metadata.create_all(bind=engine)
 
 
+def _add_missing_company_user_column():
+    inspector = inspect(engine)
+    columns = {column["name"] for column in inspector.get_columns("users")}
+
+    if "company_id" not in columns:
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE users ADD COLUMN company_id INTEGER "
+                    "REFERENCES companies(id)"
+                )
+            )
+
+
+_add_missing_company_user_column()
+
+
 # ============================================================
 # CORS
 # ============================================================
@@ -301,6 +319,46 @@ def get_me(
     current_user: User = Depends(get_current_user),
 ):
     with Session(engine) as session:
+        if current_user.role == UserRole.COMPANY:
+            company = session.get(Company, current_user.company_id)
+
+            if company is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Company not found",
+                )
+
+            company_logo = ''
+            logo_files = list(_company_logo_files(company.id))
+
+            if logo_files:
+                logo_path = logo_files[0]
+                mime_types = {
+                    ".jpg": "image/jpeg",
+                    ".png": "image/png",
+                    ".webp": "image/webp",
+                    ".svg": "image/svg+xml",
+                }
+                mime_type = mime_types.get(
+                    logo_path.suffix.lower()
+                )
+
+                if mime_type is not None:
+                    company_logo = _logo_data_url(
+                        logo_path,
+                        mime_type,
+                    )
+
+            return {
+                "role": current_user.role,
+                "company_id": company.id,
+                "company_code": company.company_code,
+                "company_name": company.name,
+                "tax_id": company.tax_id,
+                "address": company.address,
+                "company_logo": company_logo,
+            }
+
         employee = session.get(
             Employee,
             current_user.employee_id,
@@ -340,6 +398,7 @@ def get_me(
                     )
 
         return {
+            "role": current_user.role,
             "id": employee.id,
             "company_id": employee.company_id,
             "first_name": employee.first_name,
@@ -492,6 +551,13 @@ def get_company_logo(
                     detail="You can only access your own company logo",
                 )
 
+        elif current_user.role == UserRole.COMPANY:
+            if current_user.company_id != company_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="You can only access your own company logo",
+                )
+
     files = list(_company_logo_files(company_id))
     if not files:
         raise HTTPException(status_code=404, detail="Company logo not found")
@@ -546,6 +612,223 @@ def delete_company_logo(
         old_path.unlink(missing_ok=True)
 
     return {"logo": ""}
+
+
+# ============================================================
+# CREDENCIALES DE EMPRESA
+# ============================================================
+
+
+@app.post("/api/companies/{company_id}/credentials")
+def create_or_update_company_credentials(
+    company_id: int,
+    data: CompanyCredentialsCreate,
+    current_user: User = Depends(require_hr),
+):
+    username = data.username.strip()
+    password = data.password
+
+    if not username or not password:
+        raise HTTPException(
+            status_code=400,
+            detail="Username and password are required",
+        )
+
+    with Session(engine) as session:
+        company = session.get(Company, company_id)
+
+        if company is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Company not found",
+            )
+
+        existing_username = session.scalar(
+            select(User).where(User.username == username)
+        )
+
+        existing_company_user = session.scalar(
+            select(User).where(User.company_id == company_id)
+        )
+
+        if (
+            existing_username is not None
+            and existing_company_user is not None
+            and existing_username.id != existing_company_user.id
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="This username is already in use",
+            )
+
+        if existing_company_user is None:
+            user = User(
+                username=username,
+                password_hash=hash_password(password),
+                role=UserRole.COMPANY,
+                company_id=company_id,
+            )
+            session.add(user)
+        else:
+            user = existing_company_user
+            user.username = username
+            user.password_hash = hash_password(password)
+            user.role = UserRole.COMPANY
+            user.company_id = company_id
+
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            raise HTTPException(
+                status_code=409,
+                detail="This username is already in use",
+            )
+
+        session.refresh(user)
+
+        return {
+            "id": user.id,
+            "company_id": company_id,
+            "username": user.username,
+            "role": user.role,
+        }
+
+
+# ============================================================
+# PORTAL DE EMPRESA — CONSULTA
+# ============================================================
+
+
+@app.get("/api/company/dashboard")
+def company_dashboard(
+    current_user: User = Depends(require_company),
+):
+    with Session(engine) as session:
+        company = session.get(Company, current_user.company_id)
+        if company is None:
+            raise HTTPException(status_code=404, detail="Company not found")
+
+        employees = session.scalars(
+            select(Employee)
+            .where(Employee.company_id == company.id)
+            .order_by(Employee.id)
+        ).all()
+
+        contracts = session.scalars(
+            select(Contract)
+            .join(Employee, Contract.employee_id == Employee.id)
+            .where(Employee.company_id == company.id)
+        ).all()
+
+        nominas = session.scalars(
+            select(Nomina)
+            .join(Employee, Nomina.employee_id == Employee.id)
+            .where(Employee.company_id == company.id)
+        ).all()
+
+        activities = _read_activity()
+        employee_ids = {employee.id for employee in employees}
+        company_activities = [
+            activity
+            for activity in activities
+            if activity.get("employee_id") in employee_ids
+        ][:4]
+
+        return {
+            "company_id": company.id,
+            "company_code": company.company_code,
+            "company_name": company.name,
+            "tax_id": company.tax_id,
+            "address": company.address,
+            "employees_count": len(employees),
+            "contracts_count": sum(
+                1 for contract in contracts if contract.document_path
+            ),
+            "nominas_count": sum(
+                1 for nomina in nominas if nomina.document_path
+            ),
+            "activities": company_activities,
+        }
+
+
+@app.get("/api/company/employees")
+def company_employees(
+    current_user: User = Depends(require_company),
+):
+    with Session(engine) as session:
+        employees = session.scalars(
+            select(Employee)
+            .where(Employee.company_id == current_user.company_id)
+            .order_by(Employee.id)
+        ).all()
+
+        return [
+            {
+                "id": employee.id,
+                "company_id": employee.company_id,
+                "first_name": employee.first_name,
+                "last_name": employee.last_name,
+                "employee_code": employee.employee_code,
+                "job_category": employee.job_category,
+                "job_title": employee.job_title,
+            }
+            for employee in employees
+        ]
+
+
+@app.get("/api/company/contracts")
+def company_contracts(
+    current_user: User = Depends(require_company),
+):
+    with Session(engine) as session:
+        rows = session.execute(
+            select(Contract, Employee)
+            .join(Employee, Contract.employee_id == Employee.id)
+            .where(Employee.company_id == current_user.company_id)
+            .order_by(Contract.id.desc())
+        ).all()
+
+        return [
+            {
+                "id": contract.id,
+                "employee_id": contract.employee_id,
+                "employee_name": (
+                    f"{employee.first_name} {employee.last_name}".strip()
+                ),
+                "start_date": contract.start_date,
+                "end_date": contract.end_date,
+                "contract_type": contract.contract_type,
+                "document_path": contract.document_path,
+            }
+            for contract, employee in rows
+        ]
+
+
+@app.get("/api/company/nominas")
+def company_nominas(
+    current_user: User = Depends(require_company),
+):
+    with Session(engine) as session:
+        rows = session.execute(
+            select(Nomina, Employee)
+            .join(Employee, Nomina.employee_id == Employee.id)
+            .where(Employee.company_id == current_user.company_id)
+            .order_by(Nomina.date.desc(), Nomina.id.desc())
+        ).all()
+
+        return [
+            {
+                "id": nomina.id,
+                "employee_id": nomina.employee_id,
+                "employee_name": (
+                    f"{employee.first_name} {employee.last_name}".strip()
+                ),
+                "date": nomina.date,
+                "document_path": nomina.document_path,
+            }
+            for nomina, employee in rows
+        ]
 
 
 # ============================================================
@@ -1004,6 +1287,15 @@ def list_employee_contracts(
                 detail="Employee not found",
             )
 
+        if (
+            current_user.role == UserRole.COMPANY
+            and employee.company_id != current_user.company_id
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access employees from your own company",
+            )
+
         return employee.contracts
 
 
@@ -1379,6 +1671,14 @@ def download_contract_document(
                 detail="Contract not found",
             )
 
+        if current_user.role == UserRole.COMPANY:
+            employee = session.get(Employee, employee_id)
+            if employee is None or employee.company_id != current_user.company_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="You can only access contracts from your own company",
+                )
+
         if not contract.document_path:
             raise HTTPException(
                 status_code=404,
@@ -1456,6 +1756,15 @@ def list_employee_nominas(
             raise HTTPException(
                 status_code=404,
                 detail="Employee not found",
+            )
+
+        if (
+            current_user.role == UserRole.COMPANY
+            and employee.company_id != current_user.company_id
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access employees from your own company",
             )
 
         return session.scalars(
@@ -1804,6 +2113,14 @@ def download_nomina_document(
                 status_code=404,
                 detail="Nomina not found",
             )
+
+        if current_user.role == UserRole.COMPANY:
+            employee = session.get(Employee, employee_id)
+            if employee is None or employee.company_id != current_user.company_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="You can only access nominas from your own company",
+                )
 
         if not nomina.document_path:
             raise HTTPException(

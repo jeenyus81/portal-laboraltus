@@ -37,6 +37,11 @@ class CompanyResponse(BaseModel):
     )
 
 
+class CompanyCredentialsCreate(BaseModel):
+    username: str
+    password: str
+
+
 # ============================================================
 # EMPLEADOS
 # ============================================================

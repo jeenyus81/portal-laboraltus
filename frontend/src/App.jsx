@@ -61,6 +61,14 @@ function App() {
   const [editingCompany, setEditingCompany] = useState(null)
   const [companySaving, setCompanySaving] = useState(false)
 
+  const [companyCredentialsForm, setCompanyCredentialsForm] = useState({
+    username: '',
+    password: '',
+  })
+  const [companyCredentialsSaving, setCompanyCredentialsSaving] = useState(false)
+  const [companyCredentialsError, setCompanyCredentialsError] = useState('')
+  const [companyCredentialsMessage, setCompanyCredentialsMessage] = useState('')
+
   const [creatingCompany, setCreatingCompany] = useState(false)
   const [companyCreateSaving, setCompanyCreateSaving] = useState(false)
   const [companyCreateError, setCompanyCreateError] = useState('')
@@ -82,6 +90,19 @@ function App() {
   const [employeeActiveMenu, setEmployeeActiveMenu] = useState('dashboard')
   const [downloadedContractIds, setDownloadedContractIds] = useState([])
   const [downloadedNominaIds, setDownloadedNominaIds] = useState([])
+
+  // =========================================================
+  // PORTAL EMPRESA — ESTADO INDEPENDIENTE DEL EMPLEADO
+  // =========================================================
+
+  const [companyPortalView, setCompanyPortalView] = useState('dashboard')
+  const [companyActiveMenu, setCompanyActiveMenu] = useState('dashboard')
+  const [companyDashboard, setCompanyDashboard] = useState(null)
+  const [companyEmployees, setCompanyEmployees] = useState([])
+  const [companyContracts, setCompanyContracts] = useState([])
+  const [companyNominas, setCompanyNominas] = useState([])
+  const [companyPortalLoading, setCompanyPortalLoading] = useState(false)
+  const [companyPortalError, setCompanyPortalError] = useState('')
 
   // =========================================================
   // EDICION DE EMPLEADO
@@ -748,6 +769,178 @@ function App() {
     }
   }
 
+  async function loadCompanyPortalData(token) {
+    if (!token) {
+      setCompanyDashboard(null)
+      setCompanyEmployees([])
+      setCompanyContracts([])
+      setCompanyNominas([])
+      return
+    }
+
+    setCompanyPortalLoading(true)
+    setCompanyPortalError('')
+
+    try {
+      const headers = {
+        Authorization: 'Bearer ' + token,
+      }
+
+      const [dashboardResponse, employeesResponse, contractsResponse, nominasResponse] =
+        await Promise.all([
+          fetch(API_URL + '/api/company/dashboard', { headers }),
+          fetch(API_URL + '/api/company/employees', { headers }),
+          fetch(API_URL + '/api/company/contracts', { headers }),
+          fetch(API_URL + '/api/company/nominas', { headers }),
+        ])
+
+      const [dashboardData, employeesData, contractsData, nominasData] =
+        await Promise.all([
+          dashboardResponse.json().catch(() => null),
+          employeesResponse.json().catch(() => null),
+          contractsResponse.json().catch(() => null),
+          nominasResponse.json().catch(() => null),
+        ])
+
+      if (!dashboardResponse.ok) {
+        throw new Error(
+          dashboardData?.detail ||
+            'No se pudo cargar el panel de empresa',
+        )
+      }
+
+      if (!employeesResponse.ok) {
+        throw new Error(
+          employeesData?.detail ||
+            'No se pudieron cargar los empleados de la empresa',
+        )
+      }
+
+      if (!contractsResponse.ok) {
+        throw new Error(
+          contractsData?.detail ||
+            'No se pudieron cargar los contratos de la empresa',
+        )
+      }
+
+      if (!nominasResponse.ok) {
+        throw new Error(
+          nominasData?.detail ||
+            'No se pudieron cargar las nóminas de la empresa',
+        )
+      }
+
+      setCompanyDashboard(
+        dashboardData && typeof dashboardData === 'object'
+          ? dashboardData
+          : null,
+      )
+      setCompanyEmployees(
+        Array.isArray(employeesData) ? employeesData : [],
+      )
+      setCompanyContracts(
+        Array.isArray(contractsData) ? contractsData : [],
+      )
+      setCompanyNominas(
+        Array.isArray(nominasData) ? nominasData : [],
+      )
+    } catch (err) {
+      setCompanyDashboard(null)
+      setCompanyEmployees([])
+      setCompanyContracts([])
+      setCompanyNominas([])
+      setCompanyPortalError(err.message)
+    } finally {
+      setCompanyPortalLoading(false)
+    }
+  }
+
+  function handleCompanyActivityClick(activity) {
+    if (!activity?.target) {
+      return
+    }
+
+    if (activity.target === 'employees') {
+      setCompanyPortalView('employees')
+      setCompanyActiveMenu('employees')
+      return
+    }
+
+    if (activity.target === 'contracts') {
+      setCompanyPortalView('contracts')
+      setCompanyActiveMenu('contracts')
+      return
+    }
+
+    if (activity.target === 'nominas') {
+      setCompanyPortalView('nominas')
+      setCompanyActiveMenu('nominas')
+    }
+  }
+
+  function handleCompanyNavigate(view) {
+    setCompanyPortalView(view)
+    setCompanyActiveMenu(view)
+  }
+
+  function formatCompanyDate(value) {
+    if (!value) {
+      return '—'
+    }
+
+    const date = new Date(value)
+
+    if (Number.isNaN(date.getTime())) {
+      return value
+    }
+
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'Europe/Madrid',
+    })
+  }
+
+  function formatCompanyDateTime(value) {
+    if (!value) {
+      return ''
+    }
+
+    const date = new Date(value)
+
+    if (Number.isNaN(date.getTime())) {
+      return ''
+    }
+
+    return date.toLocaleString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Madrid',
+    })
+  }
+
+  function formatCompanyContractName(contract) {
+    return (
+      contract?.document_path?.split(/[\\/]/).pop() ||
+      'Documento de contrato'
+    )
+  }
+
+  function formatCompanyNominaName(nomina) {
+    return (
+      nomina?.document_path?.split(/[\\/]/).pop() ||
+      'Documento de nómina'
+    )
+  }
+
+  // =========================================================
+  // ACTIVIDAD RECIENTE
+  // =========================================================
+
   function formatActivityDateTime(value) {
     if (!value) {
       return ''
@@ -815,6 +1008,24 @@ function App() {
 
     loadRecentActivities(token)
   }, [loggedIn, user?.role, companyView])
+
+  useEffect(() => {
+    if (
+      !loggedIn ||
+      user?.role !== 'COMPANY' ||
+      companyPortalView !== 'dashboard'
+    ) {
+      return
+    }
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      return
+    }
+
+    loadCompanyPortalData(token)
+  }, [loggedIn, user?.role, companyPortalView])
 
   useEffect(() => {
     if (
@@ -896,6 +1107,9 @@ function App() {
     setSelectedCompany(company)
     setCompanyView('company')
     setEditingCompany(null)
+    setCompanyCredentialsForm({ username: '', password: '' })
+    setCompanyCredentialsError('')
+    setCompanyCredentialsMessage('')
     setCompaniesError('')
   }
 
@@ -907,6 +1121,9 @@ function App() {
     setSelectedCompany(null)
     setEditingCompany(null)
     setCompanyView('companies')
+    setCompanyCredentialsForm({ username: '', password: '' })
+    setCompanyCredentialsError('')
+    setCompanyCredentialsMessage('')
 
     setCompanyForm({
       name: '',
@@ -1019,6 +1236,70 @@ function App() {
       setCompanyCreateError(err.message)
     } finally {
       setCompanyCreateSaving(false)
+    }
+  }
+
+  // =========================================================
+  // CREDENCIALES DE EMPRESA
+  // =========================================================
+
+  async function handleSaveCompanyCredentials(event) {
+    event.preventDefault()
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setCompanyCredentialsError('No hay una sesion valida')
+      return
+    }
+
+    if (!selectedCompany) {
+      setCompanyCredentialsError('No se ha seleccionado una empresa')
+      return
+    }
+
+    if (!companyCredentialsForm.username.trim() || !companyCredentialsForm.password) {
+      setCompanyCredentialsError('Introduce usuario y contraseña')
+      return
+    }
+
+    setCompanyCredentialsSaving(true)
+    setCompanyCredentialsError('')
+    setCompanyCredentialsMessage('')
+
+    try {
+      const response = await fetch(
+        API_URL + '/api/companies/' + selectedCompany.id + '/credentials',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token,
+          },
+          body: JSON.stringify({
+            username: companyCredentialsForm.username.trim(),
+            password: companyCredentialsForm.password,
+          }),
+        },
+      )
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail || 'No se pudieron guardar las credenciales de empresa',
+        )
+      }
+
+      setCompanyCredentialsForm({
+        username: data?.username || companyCredentialsForm.username.trim(),
+        password: '',
+      })
+      setCompanyCredentialsMessage('Credenciales de empresa guardadas correctamente')
+    } catch (err) {
+      setCompanyCredentialsError(err.message)
+    } finally {
+      setCompanyCredentialsSaving(false)
     }
   }
 
@@ -2458,6 +2739,52 @@ async function handleDirectNominaFile(event) {
 
         await loadCompanies(data.access_token)
         await loadEmployees(data.access_token)
+      } else if (data.role === 'COMPANY') {
+        const meResponse = await fetch(
+          API_URL + '/api/me',
+          {
+            headers: {
+              Authorization:
+                'Bearer ' + data.access_token,
+            },
+          },
+        )
+
+        const me = await meResponse.json()
+
+        if (!meResponse.ok) {
+          throw new Error(
+            me.detail || 'No se pudo cargar la empresa',
+          )
+        }
+
+        const companyLogo =
+          (await loadEmployeeCompanyLogo(
+            me.company_id,
+            data.access_token,
+          )) ||
+          me.company_logo ||
+          getStoredCompanyLogo(me.company_id) ||
+          ''
+
+        const loggedUser = {
+          ...me,
+          company_logo: companyLogo,
+          role: data.role,
+          username: username,
+        }
+
+        setUser(loggedUser)
+        setLoggedIn(true)
+        setCompanyPortalView('dashboard')
+        setCompanyActiveMenu('dashboard')
+        setCompanyDashboard(null)
+        setCompanyEmployees([])
+        setCompanyContracts([])
+        setCompanyNominas([])
+        setCompanyPortalError('')
+
+        await loadCompanyPortalData(data.access_token)
       } else {
         const meResponse = await fetch(
           API_URL + '/api/me',
@@ -2546,8 +2873,19 @@ async function handleDirectNominaFile(event) {
     setCompanyView('companies')
     setEmployeeSection('contracts')
 
+    setCompanyPortalView('dashboard')
+    setCompanyActiveMenu('dashboard')
+    setCompanyDashboard(null)
+    setCompanyEmployees([])
+    setCompanyContracts([])
+    setCompanyNominas([])
+    setCompanyPortalError('')
+
     setEditingCompany(null)
     setCreatingCompany(false)
+    setCompanyCredentialsForm({ username: '', password: '' })
+    setCompanyCredentialsError('')
+    setCompanyCredentialsMessage('')
 
     setEditingEmployee(null)
     setCreatingEmployee(false)
@@ -4141,6 +4479,82 @@ if (loggedIn && user && user.role === 'HR') {
 
                   </div>
 
+                </div>
+
+                <div className="profile" style={{ marginTop: '24px' }}>
+                  <div className="section-header">
+                    <div>
+                      <p className="eyebrow">
+                        Acceso de empresa
+                      </p>
+                      <h2>
+                        Credenciales de acceso
+                      </h2>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSaveCompanyCredentials}>
+                    <label htmlFor="company-access-username">
+                      Usuario
+                    </label>
+                    <input
+                      id="company-access-username"
+                      type="text"
+                      value={companyCredentialsForm.username}
+                      onChange={(event) =>
+                        setCompanyCredentialsForm((previous) => ({
+                          ...previous,
+                          username: event.target.value,
+                        }))
+                      }
+                      autoComplete="off"
+                    />
+
+                    <label htmlFor="company-access-password">
+                      Contraseña
+                    </label>
+                    <input
+                      id="company-access-password"
+                      type="password"
+                      value={companyCredentialsForm.password}
+                      onChange={(event) =>
+                        setCompanyCredentialsForm((previous) => ({
+                          ...previous,
+                          password: event.target.value,
+                        }))
+                      }
+                      autoComplete="new-password"
+                    />
+
+                    {companyCredentialsError && (
+                      <p className="error">
+                        {companyCredentialsError}
+                      </p>
+                    )}
+
+                    {companyCredentialsMessage && (
+                      <p className="muted" style={{ margin: '10px 0 0' }}>
+                        {companyCredentialsMessage}
+                      </p>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="hr-company-detail-button"
+                      disabled={companyCredentialsSaving}
+                      style={{
+                        background: '#f4f3ee',
+                        color: '#172b45',
+                        border: '1px solid #f4f3ee',
+                        boxShadow: 'none',
+                        marginTop: '18px',
+                      }}
+                    >
+                      {companyCredentialsSaving
+                        ? 'Guardando...'
+                        : 'Guardar acceso de empresa'}
+                    </button>
+                  </form>
                 </div>
 
                 {/* EDITAR EMPRESA */}
@@ -5936,6 +6350,591 @@ if (loggedIn && user && user.role === 'HR') {
             )}
 
 </div>
+        </div>
+      </main>
+    )
+  }
+
+  // =========================================================
+  // PORTAL EMPRESA
+  // =========================================================
+
+  if (loggedIn && user && user.role === 'COMPANY') {
+    const companyName =
+      user.company_name ||
+      companyDashboard?.company_name ||
+      'Empresa'
+    const companyLogo =
+      user.company_logo || ''
+    const companyActivities =
+      Array.isArray(companyDashboard?.activities)
+        ? companyDashboard.activities.slice(0, 4)
+        : []
+    const companyContractsWithDocument =
+      companyContracts.filter(
+        (contract) => contract?.document_path,
+      )
+    const companyNominasWithDocument =
+      companyNominas.filter(
+        (nomina) => nomina?.document_path,
+      )
+
+    return (
+      <main className="app company-app">
+        <aside className="company-sidebar">
+          <div className="company-brand">
+            <div className="company-brand-logo">
+              {companyLogo ? (
+                <img
+                  src={companyLogo}
+                  alt={'Logo de ' + companyName}
+                />
+              ) : (
+                <span>Sin logo</span>
+              )}
+            </div>
+
+            <div className="company-brand-name">
+              {companyName}
+            </div>
+          </div>
+
+          <nav className="company-nav">
+            <button
+              type="button"
+              className={
+                companyActiveMenu === 'dashboard'
+                  ? 'company-nav-button active'
+                  : 'company-nav-button'
+              }
+              onClick={() =>
+                handleCompanyNavigate('dashboard')
+              }
+            >
+              <span className="company-nav-icon">⌂</span>
+              Inicio
+            </button>
+
+            <button
+              type="button"
+              className={
+                companyActiveMenu === 'employees'
+                  ? 'company-nav-button active'
+                  : 'company-nav-button'
+              }
+              onClick={() =>
+                handleCompanyNavigate('employees')
+              }
+            >
+              <span className="company-nav-icon">👥</span>
+              Empleados
+            </button>
+
+            <button
+              type="button"
+              className={
+                companyActiveMenu === 'contracts'
+                  ? 'company-nav-button active'
+                  : 'company-nav-button'
+              }
+              onClick={() =>
+                handleCompanyNavigate('contracts')
+              }
+            >
+              <span className="company-nav-icon">📄</span>
+              Contratos
+            </button>
+
+            <button
+              type="button"
+              className={
+                companyActiveMenu === 'nominas'
+                  ? 'company-nav-button active'
+                  : 'company-nav-button'
+              }
+              onClick={() =>
+                handleCompanyNavigate('nominas')
+              }
+            >
+              <span className="company-nav-icon">💳</span>
+              Nóminas
+            </button>
+          </nav>
+
+          <div className="company-sidebar-bottom">
+            <div className="company-user-box">
+              <div className="company-user-avatar">
+                <span>👤</span>
+              </div>
+
+              <div>
+                <strong>
+                  {user.username || 'Administrador'}
+                </strong>
+                <span>Empresa</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="company-logout-button"
+              onClick={handleLogout}
+            >
+              <span className="company-nav-icon">↪</span>
+              Cerrar sesión
+            </button>
+          </div>
+        </aside>
+
+        <div className="company-main">
+          <div className="company-topbar">
+            <div className="company-topbar-title">
+              <p className="eyebrow">
+                PORTAL {companyName}
+              </p>
+
+              <h1 className="company-panel-title">
+                Panel de control de la empresa
+              </h1>
+            </div>
+
+            <div className="company-topbar-date">
+              <span className="company-topbar-date-icon">▣</span>
+              <span>
+                {currentDateTime.toLocaleDateString(
+                  'es-ES',
+                  {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    timeZone: 'Europe/Madrid',
+                  },
+                )}{' · '}
+                {currentDateTime.toLocaleTimeString(
+                  'es-ES',
+                  {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Madrid',
+                  },
+                )}
+              </span>
+            </div>
+          </div>
+
+          {companyPortalView === 'dashboard' && (
+            <div className="company-dashboard">
+              <div className="company-dashboard-welcome">
+                <h2>
+                  Bienvenido/a, administrador {companyName}
+                </h2>
+                <p className="muted">
+                  Panel de control de la empresa
+                </p>
+              </div>
+
+              {companyPortalLoading && !companyDashboard ? (
+                <div className="company-dashboard-message">
+                  Cargando información de la empresa...
+                </div>
+              ) : companyPortalError && !companyDashboard ? (
+                <div className="company-dashboard-message company-dashboard-error">
+                  {companyPortalError}
+                </div>
+              ) : (
+                <>
+                  <div className="company-dashboard-stats">
+                    <article
+                      className="company-stat-card company-stat-employees"
+                      onClick={() =>
+                        handleCompanyNavigate('employees')
+                      }
+                    >
+                      <div className="company-stat-icon">
+                        👥
+                      </div>
+                      <div className="company-stat-body">
+                        <span>Empleados</span>
+                        <strong>
+                          {companyDashboard?.employees_count ??
+                            companyEmployees.length}
+                        </strong>
+                        <p>Empleados activos</p>
+                      </div>
+                    </article>
+
+                    <article
+                      className="company-stat-card"
+                      onClick={() =>
+                        handleCompanyNavigate('contracts')
+                      }
+                    >
+                      <div className="company-stat-icon">
+                        📄
+                      </div>
+                      <div className="company-stat-body">
+                        <span>Contratos</span>
+                        <strong>
+                          {companyDashboard?.contracts_count ??
+                            companyContractsWithDocument.length}
+                        </strong>
+                        <p>Contratos cargados</p>
+                      </div>
+                    </article>
+
+                    <article
+                      className="company-stat-card"
+                      onClick={() =>
+                        handleCompanyNavigate('nominas')
+                      }
+                    >
+                      <div className="company-stat-icon">
+                        💳
+                      </div>
+                      <div className="company-stat-body">
+                        <span>Nóminas</span>
+                        <strong>
+                          {companyDashboard?.nominas_count ??
+                            companyNominasWithDocument.length}
+                        </strong>
+                        <p>Nóminas cargadas</p>
+                      </div>
+                    </article>
+                  </div>
+
+                  <div className="company-dashboard-bottom">
+                    <section className="company-dashboard-box company-dashboard-activity-box">
+                      <div className="company-dashboard-box-header">
+                        <p className="eyebrow">
+                          ACTIVIDAD RECIENTE
+                        </p>
+                        <h2>Actividad reciente</h2>
+                      </div>
+
+                      <div className="company-activity-list">
+                        {companyActivities.length === 0 ? (
+                          <div className="company-empty-activity">
+                            <strong>
+                              No hay actividad reciente
+                            </strong>
+                            <p>
+                              Las últimas acciones realizadas sobre la documentación de tu empresa aparecerán aquí.
+                            </p>
+                          </div>
+                        ) : (
+                          companyActivities.map((activity) => (
+                            <button
+                              type="button"
+                              className="company-activity-item"
+                              key={activity.id}
+                              onClick={() =>
+                                handleCompanyActivityClick(
+                                  activity,
+                                )
+                              }
+                            >
+                              <span className="company-activity-icon">
+                                {activity.icon || '•'}
+                              </span>
+                              <span className="company-activity-content">
+                                <strong>
+                                  {activity.title}
+                                </strong>
+                                <span>
+                                  {activity.detail}
+                                </span>
+                              </span>
+                              <time>
+                                {formatCompanyDateTime(
+                                  activity.timestamp,
+                                )}
+                              </time>
+                              <span className="company-activity-arrow">
+                                →
+                              </span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </section>
+
+                    <section className="company-dashboard-box">
+                      <div className="company-dashboard-box-header">
+                        <p className="eyebrow">
+                          ACCESOS RÁPIDOS
+                        </p>
+                        <h2>Gestión habitual</h2>
+                      </div>
+
+                      <div className="company-quick-actions">
+                        <button
+                          type="button"
+                          className="company-quick-action company-quick-action-nominas"
+                          onClick={() =>
+                            handleCompanyNavigate('nominas')
+                          }
+                        >
+                          <span className="company-quick-action-icon">
+                            💳
+                          </span>
+                          <span className="company-quick-action-content">
+                            <strong>Nóminas cargadas</strong>
+                            <span>
+                              Consultar las últimas nóminas cargadas
+                            </span>
+                          </span>
+                          <span className="company-quick-action-arrow">
+                            →
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="company-quick-action company-quick-action-contracts"
+                          onClick={() =>
+                            handleCompanyNavigate('contracts')
+                          }
+                        >
+                          <span className="company-quick-action-icon">
+                            📄
+                          </span>
+                          <span className="company-quick-action-content">
+                            <strong>Contratos cargados</strong>
+                            <span>
+                              Consultar los últimos contratos cargados
+                            </span>
+                          </span>
+                          <span className="company-quick-action-arrow">
+                            →
+                          </span>
+                        </button>
+                      </div>
+                    </section>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {companyPortalView === 'employees' && (
+            <div className="company-content-panel">
+              <div className="company-content-header">
+                <div>
+                  <p className="eyebrow">GESTIÓN DE PERSONAL</p>
+                  <h2>Empleados</h2>
+                </div>
+                <button
+                  type="button"
+                  className="company-back-button"
+                  onClick={() =>
+                    handleCompanyNavigate('dashboard')
+                  }
+                >
+                  ← Inicio
+                </button>
+              </div>
+
+              {companyPortalLoading ? (
+                <p className="muted">Cargando empleados...</p>
+              ) : companyEmployees.length === 0 ? (
+                <div className="company-empty-state">
+                  <strong>No hay empleados</strong>
+                  <p>
+                    No se encontraron empleados en esta empresa.
+                  </p>
+                </div>
+              ) : (
+                <div className="company-list">
+                  {companyEmployees.map((employee) => (
+                    <article
+                      className="company-list-card"
+                      key={employee.id}
+                    >
+                      <div className="company-list-icon">👤</div>
+                      <div className="company-list-main">
+                        <strong>
+                          {`${employee.first_name || ''} ${employee.last_name || ''}`.trim() ||
+                            'Empleado'}
+                        </strong>
+                        <span>
+                          {employee.job_title ||
+                            employee.job_category ||
+                            'Sin puesto indicado'}
+                        </span>
+                      </div>
+                      <div className="company-list-meta">
+                        <span>Código</span>
+                        <strong>
+                          {employee.employee_code || '—'}
+                        </strong>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {companyPortalView === 'contracts' && (
+            <div className="company-content-panel">
+              <div className="company-content-header">
+                <div>
+                  <p className="eyebrow">DOCUMENTACIÓN</p>
+                  <h2>Contratos cargados</h2>
+                </div>
+                <button
+                  type="button"
+                  className="company-back-button"
+                  onClick={() =>
+                    handleCompanyNavigate('dashboard')
+                  }
+                >
+                  ← Inicio
+                </button>
+              </div>
+
+              {companyPortalLoading ? (
+                <p className="muted">Cargando contratos...</p>
+              ) : companyContractsWithDocument.length === 0 ? (
+                <div className="company-empty-state">
+                  <strong>No hay contratos cargados</strong>
+                  <p>
+                    No hay documentos de contrato disponibles para esta empresa.
+                  </p>
+                </div>
+              ) : (
+                <div className="company-list">
+                  {companyContractsWithDocument.map((contract) => (
+                    <article
+                      className="company-list-card company-document-card"
+                      key={contract.id}
+                    >
+                      <div className="company-list-icon">📄</div>
+                      <div className="company-list-main">
+                        <strong>
+                          {contract.employee_name || 'Empleado'}
+                        </strong>
+                        <span>
+                          {contract.contract_type || 'Contrato'} ·{' '}
+                          {formatCompanyContractName(contract)}
+                        </span>
+                        <small>
+                          {formatCompanyDate(contract.start_date)}
+                          {contract.end_date
+                            ? ' — ' +
+                              formatCompanyDate(contract.end_date)
+                            : ''}
+                        </small>
+                      </div>
+                      <div className="company-document-actions">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleViewContract(
+                              contract,
+                              contract.employee_id,
+                            )
+                          }
+                        >
+                          Ver
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() =>
+                            handleDownload(
+                              contract,
+                              contract.employee_id,
+                            )
+                          }
+                        >
+                          Descargar
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {companyPortalView === 'nominas' && (
+            <div className="company-content-panel">
+              <div className="company-content-header">
+                <div>
+                  <p className="eyebrow">DOCUMENTACIÓN</p>
+                  <h2>Nóminas cargadas</h2>
+                </div>
+                <button
+                  type="button"
+                  className="company-back-button"
+                  onClick={() =>
+                    handleCompanyNavigate('dashboard')
+                  }
+                >
+                  ← Inicio
+                </button>
+              </div>
+
+              {companyPortalLoading ? (
+                <p className="muted">Cargando nóminas...</p>
+              ) : companyNominasWithDocument.length === 0 ? (
+                <div className="company-empty-state">
+                  <strong>No hay nóminas cargadas</strong>
+                  <p>
+                    No hay documentos de nómina disponibles para esta empresa.
+                  </p>
+                </div>
+              ) : (
+                <div className="company-list">
+                  {companyNominasWithDocument.map((nomina) => (
+                    <article
+                      className="company-list-card company-document-card"
+                      key={nomina.id}
+                    >
+                      <div className="company-list-icon">💳</div>
+                      <div className="company-list-main">
+                        <strong>
+                          {nomina.employee_name || 'Empleado'}
+                        </strong>
+                        <span>
+                          {formatCompanyNominaName(nomina)}
+                        </span>
+                        <small>
+                          Fecha: {formatCompanyDate(nomina.date)}
+                        </small>
+                      </div>
+                      <div className="company-document-actions">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleViewNomina(
+                              nomina,
+                              nomina.employee_id,
+                            )
+                          }
+                        >
+                          Ver
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() =>
+                            handleDownloadNomina(
+                              nomina,
+                              nomina.employee_id,
+                            )
+                          }
+                        >
+                          Descargar
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
     )

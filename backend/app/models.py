@@ -8,6 +8,7 @@ from .database import Base
 
 class UserRole:
     EMPLOYEE = "EMPLOYEE"
+    COMPANY = "COMPANY"
     HR = "HR"
 
 
@@ -40,6 +41,11 @@ class Company(Base):
 
     employees: Mapped[list["Employee"]] = relationship(
         back_populates="company"
+    )
+
+    user: Mapped["User | None"] = relationship(
+        back_populates="company",
+        uselist=False,
     )
 
 
@@ -163,7 +169,17 @@ class User(Base):
         nullable=True,
     )
 
+    company_id: Mapped[int | None] = mapped_column(
+        ForeignKey("companies.id"),
+        unique=True,
+        nullable=True,
+    )
+
     employee: Mapped["Employee | None"] = relationship(
+        back_populates="user"
+    )
+
+    company: Mapped["Company | None"] = relationship(
         back_populates="user"
     )
 
