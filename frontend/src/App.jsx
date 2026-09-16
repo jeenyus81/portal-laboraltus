@@ -28,6 +28,11 @@ function App() {
   const contractFileInputRef = useRef(null)
   const nominaFileInputRef = useRef(null)
   const companyLogoFileInputRef = useRef(null)
+  const companyNominaFileInputRef = useRef(null)
+  const companyNominaPanelFileInputRef = useRef(null)
+  const companyNominaPanelTargetRef = useRef(null)
+  const companyContractPanelFileInputRef = useRef(null)
+  const companyContractPanelTargetRef = useRef(null)
 
   // =========================================================
   // EMPRESAS
@@ -37,12 +42,17 @@ function App() {
   const [companiesLoading, setCompaniesLoading] = useState(false)
   const [companiesError, setCompaniesError] = useState('')
 
+  const [recentActivities, setRecentActivities] = useState([])
+  const [recentActivitiesLoading, setRecentActivitiesLoading] = useState(false)
+  const [recentActivitiesError, setRecentActivitiesError] = useState('')
+
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [companyView, setCompanyView] = useState('companies')
   const [activeMenu, setActiveMenu] = useState('companies')
 
   const [companyForm, setCompanyForm] = useState({
     name: '',
+    company_code: '',
     tax_id: '',
     address: '',
     logo: '',
@@ -54,6 +64,9 @@ function App() {
   const [creatingCompany, setCreatingCompany] = useState(false)
   const [companyCreateSaving, setCompanyCreateSaving] = useState(false)
   const [companyCreateError, setCompanyCreateError] = useState('')
+
+  const companyNominaFilesRef = useRef([])
+  const companyContractFilesRef = useRef([])
 
   // =========================================================
   // EMPLEADOS
@@ -79,6 +92,7 @@ function App() {
   const [employeeForm, setEmployeeForm] = useState({
     first_name: '',
     last_name: '',
+    employee_code: '',
     job_title: '',
     job_category: '',
     nationality: '',
@@ -99,6 +113,7 @@ function App() {
   const [newEmployeeForm, setNewEmployeeForm] = useState({
     first_name: '',
     last_name: '',
+    employee_code: '',
     national_id: '',
     nationality: '',
     gender: '',
@@ -123,6 +138,7 @@ function App() {
     setNewEmployeeForm({
       first_name: '',
       last_name: '',
+      employee_code: '',
       national_id: '',
       nationality: '',
       gender: '',
@@ -172,6 +188,7 @@ function App() {
           body: JSON.stringify({
             company_id: selectedCompany.id,
             first_name: newEmployeeForm.first_name,
+            employee_code: newEmployeeForm.employee_code,
             last_name: newEmployeeForm.last_name,
             national_id: newEmployeeForm.national_id,
             nationality: newEmployeeForm.nationality,
@@ -207,6 +224,7 @@ function App() {
       setNewEmployeeForm({
         first_name: '',
         last_name: '',
+        employee_code: '',
         national_id: '',
         nationality: '',
         gender: '',
@@ -642,6 +660,43 @@ function App() {
     reader.readAsDataURL(file)
   }
 
+  function handleCompanyNominaFilesChange(event) {
+    const files = Array.from(event.target.files || [])
+    companyNominaFilesRef.current = files
+  }
+
+  function handleCompanyNominaPanelFilesChange(event) {
+    const files = Array.from(event.target.files || [])
+    companyNominaFilesRef.current = files
+    event.target.value = ''
+  }
+
+  function handleOpenCompanyNominaUpload(company) {
+    companyNominaPanelTargetRef.current = company
+    companyNominaFilesRef.current = []
+
+    if (companyNominaPanelFileInputRef.current) {
+      companyNominaPanelFileInputRef.current.value = ''
+      companyNominaPanelFileInputRef.current.click()
+    }
+  }
+
+  function handleCompanyContractPanelFilesChange(event) {
+    const files = Array.from(event.target.files || [])
+    companyContractFilesRef.current = files
+    event.target.value = ''
+  }
+
+  function handleOpenCompanyContractUpload(company) {
+    companyContractPanelTargetRef.current = company
+    companyContractFilesRef.current = []
+
+    if (companyContractPanelFileInputRef.current) {
+      companyContractPanelFileInputRef.current.value = ''
+      companyContractPanelFileInputRef.current.click()
+    }
+  }
+
   function handleRemoveCompanyLogo() {
     setCompanyForm((previous) => ({
       ...previous,
@@ -656,6 +711,111 @@ function App() {
   // =========================================================
   // CARGAR EMPRESAS
   // =========================================================
+
+  async function loadRecentActivities(token) {
+    if (!token) {
+      setRecentActivities([])
+      return
+    }
+
+    setRecentActivitiesLoading(true)
+    setRecentActivitiesError('')
+
+    try {
+      const response = await fetch(
+        API_URL + '/api/activity/recent',
+        {
+          headers: {
+            Authorization: 'Bearer ' + token,
+          },
+        },
+      )
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail || 'No se pudo cargar la actividad reciente',
+        )
+      }
+
+      setRecentActivities(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setRecentActivities([])
+      setRecentActivitiesError(err.message)
+    } finally {
+      setRecentActivitiesLoading(false)
+    }
+  }
+
+  function formatActivityDateTime(value) {
+    if (!value) {
+      return ''
+    }
+
+    const date = new Date(value)
+
+    if (Number.isNaN(date.getTime())) {
+      return ''
+    }
+
+    return date.toLocaleString(
+      'es-ES',
+      {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Europe/Madrid',
+      },
+    )
+  }
+
+  function handleRecentActivityClick(activity) {
+    if (!activity?.target) {
+      return
+    }
+
+    if (activity.target === 'companies') {
+      setActiveMenu('companies')
+      setSelectedCompany(null)
+      setSelectedEmployee(null)
+      setCompanyView('companies')
+      return
+    }
+
+    if (activity.target === 'employees') {
+      handleEnterAllEmployees()
+      return
+    }
+
+    if (activity.target === 'contracts') {
+      setActiveMenu('contracts')
+      setCompanyView('contractsBlank')
+      return
+    }
+
+    if (activity.target === 'nominas') {
+      setActiveMenu('nominas')
+      setCompanyView('nominasBlank')
+    }
+  }
+
+  useEffect(() => {
+    if (!loggedIn || user?.role !== 'HR' || companyView !== 'dashboard') {
+      return
+    }
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      return
+    }
+
+    loadRecentActivities(token)
+  }, [loggedIn, user?.role, companyView])
+
 
   async function loadCompanies(token) {
     setCompaniesLoading(true)
@@ -732,6 +892,7 @@ function App() {
 
     setCompanyForm({
       name: '',
+      company_code: '',
       tax_id: '',
       address: '',
       logo: '',
@@ -750,6 +911,7 @@ function App() {
 
     setCompanyForm({
       name: '',
+      company_code: '',
       tax_id: '',
       address: '',
       logo: '',
@@ -762,6 +924,7 @@ function App() {
 
     setCompanyForm({
       name: '',
+      company_code: '',
       tax_id: '',
       address: '',
       logo: '',
@@ -792,6 +955,7 @@ function App() {
           },
           body: JSON.stringify({
             name: companyForm.name,
+            company_code: companyForm.company_code,
             tax_id: companyForm.tax_id,
             address: companyForm.address,
           }),
@@ -828,6 +992,7 @@ function App() {
 
       setCompanyForm({
         name: '',
+        company_code: '',
         tax_id: '',
         address: '',
         logo: '',
@@ -848,6 +1013,7 @@ function App() {
 
     setCompanyForm({
       name: company.name || '',
+      company_code: company.company_code || '',
       tax_id: company.tax_id || '',
       address: company.address || '',
       logo:
@@ -864,6 +1030,7 @@ function App() {
 
     setCompanyForm({
       name: '',
+      company_code: '',
       tax_id: '',
       address: '',
       logo: '',
@@ -900,6 +1067,7 @@ function App() {
           },
           body: JSON.stringify({
             name: companyForm.name,
+            company_code: companyForm.company_code,
             tax_id: companyForm.tax_id,
             address: companyForm.address,
           }),
@@ -939,6 +1107,7 @@ function App() {
 
       setCompanyForm({
         name: '',
+        company_code: '',
         tax_id: '',
         address: '',
         logo: '',
@@ -1029,6 +1198,8 @@ function App() {
     setNominas([])
     setSelectedFiles({})
     setSelectedNominaFiles({})
+    companyNominaFilesRef.current = []
+    companyContractFilesRef.current = []
   }
 
   // =========================================================
@@ -1085,6 +1256,7 @@ function App() {
     setEmployeeForm({
       first_name: employee.first_name || '',
       last_name: employee.last_name || '',
+      employee_code: employee.employee_code || '',
       job_title: employee.job_title || '',
       job_category: employee.job_category || '',
       nationality: employee.nationality || '',
@@ -1100,6 +1272,7 @@ function App() {
     setEmployeeForm({
       first_name: '',
       last_name: '',
+      employee_code: '',
       job_title: '',
       job_category: '',
       nationality: '',
@@ -1138,6 +1311,7 @@ function App() {
           body: JSON.stringify({
             company_id: editingEmployee.company_id,
             first_name: employeeForm.first_name,
+            employee_code: employeeForm.employee_code,
             last_name: employeeForm.last_name,
             national_id: editingEmployee.national_id,
             nationality: employeeForm.nationality,
@@ -1174,6 +1348,7 @@ function App() {
       setEmployeeForm({
         first_name: '',
         last_name: '',
+        employee_code: '',
         job_title: '',
         job_category: '',
         nationality: '',
@@ -2232,8 +2407,10 @@ async function handleDirectNominaFile(event) {
         setUser(loggedUser)
         setLoggedIn(true)
 
+        setActiveMenu('dashboard')
         setCompanyView('dashboard')
         setSelectedCompany(null)
+        setSelectedEmployee(null)
 
         await loadCompanies(data.access_token)
         await loadEmployees(data.access_token)
@@ -2333,6 +2510,7 @@ async function handleDirectNominaFile(event) {
 
     setCompanyForm({
       name: '',
+      company_code: '',
       tax_id: '',
       address: '',
       logo: '',
@@ -2341,6 +2519,7 @@ async function handleDirectNominaFile(event) {
     setEmployeeForm({
       first_name: '',
       last_name: '',
+      employee_code: '',
       job_title: '',
       job_category: '',
       nationality: '',
@@ -2350,6 +2529,7 @@ async function handleDirectNominaFile(event) {
     setNewEmployeeForm({
       first_name: '',
       last_name: '',
+      employee_code: '',
       national_id: '',
       nationality: '',
       gender: '',
@@ -2636,15 +2816,16 @@ if (loggedIn && user && user.role === 'HR') {
 
 </div>
 {/* ================================================= */}
-{/* PANEL VACÍO DE CONTRATOS */}
+{/* PANEL DE CONTRATOS */}
 {/* ================================================= */}
 
 {companyView === 'contractsBlank' && (
   <div className="contracts">
+
     <div className="section-header">
       <div>
         <p className="eyebrow">
-          Gestion de contratos
+          Gestión de contratos
         </p>
 
         <h2>
@@ -2652,6 +2833,126 @@ if (loggedIn && user && user.role === 'HR') {
         </h2>
       </div>
     </div>
+
+    <input
+      ref={companyContractPanelFileInputRef}
+      type="file"
+      multiple
+      style={{ display: 'none' }}
+      onChange={
+        handleCompanyContractPanelFilesChange
+      }
+    />
+
+    {companiesLoading && (
+      <p className="muted">
+        Cargando empresas...
+      </p>
+    )}
+
+    {!companiesLoading && companiesError && (
+      <p className="error">
+        {companiesError}
+      </p>
+    )}
+
+    {!companiesLoading &&
+      !companiesError &&
+      companies.length === 0 && (
+        <div className="empty-state">
+          <strong>
+            No hay empresas
+          </strong>
+
+          <p>
+            No se encontraron empresas
+            en el sistema.
+          </p>
+        </div>
+      )}
+
+    {!companiesLoading &&
+      companies.length > 0 && (
+        <div className="contract-list">
+          {companies.map((company) => (
+            <article
+              className="contract-card hr-company-card"
+              key={company.id}
+            >
+              <div className="hr-company-row">
+
+                <div className="hr-company-field hr-company-name">
+                  <span>
+                    Empresa
+                  </span>
+
+                  <strong>
+                    {company.name}
+                  </strong>
+                </div>
+
+                <div className="hr-company-logo-slot">
+                  {company.logo ? (
+                    <img
+                      src={company.logo}
+                      alt={
+                        'Logo de ' +
+                        company.name
+                      }
+                    />
+                  ) : (
+                    <span>
+                      Logotipo
+                    </span>
+                  )}
+                </div>
+
+                <div className="hr-company-field">
+                  <span>
+                    CIF / NIF
+                  </span>
+
+                  <strong>
+                    {company.tax_id}
+                  </strong>
+                </div>
+
+                <div className="hr-company-field hr-company-address">
+                  <span>
+                    Dirección
+                  </span>
+
+                  <strong>
+                    {company.address}
+                  </strong>
+                </div>
+
+                <div className="hr-company-action">
+                  <button
+                    type="button"
+                    className="hr-company-detail-button"
+                    style={{
+                      background: '#f4f3ee',
+                      color: '#172b45',
+                      border: '1px solid #f4f3ee',
+                      boxShadow: 'none',
+                    }}
+                    onClick={() =>
+                      handleOpenCompanyContractUpload(
+                        company,
+                      )
+                    }
+                  >
+                    Cargar contratos
+                  </button>
+                </div>
+
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
   </div>
 )}
 
@@ -2661,10 +2962,11 @@ if (loggedIn && user && user.role === 'HR') {
 
 {companyView === 'nominasBlank' && (
   <div className="contracts">
+
     <div className="section-header">
       <div>
         <p className="eyebrow">
-          Gestion de nóminas
+          Gestión de nóminas
         </p>
 
         <h2>
@@ -2672,6 +2974,126 @@ if (loggedIn && user && user.role === 'HR') {
         </h2>
       </div>
     </div>
+
+    <input
+      ref={companyNominaPanelFileInputRef}
+      type="file"
+      multiple
+      style={{ display: 'none' }}
+      onChange={
+        handleCompanyNominaPanelFilesChange
+      }
+    />
+
+    {companiesLoading && (
+      <p className="muted">
+        Cargando empresas...
+      </p>
+    )}
+
+    {!companiesLoading && companiesError && (
+      <p className="error">
+        {companiesError}
+      </p>
+    )}
+
+    {!companiesLoading &&
+      !companiesError &&
+      companies.length === 0 && (
+        <div className="empty-state">
+          <strong>
+            No hay empresas
+          </strong>
+
+          <p>
+            No se encontraron empresas
+            en el sistema.
+          </p>
+        </div>
+      )}
+
+    {!companiesLoading &&
+      companies.length > 0 && (
+        <div className="contract-list">
+          {companies.map((company) => (
+            <article
+              className="contract-card hr-company-card"
+              key={company.id}
+            >
+              <div className="hr-company-row">
+
+                <div className="hr-company-field hr-company-name">
+                  <span>
+                    Empresa
+                  </span>
+
+                  <strong>
+                    {company.name}
+                  </strong>
+                </div>
+
+                <div className="hr-company-logo-slot">
+                  {company.logo ? (
+                    <img
+                      src={company.logo}
+                      alt={
+                        'Logo de ' +
+                        company.name
+                      }
+                    />
+                  ) : (
+                    <span>
+                      Logotipo
+                    </span>
+                  )}
+                </div>
+
+                <div className="hr-company-field">
+                  <span>
+                    CIF / NIF
+                  </span>
+
+                  <strong>
+                    {company.tax_id}
+                  </strong>
+                </div>
+
+                <div className="hr-company-field hr-company-address">
+                  <span>
+                    Dirección
+                  </span>
+
+                  <strong>
+                    {company.address}
+                  </strong>
+                </div>
+
+                <div className="hr-company-action">
+                  <button
+                    type="button"
+                    className="hr-company-detail-button"
+                    style={{
+                      background: '#f4f3ee',
+                      color: '#172b45',
+                      border: '1px solid #f4f3ee',
+                      boxShadow: 'none',
+                    }}
+                    onClick={() =>
+                      handleOpenCompanyNominaUpload(
+                        company,
+                      )
+                    }
+                  >
+                    Cargar nóminas
+                  </button>
+                </div>
+
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
   </div>
 )}
 
@@ -2731,6 +3153,7 @@ if (loggedIn && user && user.role === 'HR') {
         <button
           type="button"
           onClick={() => {
+            setActiveMenu('companies')
             setCompanyView('companies')
             setSelectedCompany(null)
             setSelectedEmployee(null)
@@ -2809,13 +3232,8 @@ if (loggedIn && user && user.role === 'HR') {
         <button
           type="button"
           onClick={() => {
-            if (selectedEmployee) {
-              handleViewContracts(selectedEmployee)
-            } else if (selectedCompany) {
-              handleEnterEmployees()
-            } else {
-              setCompanyView('companies')
-            }
+            setActiveMenu('contracts')
+            setCompanyView('contractsBlank')
           }}
         >
           Gestionar
@@ -2855,13 +3273,8 @@ if (loggedIn && user && user.role === 'HR') {
         <button
           type="button"
           onClick={() => {
-            if (selectedEmployee) {
-              handleViewNominas(selectedEmployee)
-            } else if (selectedCompany) {
-              handleEnterEmployees()
-            } else {
-              setCompanyView('companies')
-            }
+            setActiveMenu('nominas')
+            setCompanyView('nominasBlank')
           }}
         >
           Gestionar
@@ -2902,110 +3315,60 @@ if (loggedIn && user && user.role === 'HR') {
 
         <div className="hr-activity-list">
 
-          <div className="hr-activity-item">
-
-            <div className="hr-activity-icon">
-              🏢
-            </div>
-
-            <div className="hr-activity-content">
-
+          {recentActivitiesLoading ? (
+            <p className="muted">
+              Cargando actividad reciente...
+            </p>
+          ) : recentActivitiesError ? (
+            <p className="error">
+              {recentActivitiesError}
+            </p>
+          ) : recentActivities.length === 0 ? (
+            <div className="empty-state">
               <strong>
-                Empresa creada
+                No hay actividad reciente
               </strong>
-
-              <span>
-                {companies.length > 0
-                  ? companies[companies.length - 1].name
-                  : 'No hay empresas registradas'}
-              </span>
-
+              <p>
+                Las últimas acciones realizadas aparecerán aquí.
+              </p>
             </div>
+          ) : (
+            recentActivities.map((activity) => (
+              <div
+                className="hr-activity-item clickable"
+                key={activity.id}
+                role="button"
+                tabIndex={0}
+                onClick={() =>
+                  handleRecentActivityClick(activity)
+                }
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    handleRecentActivityClick(activity)
+                  }
+                }}
+              >
+                <div className="hr-activity-icon">
+                  {activity.icon || '•'}
+                </div>
 
-            <time>
-              Hoy
-            </time>
+                <div className="hr-activity-content">
+                  <strong>
+                    {activity.title}
+                  </strong>
 
-          </div>
+                  <span>
+                    {activity.detail}
+                  </span>
+                </div>
 
-
-          <div className="hr-activity-item">
-
-            <div className="hr-activity-icon">
-              👥
-            </div>
-
-            <div className="hr-activity-content">
-
-              <strong>
-                Empleado creado
-              </strong>
-
-              <span>
-                {employees.length > 0
-                  ? employees[employees.length - 1].first_name +
-                    ' ' +
-                    employees[employees.length - 1].last_name
-                  : 'No hay empleados registrados'}
-              </span>
-
-            </div>
-
-            <time>
-              Hoy
-            </time>
-
-          </div>
-
-
-          <div className="hr-activity-item">
-
-            <div className="hr-activity-icon">
-              📄
-            </div>
-
-            <div className="hr-activity-content">
-
-              <strong>
-                Contratos
-              </strong>
-
-              <span>
-                Gestión de contratos laborales
-              </span>
-
-            </div>
-
-            <time>
-              Hoy
-            </time>
-
-          </div>
-
-
-          <div className="hr-activity-item">
-
-            <div className="hr-activity-icon">
-              💳
-            </div>
-
-            <div className="hr-activity-content">
-
-              <strong>
-                Nóminas
-              </strong>
-
-              <span>
-                Gestión de nóminas de empleados
-              </span>
-
-            </div>
-
-            <time>
-              Hoy
-            </time>
-
-          </div>
+                <time>
+                  {formatActivityDateTime(activity.timestamp)}
+                </time>
+              </div>
+            ))
+          )}
 
         </div>
 
@@ -3292,6 +3655,22 @@ if (loggedIn && user && user.role === 'HR') {
                         })
                       }
                       required
+                    />
+
+                    <label htmlFor="new-company-code">
+                      Código empresa
+                    </label>
+
+                    <input
+                      id="new-company-code"
+                      type="text"
+                      value={companyForm.company_code}
+                      onChange={(event) =>
+                        setCompanyForm({
+                          ...companyForm,
+                          company_code: event.target.value,
+                        })
+                      }
                     />
 
                     <label htmlFor="new-company-tax-id">
@@ -3642,6 +4021,30 @@ if (loggedIn && user && user.role === 'HR') {
                       Empleados
                     </button>
 
+                    <input
+                      ref={companyNominaFileInputRef}
+                      type="file"
+                      multiple
+                      style={{ display: 'none' }}
+                      onChange={
+                        handleCompanyNominaFilesChange
+                      }
+                    />
+
+                    <button
+                      type="button"
+                      className="hr-company-detail-button"
+                      onClick={() => {
+                        companyNominaFilesRef.current = []
+                        if (companyNominaFileInputRef.current) {
+                          companyNominaFileInputRef.current.value = ''
+                          companyNominaFileInputRef.current.click()
+                        }
+                      }}
+                    >
+                      Cargar nóminas
+                    </button>
+
                   </div>
 
                 </div>
@@ -3688,6 +4091,25 @@ if (loggedIn && user && user.role === 'HR') {
                           })
                         }
                         required
+                      />
+
+                      <label htmlFor="company-code">
+                        Código empresa
+                      </label>
+
+                      <input
+                        id="company-code"
+                        type="text"
+                        value={
+                          companyForm.company_code
+                        }
+                        onChange={(event) =>
+                          setCompanyForm({
+                            ...companyForm,
+                            company_code:
+                              event.target.value,
+                          })
+                        }
                       />
 
                       <label htmlFor="company-tax-id">
@@ -4069,6 +4491,25 @@ if (loggedIn && user && user.role === 'HR') {
                           })
                         }
                         required
+                      />
+
+                      <label htmlFor="new-employee-code">
+                        Código empleado
+                      </label>
+
+                      <input
+                        id="new-employee-code"
+                        type="text"
+                        value={
+                          newEmployeeForm.employee_code
+                        }
+                        onChange={(event) =>
+                          setNewEmployeeForm({
+                            ...newEmployeeForm,
+                            employee_code:
+                              event.target.value,
+                          })
+                        }
                       />
 
                       <label htmlFor="new-employee-national-id">
@@ -4646,6 +5087,25 @@ if (loggedIn && user && user.role === 'HR') {
                           })
                         }
                         required
+                      />
+
+                      <label htmlFor="employee-code">
+                        Código empleado
+                      </label>
+
+                      <input
+                        id="employee-code"
+                        type="text"
+                        value={
+                          employeeForm.employee_code
+                        }
+                        onChange={(event) =>
+                          setEmployeeForm({
+                            ...employeeForm,
+                            employee_code:
+                              event.target.value,
+                          })
+                        }
                       />
 
                       <label htmlFor="employee-username">

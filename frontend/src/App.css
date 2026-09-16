@@ -816,6 +816,19 @@ button:disabled {
   border-bottom: 1px solid #eaecf0;
 }
 
+.hr-activity-item.clickable {
+  cursor: pointer;
+}
+
+.hr-activity-item.clickable:hover {
+  background: #fafbfc;
+}
+
+.hr-activity-item.clickable:focus-visible {
+  outline: 2px solid #2f80ed;
+  outline-offset: 2px;
+}
+
 .hr-activity-item:first-child {
   padding-top: 2px;
 }

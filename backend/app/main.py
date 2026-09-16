@@ -1,5 +1,6 @@
 import base64
 import json
+from datetime import datetime
 
 from pathlib import Path
 
@@ -15,8 +16,10 @@ from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from uuid import uuid4
+from zoneinfo import ZoneInfo
 
-from app.database import Base, engine
+from app.database import Base, add_missing_code_columns, engine
 from app.dependencies import get_current_user, require_hr
 from app.models import (
     Company,
@@ -153,9 +156,60 @@ def _write_downloaded_nominas(data: dict):
 
 
 # ============================================================
+# ACTIVIDAD RECIENTE DE RR. HH.
+# ============================================================
+
+
+ACTIVITY_FILE = Path("uploads/activity/recent_activity.json")
+ACTIVITY_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+
+def _read_activity():
+    if not ACTIVITY_FILE.exists():
+        return []
+
+    try:
+        data = json.loads(
+            ACTIVITY_FILE.read_text(encoding="utf-8")
+        )
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def _write_activity(data):
+    ACTIVITY_FILE.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def _record_activity(title, detail, target, icon):
+    timestamp = datetime.now(
+        ZoneInfo("Europe/Madrid")
+    ).isoformat()
+
+    activities = _read_activity()
+    activities.insert(
+        0,
+        {
+            "id": str(uuid4()),
+            "title": title,
+            "detail": detail,
+            "target": target,
+            "icon": icon,
+            "timestamp": timestamp,
+        },
+    )
+
+    _write_activity(activities[:100])
+
+
+# ============================================================
 # CREAR TABLAS
 # ============================================================
 
+add_missing_code_columns()
 Base.metadata.create_all(bind=engine)
 
 
@@ -283,6 +337,7 @@ def get_me(
             "company_id": employee.company_id,
             "first_name": employee.first_name,
             "last_name": employee.last_name,
+            "employee_code": employee.employee_code,
             "national_id": employee.national_id,
             "nationality": employee.nationality,
             "gender": employee.gender,
@@ -350,6 +405,13 @@ def create_company(
 
         session.refresh(company)
 
+        _record_activity(
+            "Empresa creada",
+            company.name,
+            "companies",
+            "🏢",
+        )
+
         return company
 
 
@@ -375,6 +437,7 @@ def update_company(
             )
 
         company.name = data.name
+        company.company_code = data.company_code
         company.tax_id = data.tax_id
         company.address = data.address
 
@@ -393,6 +456,13 @@ def update_company(
             )
 
         session.refresh(company)
+
+        _record_activity(
+            "Empresa actualizada",
+            company.name,
+            "companies",
+            "🏢",
+        )
 
         return company
 
@@ -507,6 +577,8 @@ def list_employees(
                         employee.first_name,
                     "last_name":
                         employee.last_name,
+                    "employee_code":
+                        employee.employee_code,
                     "national_id":
                         employee.national_id,
                     "nationality":
@@ -564,6 +636,7 @@ def create_employee(
             company_id=data.company_id,
             first_name=data.first_name,
             last_name=data.last_name,
+            employee_code=data.employee_code,
             national_id=data.national_id,
             nationality=data.nationality,
             gender=data.gender,
@@ -606,6 +679,17 @@ def create_employee(
         session.refresh(employee)
         session.refresh(user)
 
+        _record_activity(
+            "Empleado creado",
+            (
+                employee.first_name +
+                " " +
+                employee.last_name
+            ).strip(),
+            "employees",
+            "👥",
+        )
+
         return {
             "id": employee.id,
             "company_id":
@@ -614,6 +698,8 @@ def create_employee(
                 employee.first_name,
             "last_name":
                 employee.last_name,
+            "employee_code":
+                employee.employee_code,
             "national_id":
                 employee.national_id,
             "nationality":
@@ -683,6 +769,7 @@ def update_employee(
         employee.company_id = data.company_id
         employee.first_name = data.first_name
         employee.last_name = data.last_name
+        employee.employee_code = data.employee_code
         employee.national_id = data.national_id
         employee.nationality = data.nationality
         employee.gender = data.gender
@@ -725,6 +812,17 @@ def update_employee(
         if user is not None:
             username = user.username
 
+        _record_activity(
+            "Empleado actualizado",
+            (
+                employee.first_name +
+                " " +
+                employee.last_name
+            ).strip(),
+            "employees",
+            "👥",
+        )
+
         return {
             "id": employee.id,
             "company_id":
@@ -733,6 +831,8 @@ def update_employee(
                 employee.first_name,
             "last_name":
                 employee.last_name,
+            "employee_code":
+                employee.employee_code,
             "national_id":
                 employee.national_id,
             "nationality":
@@ -806,6 +906,8 @@ def get_employee(
                 employee.first_name,
             "last_name":
                 employee.last_name,
+            "employee_code":
+                employee.employee_code,
             "national_id":
                 employee.national_id,
             "nationality":
@@ -827,6 +929,18 @@ def get_employee(
             "username":
                 username,
         }
+
+
+# ============================================================
+# ACTIVIDAD RECIENTE
+# ============================================================
+
+
+@app.get("/api/activity/recent")
+def list_recent_activity(
+    current_user: User = Depends(require_hr),
+):
+    return _read_activity()[:4]
 
 
 # ============================================================
@@ -900,6 +1014,18 @@ def create_contract(
         session.add(contract)
         session.commit()
         session.refresh(contract)
+
+        _record_activity(
+            "Contrato añadido",
+            (
+                "Empleado: " +
+                employee.first_name +
+                " " +
+                employee.last_name
+            ).strip(),
+            "contracts",
+            "📄",
+        )
 
         return contract
 # ============================================================
@@ -980,6 +1106,18 @@ def create_contract_with_document(
 
         session.commit()
         session.refresh(contract)
+
+        _record_activity(
+            "Contrato añadido",
+            (
+                "Empleado: " +
+                employee.first_name +
+                " " +
+                employee.last_name
+            ).strip(),
+            "contracts",
+            "📄",
+        )
 
         return contract
 
@@ -1065,6 +1203,24 @@ def upload_contract_document(
 
         session.commit()
         session.refresh(contract)
+
+        employee = session.get(
+            Employee,
+            employee_id,
+        )
+
+        employee_name = (
+            (employee.first_name + " " + employee.last_name).strip()
+            if employee is not None
+            else "Empleado"
+        )
+
+        _record_activity(
+            "Contrato actualizado",
+            "Empleado: " + employee_name,
+            "contracts",
+            "📄",
+        )
 
         return {
             "contract_id": contract.id,
@@ -1361,6 +1517,24 @@ def upload_nomina_document(
         session.commit()
         session.refresh(nomina)
 
+        employee = session.get(
+            Employee,
+            employee_id,
+        )
+
+        employee_name = (
+            (employee.first_name + " " + employee.last_name).strip()
+            if employee is not None
+            else "Empleado"
+        )
+
+        _record_activity(
+            "Nómina actualizada",
+            "Empleado: " + employee_name,
+            "nominas",
+            "💳",
+        )
+
         return {
             "nomina_id": nomina.id,
             "document_path":
@@ -1442,6 +1616,18 @@ def create_nomina_with_document(
 
         session.commit()
         session.refresh(nomina)
+
+        _record_activity(
+            "Nómina añadida",
+            (
+                "Empleado: " +
+                employee.first_name +
+                " " +
+                employee.last_name
+            ).strip(),
+            "nominas",
+            "💳",
+        )
 
         return nomina
 

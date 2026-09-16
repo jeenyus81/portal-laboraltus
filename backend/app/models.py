@@ -22,6 +22,11 @@ class Company(Base):
         nullable=False,
     )
 
+    company_code: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
     tax_id: Mapped[str] = mapped_column(
         String(30),
         unique=True,
@@ -56,6 +61,11 @@ class Employee(Base):
     last_name: Mapped[str] = mapped_column(
         String(150),
         nullable=False,
+    )
+
+    employee_code: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
     )
 
     national_id: Mapped[str] = mapped_column(

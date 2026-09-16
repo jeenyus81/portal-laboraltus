@@ -20,6 +20,7 @@ class LoginRequest(BaseModel):
 
 class CompanyCreate(BaseModel):
     name: str
+    company_code: str | None = None
     tax_id: str
     address: str
 
@@ -27,6 +28,7 @@ class CompanyCreate(BaseModel):
 class CompanyResponse(BaseModel):
     id: int
     name: str
+    company_code: str | None = None
     tax_id: str
     address: str
 
@@ -45,6 +47,7 @@ class EmployeeCreate(BaseModel):
 
     first_name: str
     last_name: str
+    employee_code: str | None = None
 
     national_id: str
     nationality: str
@@ -63,11 +66,13 @@ class EmployeeCreate(BaseModel):
     username: str
     password: str
 
+
 class EmployeeUpdate(BaseModel):
     company_id: int
 
     first_name: str
     last_name: str
+    employee_code: str | None = None
 
     national_id: str
     nationality: str
@@ -93,6 +98,7 @@ class EmployeeResponse(BaseModel):
 
     first_name: str
     last_name: str
+    employee_code: str | None = None
 
     national_id: str
     nationality: str
