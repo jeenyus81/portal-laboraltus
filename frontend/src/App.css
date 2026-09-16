@@ -816,19 +816,6 @@ button:disabled {
   border-bottom: 1px solid #eaecf0;
 }
 
-.hr-activity-item.clickable {
-  cursor: pointer;
-}
-
-.hr-activity-item.clickable:hover {
-  background: #fafbfc;
-}
-
-.hr-activity-item.clickable:focus-visible {
-  outline: 2px solid #2f80ed;
-  outline-offset: 2px;
-}
-
 .hr-activity-item:first-child {
   padding-top: 2px;
 }
@@ -2732,12 +2719,13 @@ button:disabled {
   cursor: default;
 }
 
-.employee-stat-card:not(.employee-stat-profile) {
+.employee-stat-card {
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.employee-stat-card:not(.employee-stat-profile):hover {
-  transform: translateY(-1px);
+.employee-stat-card:hover {
+  transform: translateY(-2px);
   box-shadow: 0 7px 16px rgba(16, 24, 40, 0.07);
 }
 
@@ -2819,6 +2807,11 @@ button:disabled {
   border-radius: 12px;
   background: #ffffff;
   box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.employee-dashboard-activity-box {
+  min-height: 300px;
+  margin-top: 0;
 }
 
 .employee-dashboard-box-header {

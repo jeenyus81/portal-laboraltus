@@ -816,6 +816,24 @@ function App() {
     loadRecentActivities(token)
   }, [loggedIn, user?.role, companyView])
 
+  useEffect(() => {
+    if (
+      !loggedIn ||
+      user?.role !== 'EMPLOYEE' ||
+      employeePortalView !== 'dashboard'
+    ) {
+      return
+    }
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      return
+    }
+
+    loadRecentActivities(token)
+  }, [loggedIn, user?.role, employeePortalView])
+
 
   async function loadCompanies(token) {
     setCompaniesLoading(true)
@@ -5983,7 +6001,7 @@ if (loggedIn && user && user.role === 'HR') {
                   : 'employee-nav-button'
               }
               onClick={() => {
-                setEmployeePortalView('dashboard')
+                setEmployeePortalView('profile')
                 setEmployeeActiveMenu('profile')
               }}
             >
@@ -6103,7 +6121,13 @@ if (loggedIn && user && user.role === 'HR') {
 
               <div className="employee-dashboard-stats">
 
-                <article className="employee-stat-card employee-stat-profile">
+                <article
+                  className="employee-stat-card employee-stat-profile"
+                  onClick={() => {
+                    setEmployeePortalView('profile')
+                    setEmployeeActiveMenu('profile')
+                  }}
+                >
                   <div className="employee-stat-icon">
                     👥
                   </div>
@@ -6117,9 +6141,10 @@ if (loggedIn && user && user.role === 'HR') {
 
                 <article
                   className="employee-stat-card"
-                  onClick={() =>
+                  onClick={() => {
                     setEmployeePortalView('contracts')
-                  }
+                    setEmployeeActiveMenu('contracts')
+                  }}
                 >
                   <div className="employee-stat-icon">
                     📄
@@ -6136,9 +6161,10 @@ if (loggedIn && user && user.role === 'HR') {
 
                 <article
                   className="employee-stat-card"
-                  onClick={() =>
+                  onClick={() => {
                     setEmployeePortalView('nominas')
-                  }
+                    setEmployeeActiveMenu('nominas')
+                  }}
                 >
                   <div className="employee-stat-icon">
                     💳
@@ -6155,33 +6181,58 @@ if (loggedIn && user && user.role === 'HR') {
               </div>
 
               <div className="employee-dashboard-bottom">
-                <section className="employee-dashboard-box">
+                <section className="employee-dashboard-box employee-dashboard-activity-box">
                   <div className="employee-dashboard-box-header">
                     <p className="eyebrow">
-                      INFORMACIÓN PERSONAL
+                      ACTIVIDAD RECIENTE
                     </p>
-                    <h2>Mis datos</h2>
+                    <h2>Actividad reciente</h2>
                   </div>
 
-                  <div className="employee-info-list">
-                    <div>
-                      <span>Nombre completo</span>
-                      <strong>{employeeFullName}</strong>
-                    </div>
+                  <div className="hr-activity-list">
+                    {recentActivitiesLoading ? (
+                      <p className="muted">
+                        Cargando actividad reciente...
+                      </p>
+                    ) : recentActivitiesError ? (
+                      <p className="error">
+                        {recentActivitiesError}
+                      </p>
+                    ) : recentActivities.length === 0 ? (
+                      <div className="empty-state">
+                        <strong>
+                          No hay actividad reciente
+                        </strong>
+                        <p>
+                          Las últimas acciones realizadas sobre tu documentación aparecerán aquí.
+                        </p>
+                      </div>
+                    ) : (
+                      recentActivities.map((activity) => (
+                        <div
+                          className="hr-activity-item"
+                          key={activity.id}
+                        >
+                          <div className="hr-activity-icon">
+                            {activity.icon || '•'}
+                          </div>
 
-                    <div>
-                      <span>Puesto</span>
-                      <strong>
-                        {user.job_title || 'Sin puesto'}
-                      </strong>
-                    </div>
+                          <div className="hr-activity-content">
+                            <strong>
+                              {activity.title}
+                            </strong>
 
-                    <div>
-                      <span>Categoría</span>
-                      <strong>
-                        {user.job_category || 'Sin categoría'}
-                      </strong>
-                    </div>
+                            <span>
+                              {activity.detail}
+                            </span>
+                          </div>
+
+                          <time>
+                            {formatActivityDateTime(activity.timestamp)}
+                          </time>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </section>
 
@@ -6197,17 +6248,68 @@ if (loggedIn && user && user.role === 'HR') {
                     <button
                       type="button"
                       className="employee-quick-action"
-                      onClick={() =>
-                        setEmployeePortalView('contracts')
-                      }
+                      onClick={async () => {
+                        const token = localStorage.getItem('access_token')
+
+                        if (!token || !user?.id) {
+                          setEmployeePortalView('contracts')
+                          setEmployeeActiveMenu('contracts')
+                          return
+                        }
+
+                        try {
+                          const response = await fetch(
+                            API_URL +
+                              '/api/employees/' +
+                              user.id +
+                              '/contracts',
+                            {
+                              headers: {
+                                Authorization: 'Bearer ' + token,
+                              },
+                            },
+                          )
+
+                          const data = await response.json().catch(() => [])
+
+                          if (!response.ok) {
+                            throw new Error(
+                              data?.detail ||
+                                'No se pudo cargar el último contrato',
+                            )
+                          }
+
+                          const latestContract =
+                            (Array.isArray(data) ? data : [])
+                              .filter((contract) => contract.document_path)
+                              .sort(
+                                (a, b) =>
+                                  Number(b.id || 0) - Number(a.id || 0),
+                              )[0] || null
+
+                          if (latestContract) {
+                            await handleViewContract(
+                              latestContract,
+                              user.id,
+                            )
+                          } else {
+                            setEmployeePortalView('contracts')
+                            setEmployeeActiveMenu('contracts')
+                          }
+                        } catch (err) {
+                          setContractsError(err.message)
+                          setEmployeePortalView('contracts')
+                          setEmployeeActiveMenu('contracts')
+                        }
+                      }}
                     >
                       <span className="employee-quick-action-icon">
                         📄
                       </span>
                       <span className="employee-quick-action-content">
-                        <strong>Mis contratos</strong>
+                        <strong>Último contrato</strong>
                         <span>
-                          Consultar documentación laboral
+                          Consultar el último contrato cargado
                         </span>
                       </span>
                       <span className="employee-quick-action-arrow">
@@ -6218,17 +6320,76 @@ if (loggedIn && user && user.role === 'HR') {
                     <button
                       type="button"
                       className="employee-quick-action"
-                      onClick={() =>
-                        setEmployeePortalView('nominas')
-                      }
+                      onClick={async () => {
+                        const token = localStorage.getItem('access_token')
+
+                        if (!token || !user?.id) {
+                          setEmployeePortalView('nominas')
+                          setEmployeeActiveMenu('nominas')
+                          return
+                        }
+
+                        try {
+                          const response = await fetch(
+                            API_URL +
+                              '/api/employees/' +
+                              user.id +
+                              '/nominas',
+                            {
+                              headers: {
+                                Authorization: 'Bearer ' + token,
+                              },
+                            },
+                          )
+
+                          const data = await response.json().catch(() => [])
+
+                          if (!response.ok) {
+                            throw new Error(
+                              data?.detail ||
+                                'No se pudo cargar la última nómina',
+                            )
+                          }
+
+                          const latestNomina =
+                            (Array.isArray(data) ? data : [])
+                              .filter((nomina) => nomina.document_path)
+                              .sort((a, b) => {
+                                const dateA =
+                                  a.date ? new Date(a.date).getTime() : 0
+                                const dateB =
+                                  b.date ? new Date(b.date).getTime() : 0
+
+                                if (dateB !== dateA) {
+                                  return dateB - dateA
+                                }
+
+                                return Number(b.id || 0) - Number(a.id || 0)
+                              })[0] || null
+
+                          if (latestNomina) {
+                            await handleViewNomina(
+                              latestNomina,
+                              user.id,
+                            )
+                          } else {
+                            setEmployeePortalView('nominas')
+                            setEmployeeActiveMenu('nominas')
+                          }
+                        } catch (err) {
+                          setNominasError(err.message)
+                          setEmployeePortalView('nominas')
+                          setEmployeeActiveMenu('nominas')
+                        }
+                      }}
                     >
                       <span className="employee-quick-action-icon">
                         💳
                       </span>
                       <span className="employee-quick-action-content">
-                        <strong>Mis nóminas</strong>
+                        <strong>Última nómina</strong>
                         <span>
-                          Consultar tus nóminas
+                          Consultar la última nómina cargada
                         </span>
                       </span>
                       <span className="employee-quick-action-arrow">
@@ -6237,6 +6398,65 @@ if (loggedIn && user && user.role === 'HR') {
                     </button>
                   </div>
                 </section>
+              </div>
+            </div>
+          )}
+
+          {employeePortalView === 'profile' && (
+            <div className="employee-content-panel">
+              <div className="employee-content-header">
+                <div>
+                  <p className="eyebrow">
+                    INFORMACIÓN PERSONAL
+                  </p>
+
+                  <h2>
+                    Mi perfil
+                  </h2>
+                </div>
+
+                <div className="employee-contracts-landing-header-actions">
+                  {employeeCompanyLogo ? (
+                    <div className="employee-contracts-company-logo">
+                      <img
+                        src={employeeCompanyLogo}
+                        alt={'Logo de ' + employeeCompanyName}
+                      />
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    className="employee-back-button"
+                    onClick={() => {
+                      setEmployeePortalView('dashboard')
+                      setEmployeeActiveMenu('dashboard')
+                    }}
+                  >
+                    Volver
+                  </button>
+                </div>
+              </div>
+
+              <div className="employee-info-list">
+                <div>
+                  <span>Nombre completo</span>
+                  <strong>{employeeFullName}</strong>
+                </div>
+
+                <div>
+                  <span>Puesto</span>
+                  <strong>
+                    {user.job_title || 'Sin puesto'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Categoría</span>
+                  <strong>
+                    {user.job_category || 'Sin categoría'}
+                  </strong>
+                </div>
               </div>
             </div>
           )}

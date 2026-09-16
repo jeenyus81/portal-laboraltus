@@ -184,7 +184,13 @@ def _write_activity(data):
     )
 
 
-def _record_activity(title, detail, target, icon):
+def _record_activity(
+    title,
+    detail,
+    target,
+    icon,
+    employee_id=None,
+):
     timestamp = datetime.now(
         ZoneInfo("Europe/Madrid")
     ).isoformat()
@@ -199,6 +205,7 @@ def _record_activity(title, detail, target, icon):
             "target": target,
             "icon": icon,
             "timestamp": timestamp,
+            "employee_id": employee_id,
         },
     )
 
@@ -938,9 +945,26 @@ def get_employee(
 
 @app.get("/api/activity/recent")
 def list_recent_activity(
-    current_user: User = Depends(require_hr),
+    current_user: User = Depends(get_current_user),
 ):
-    return _read_activity()[:4]
+    activities = _read_activity()
+
+    if current_user.role == UserRole.EMPLOYEE:
+        employee_id = current_user.employee_id
+
+        if not employee_id:
+            return []
+
+        activities = [
+            activity
+            for activity in activities
+            if activity.get("employee_id") == employee_id
+        ]
+
+    elif current_user.role != UserRole.HR:
+        return []
+
+    return activities[:4]
 
 
 # ============================================================
@@ -1025,6 +1049,7 @@ def create_contract(
             ).strip(),
             "contracts",
             "📄",
+            employee.id,
         )
 
         return contract
@@ -1117,6 +1142,7 @@ def create_contract_with_document(
             ).strip(),
             "contracts",
             "📄",
+            employee.id,
         )
 
         return contract
@@ -1220,6 +1246,7 @@ def upload_contract_document(
             "Empleado: " + employee_name,
             "contracts",
             "📄",
+            employee_id,
         )
 
         return {
@@ -1533,6 +1560,7 @@ def upload_nomina_document(
             "Empleado: " + employee_name,
             "nominas",
             "💳",
+            employee_id,
         )
 
         return {
@@ -1627,6 +1655,7 @@ def create_nomina_with_document(
             ).strip(),
             "nominas",
             "💳",
+            employee.id,
         )
 
         return nomina
