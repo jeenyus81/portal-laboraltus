@@ -6730,7 +6730,7 @@ if (loggedIn && user && user.role === 'HR') {
                     handleCompanyNavigate('dashboard')
                   }
                 >
-                  ← Inicio
+                  Volver
                 </button>
               </div>
 
@@ -6789,7 +6789,7 @@ if (loggedIn && user && user.role === 'HR') {
                     handleCompanyNavigate('dashboard')
                   }
                 >
-                  ← Inicio
+                  Volver
                 </button>
               </div>
 
@@ -6872,7 +6872,7 @@ if (loggedIn && user && user.role === 'HR') {
                     handleCompanyNavigate('dashboard')
                   }
                 >
-                  ← Inicio
+                  Volver
                 </button>
               </div>
 

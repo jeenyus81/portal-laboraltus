@@ -4628,16 +4628,20 @@ button:disabled {
 
 .company-back-button {
   flex: 0 0 auto;
-  padding: 10px 15px;
-  border: 1px solid #d0d5dd;
+  padding: 10px 22px;
+  border: 1px solid #f1e2bd;
   border-radius: 9px;
-  background: #ffffff;
+  background: #fff8e8;
   color: #172b45;
   box-shadow: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .company-back-button:hover {
-  background: #f8fafc;
+  background: #fff2d5;
+  transform: translateY(-1px);
 }
 
 .company-list {
@@ -4716,21 +4720,26 @@ button:disabled {
 
 .company-document-actions button {
   margin: 0;
-  padding: 9px 12px;
+  padding: 9px 14px;
+  border: 1px solid #f1e2bd;
   border-radius: 8px;
-  background: #172b45;
-  color: #ffffff;
+  background: #fff8e8;
+  color: #172b45;
   box-shadow: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .company-document-actions button.secondary {
-  border: 1px solid #d0d5dd;
-  background: #ffffff;
+  border: 1px solid #f1e2bd;
+  background: #fff8e8;
   color: #172b45;
 }
 
 .company-document-actions button:hover {
-  opacity: 0.92;
+  background: #fff2d5;
+  transform: translateY(-1px);
 }
 
 @media (max-width: 1180px) {
