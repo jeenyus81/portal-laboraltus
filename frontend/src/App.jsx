@@ -2361,6 +2361,32 @@ async function handleDirectNominaFile(event) {
   }
 
   // =========================================================
+  // VOLVER A INICIO
+  // =========================================================
+
+  function handleBackToDashboard() {
+    setActiveMenu('dashboard')
+    setCompanyView('dashboard')
+    setSelectedCompany(null)
+    setSelectedEmployee(null)
+    setEditingCompany(null)
+    setCreatingCompany(false)
+    setEditingEmployee(null)
+    setCreatingEmployee(false)
+    setContracts([])
+    setNominas([])
+    setSelectedFiles({})
+    setSelectedNominaFiles({})
+    setEmployeesError('')
+    setCompaniesError('')
+    setContractsError('')
+    setNominasError('')
+    setEmployeeEditError('')
+    setEmployeeCreateError('')
+    setCompanyCreateError('')
+  }
+
+  // =========================================================
   // LOGIN
   // =========================================================
 
@@ -2832,6 +2858,24 @@ if (loggedIn && user && user.role === 'HR') {
           Contratos
         </h2>
       </div>
+
+      <div className="contract-document">
+
+        <button
+          type="button"
+          className="hr-company-detail-button"
+          style={{
+            background: '#f4f3ee',
+            color: '#172b45',
+            border: '1px solid #f4f3ee',
+            boxShadow: 'none',
+          }}
+          onClick={handleBackToDashboard}
+        >
+          Volver a Inicio
+        </button>
+
+      </div>
     </div>
 
     <input
@@ -2972,6 +3016,24 @@ if (loggedIn && user && user.role === 'HR') {
         <h2>
           Nóminas
         </h2>
+      </div>
+
+      <div className="contract-document">
+
+        <button
+          type="button"
+          className="hr-company-detail-button"
+          style={{
+            background: '#f4f3ee',
+            color: '#172b45',
+            border: '1px solid #f4f3ee',
+            boxShadow: 'none',
+          }}
+          onClick={handleBackToDashboard}
+        >
+          Volver a Inicio
+        </button>
+
       </div>
     </div>
 
@@ -3611,6 +3673,20 @@ if (loggedIn && user && user.role === 'HR') {
                     onClick={handleAddCompany}
                   >
                     Añadir empresa
+                  </button>
+
+                  <button
+                    type="button"
+                    className="hr-company-detail-button"
+                    style={{
+                      background: '#f4f3ee',
+                      color: '#172b45',
+                      border: '1px solid #f4f3ee',
+                      boxShadow: 'none',
+                    }}
+                    onClick={handleBackToDashboard}
+                  >
+                    Volver a Inicio
                   </button>
 
                 </div>
@@ -4257,6 +4333,26 @@ if (loggedIn && user && user.role === 'HR') {
                   </h2>
                 </div>
 
+                <div className="contract-document">
+
+                  <button
+                    type="button"
+                    className="hr-company-detail-button"
+                    style={{
+                      background: '#f4f3ee',
+                      color: '#172b45',
+                      border: '1px solid #f4f3ee',
+                      boxShadow: 'none',
+                      whiteSpace: 'nowrap',
+                      minWidth: '170px',
+                      height: '60px',
+                    }}
+                    onClick={handleBackToDashboard}
+                  >
+                    Volver a Inicio
+                  </button>
+
+                </div>
 
               </div>
 
@@ -4420,6 +4516,20 @@ if (loggedIn && user && user.role === 'HR') {
                       }
                     >
                       Volver a empresa
+                    </button>
+
+                    <button
+                      type="button"
+                      className="hr-company-detail-button"
+                      style={{
+                        background: '#f4f3ee',
+                        color: '#172b45',
+                        border: '1px solid #f4f3ee',
+                        boxShadow: 'none',
+                      }}
+                      onClick={handleBackToDashboard}
+                    >
+                      Volver a Inicio
                     </button>
 
                   </div>
