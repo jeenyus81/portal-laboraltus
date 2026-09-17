@@ -752,6 +752,32 @@ def company_dashboard(
         }
 
 
+@app.get("/api/company/activity/all")
+def company_all_activity(
+    current_user: User = Depends(require_company),
+):
+    with Session(engine) as session:
+        employee_ids = set(
+            session.scalars(
+                select(Employee.id).where(
+                    Employee.company_id == current_user.company_id
+                )
+            ).all()
+        )
+
+    activities = [
+        activity
+        for activity in _read_activity()
+        if activity.get("employee_id") in employee_ids
+    ]
+
+    return sorted(
+        activities,
+        key=lambda activity: activity.get("timestamp") or "",
+        reverse=True,
+    )
+
+
 @app.get("/api/company/employees")
 def company_employees(
     current_user: User = Depends(require_company),
