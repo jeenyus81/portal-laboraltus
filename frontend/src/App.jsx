@@ -4686,7 +4686,7 @@ if (loggedIn && user && user.role === 'HR') {
 
                     <button
                       type="button"
-                      className="hr-company-credentials-button"
+                      className="hr-company-detail-button"
                       onClick={handleOpenCompanyCredentials}
                     >
                       Credenciales

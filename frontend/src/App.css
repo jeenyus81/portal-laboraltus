@@ -886,26 +886,6 @@ button:disabled {
   box-shadow: none !important;
 }
 
-/* Botón del historial completo: arriba a la derecha, color crema y texto negro */
-.hr-activity-history-back {
-  align-self: flex-start;
-  margin-top: 0;
-  padding: 12px 18px;
-  border: 1px solid #f4f3ee;
-  border-radius: 10px;
-  background: #f4f3ee !important;
-  color: #000000 !important;
-  font-size: 14px;
-  font-weight: 700;
-  box-shadow: none !important;
-  white-space: nowrap;
-}
-
-.hr-activity-history-back:hover {
-  background: #ebe9e1 !important;
-  color: #000000 !important;
-}
-
 /* =========================================================
    ACCESOS RAPIDOS
    ========================================================= */
@@ -4886,138 +4866,57 @@ button:disabled {
   }
 }
 
-.company-employee-list-actions {
+/* =========================================================
+   RR. HH. — CREDENCIALES DE EMPRESA
+   ========================================================= */
+
+.hr-main .hr-company-credentials-entry {
   display: flex;
-  align-items: center;
   justify-content: flex-end;
+  margin-top: 24px;
 }
 
-.company-view-button {
-  padding: 10px 22px;
-  border: 1px solid #f1e2bd;
-  border-radius: 9px;
-  background: #fff8e8;
-  color: #000000;
-  box-shadow: none;
+.hr-main .hr-company-credentials-button {
+  margin: 0;
+  padding: 13px 18px;
+  border: 1px solid #f4f3ee !important;
+  border-radius: 10px;
+  background: #f4f3ee !important;
+  color: #172b45 !important;
+  box-shadow: none !important;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.15s ease;
 }
 
-.company-view-button:hover {
-  background: #fff2d5;
+.hr-main .hr-company-credentials-button:hover:not(:disabled) {
+  background: #ebe9e2 !important;
+  border-color: #ebe9e2 !important;
+  color: #172b45 !important;
   transform: translateY(-1px);
 }
 
-.company-employee-detail-card {
-  padding: 28px;
-  border: 1px solid #e4e7ec;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+.hr-main .hr-company-credentials-button:disabled {
+  cursor: default;
+  opacity: 1;
+  background: #f4f3ee !important;
+  color: #172b45 !important;
 }
 
-.company-employee-detail-heading {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding-bottom: 22px;
-  border-bottom: 1px solid #e4e7ec;
-}
-
-.company-employee-detail-heading h3 {
-  margin: 0 0 6px;
-  color: #172b45;
-  font-size: 22px;
-}
-
-.company-employee-detail-heading p {
-  margin: 0;
-  color: #667085;
-  font-size: 14px;
-}
-
-.company-employee-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
+.hr-main .hr-company-credentials-panel {
   margin-top: 24px;
 }
 
-.company-employee-detail-grid div {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 16px;
-  border-radius: 10px;
-  background: #fffaf0;
-}
-
-.company-employee-detail-grid span {
-  color: #667085;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.company-employee-detail-grid strong {
-  color: #172b45;
-  font-size: 15px;
-}
-
-@media (max-width: 700px) {
-  .company-employee-detail-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Historial completo de actividad del panel Empresa */
-.company-activity-view-all {
-  display: inline-block !important;
-  width: auto !important;
-  align-self: center;
-  margin: 18px auto 0;
-  padding: 7px 12px !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  color: #2f80ed !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  cursor: pointer;
-  box-shadow: none !important;
-}
-
-.company-activity-view-all:hover {
-  background: transparent !important;
-  color: #1769c2 !important;
-}
-
-.company-page-section {
-  width: 100%;
-}
-
-.company-page-header {
+.hr-main .hr-company-credentials-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 24px;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
 }
 
-.company-page-header h1 {
+/* Credenciales dentro de la fila de acciones de la ficha de empresa */
+.hr-main .hr-company-detail-actions .hr-company-credentials-button {
   margin: 0;
-  color: #172b45;
-  font-size: 30px;
-  line-height: 1.2;
 }
-
-.company-activity-history-list {
-  padding: 20px;
-  border: 1px solid #e3e7ec;
-  border-radius: 12px;
-  background: #ffffff;
-}
-
-
-
+  
