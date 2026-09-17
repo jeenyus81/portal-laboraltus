@@ -71,7 +71,6 @@ function App() {
   const [companyCredentialsSaving, setCompanyCredentialsSaving] = useState(false)
   const [companyCredentialsError, setCompanyCredentialsError] = useState('')
   const [companyCredentialsMessage, setCompanyCredentialsMessage] = useState('')
-  const [companyCredentialsSaved, setCompanyCredentialsSaved] = useState(false)
 
   const [creatingCompany, setCreatingCompany] = useState(false)
   const [companyCreateSaving, setCompanyCreateSaving] = useState(false)
@@ -107,6 +106,12 @@ function App() {
   const [companyNominas, setCompanyNominas] = useState([])
   const [companyPortalLoading, setCompanyPortalLoading] = useState(false)
   const [companyPortalError, setCompanyPortalError] = useState('')
+  const [companyAllActivities, setCompanyAllActivities] = useState([])
+  const [companyAllActivitiesLoading, setCompanyAllActivitiesLoading] = useState(false)
+  const [companyAllActivitiesError, setCompanyAllActivitiesError] = useState('')
+  const [selectedCompanyEmployee, setSelectedCompanyEmployee] = useState(null)
+  const [selectedCompanyContractEmployee, setSelectedCompanyContractEmployee] = useState(null)
+  const [selectedCompanyNominaEmployee, setSelectedCompanyNominaEmployee] = useState(null)
 
   // =========================================================
   // EDICION DE EMPLEADO
@@ -895,6 +900,40 @@ function App() {
     }
   }
 
+  async function handleOpenCompanyActivityHistory() {
+    setCompanyAllActivitiesLoading(true)
+    setCompanyAllActivitiesError('')
+    setCompanyPortalView('activity')
+    setCompanyActiveMenu('dashboard')
+
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      setCompanyAllActivitiesLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch(
+        API_URL + '/api/company/activity',
+        {
+          headers: {
+            Authorization: 'Bearer ' + token,
+          },
+        },
+      )
+      const data = await response.json().catch(() => null)
+      if (!response.ok) {
+        throw new Error(data?.detail || 'No se pudo cargar el historial de actividad')
+      }
+      setCompanyAllActivities(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setCompanyAllActivities([])
+      setCompanyAllActivitiesError(err.message)
+    } finally {
+      setCompanyAllActivitiesLoading(false)
+    }
+  }
+
   function handleCompanyActivityClick(activity) {
     if (!activity?.target) {
       return
@@ -916,6 +955,24 @@ function App() {
       setCompanyPortalView('nominas')
       setCompanyActiveMenu('nominas')
     }
+  }
+
+  function handleViewCompanyContracts(employee) {
+    setSelectedCompanyContractEmployee(employee)
+    setCompanyPortalView('employee-contracts')
+    setCompanyActiveMenu('contracts')
+  }
+
+  function handleViewCompanyEmployee(employee) {
+    setSelectedCompanyEmployee(employee)
+    setCompanyPortalView('employee-detail')
+    setCompanyActiveMenu('employees')
+  }
+
+  function handleViewCompanyNominas(employee) {
+    setSelectedCompanyNominaEmployee(employee)
+    setCompanyPortalView('employee-nominas')
+    setCompanyActiveMenu('nominas')
   }
 
   function handleCompanyNavigate(view) {
@@ -1164,7 +1221,6 @@ function App() {
     setCompanyCredentialsForm({ username: '', password: '' })
     setCompanyCredentialsError('')
     setCompanyCredentialsMessage('')
-    setCompanyCredentialsSaved(false)
     setCompaniesError('')
   }
 
@@ -1179,7 +1235,6 @@ function App() {
     setCompanyCredentialsForm({ username: '', password: '' })
     setCompanyCredentialsError('')
     setCompanyCredentialsMessage('')
-    setCompanyCredentialsSaved(false)
 
     setCompanyForm({
       name: '',
@@ -1349,50 +1404,14 @@ function App() {
 
       setCompanyCredentialsForm({
         username: data?.username || companyCredentialsForm.username.trim(),
-        password: companyCredentialsForm.password,
+        password: '',
       })
-      setCompanyCredentialsSaved(true)
       setCompanyCredentialsMessage('Credenciales de empresa guardadas correctamente')
     } catch (err) {
       setCompanyCredentialsError(err.message)
     } finally {
       setCompanyCredentialsSaving(false)
     }
-  }
-
-  async function handleOpenCompanyCredentials() {
-    setCompanyCredentialsError('')
-    setCompanyCredentialsMessage('')
-    setCompanyCredentialsSaved(false)
-    setCompanyView('credentials')
-
-    const token = localStorage.getItem('access_token')
-    if (!token || !selectedCompany) return
-
-    try {
-      const response = await fetch(
-        API_URL + '/api/companies/' + selectedCompany.id + '/credentials',
-        { headers: { Authorization: 'Bearer ' + token } },
-      )
-      const data = await response.json().catch(() => null)
-      if (!response.ok) {
-        throw new Error(data?.detail || 'No se pudieron cargar las credenciales')
-      }
-
-      setCompanyCredentialsForm({
-        username: data?.username || '',
-        password: data?.password || '',
-      })
-      setCompanyCredentialsSaved(Boolean(data?.username && data?.password))
-    } catch (err) {
-      setCompanyCredentialsError(err.message)
-    }
-  }
-
-  function handleEditCompanyCredentials() {
-    setCompanyCredentialsSaved(false)
-    setCompanyCredentialsError('')
-    setCompanyCredentialsMessage('')
   }
 
   // =========================================================
@@ -4506,96 +4525,6 @@ if (loggedIn && user && user.role === 'HR') {
           {/* FICHA DE EMPRESA */}
           {/* ================================================= */}
 
-          {companyView === 'credentials' && selectedCompany && (
-            <div className="contracts">
-              <div className="section-header">
-                <div>
-                  <p className="eyebrow">Acceso de empresa</p>
-                  <h2>Credenciales de empresa</h2>
-                </div>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => setCompanyView('company')}
-                >
-                  Volver
-                </button>
-              </div>
-
-              <div className="profile hr-company-credentials-panel">
-                <form onSubmit={handleSaveCompanyCredentials}>
-                  <label htmlFor="company-access-username">Usuario</label>
-                  <input
-                    id="company-access-username"
-                    type="text"
-                    value={companyCredentialsForm.username}
-                    onChange={(event) =>
-                      setCompanyCredentialsForm((previous) => ({
-                        ...previous,
-                        username: event.target.value,
-                      }))
-                    }
-                    autoComplete="off"
-                    disabled={companyCredentialsSaved}
-                  />
-
-                  <label htmlFor="company-access-password">Contraseña</label>
-                  <input
-                    id="company-access-password"
-                    type={companyCredentialsSaved ? 'text' : 'password'}
-                    value={companyCredentialsForm.password}
-                    onChange={(event) =>
-                      setCompanyCredentialsForm((previous) => ({
-                        ...previous,
-                        password: event.target.value,
-                      }))
-                    }
-                    autoComplete="new-password"
-                    disabled={companyCredentialsSaved}
-                  />
-
-                  {companyCredentialsError && (
-                    <p className="error">{companyCredentialsError}</p>
-                  )}
-                  {companyCredentialsMessage && (
-                    <p className="muted">{companyCredentialsMessage}</p>
-                  )}
-
-                  <div className="hr-company-credentials-actions">
-                    {!companyCredentialsSaved ? (
-                      <button
-                        type="submit"
-                        className="hr-company-credentials-button"
-                        disabled={companyCredentialsSaving}
-                      >
-                        {companyCredentialsSaving
-                          ? 'Guardando...'
-                          : 'Guardar acceso de empresa'}
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          className="hr-company-credentials-button"
-                          disabled
-                        >
-                          Credenciales guardadas
-                        </button>
-                        <button
-                          type="button"
-                          className="hr-company-credentials-button"
-                          onClick={handleEditCompanyCredentials}
-                        >
-                          Editar
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
           {companyView === 'company' &&
             selectedCompany && (
               <div className="contracts">
@@ -4740,6 +4669,82 @@ if (loggedIn && user && user.role === 'HR') {
 
                   </div>
 
+                </div>
+
+                <div className="profile" style={{ marginTop: '24px' }}>
+                  <div className="section-header">
+                    <div>
+                      <p className="eyebrow">
+                        Acceso de empresa
+                      </p>
+                      <h2>
+                        Credenciales de acceso
+                      </h2>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSaveCompanyCredentials}>
+                    <label htmlFor="company-access-username">
+                      Usuario
+                    </label>
+                    <input
+                      id="company-access-username"
+                      type="text"
+                      value={companyCredentialsForm.username}
+                      onChange={(event) =>
+                        setCompanyCredentialsForm((previous) => ({
+                          ...previous,
+                          username: event.target.value,
+                        }))
+                      }
+                      autoComplete="off"
+                    />
+
+                    <label htmlFor="company-access-password">
+                      Contraseña
+                    </label>
+                    <input
+                      id="company-access-password"
+                      type="password"
+                      value={companyCredentialsForm.password}
+                      onChange={(event) =>
+                        setCompanyCredentialsForm((previous) => ({
+                          ...previous,
+                          password: event.target.value,
+                        }))
+                      }
+                      autoComplete="new-password"
+                    />
+
+                    {companyCredentialsError && (
+                      <p className="error">
+                        {companyCredentialsError}
+                      </p>
+                    )}
+
+                    {companyCredentialsMessage && (
+                      <p className="muted" style={{ margin: '10px 0 0' }}>
+                        {companyCredentialsMessage}
+                      </p>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="hr-company-detail-button"
+                      disabled={companyCredentialsSaving}
+                      style={{
+                        background: '#f4f3ee',
+                        color: '#172b45',
+                        border: '1px solid #f4f3ee',
+                        boxShadow: 'none',
+                        marginTop: '18px',
+                      }}
+                    >
+                      {companyCredentialsSaving
+                        ? 'Guardando...'
+                        : 'Guardar acceso de empresa'}
+                    </button>
+                  </form>
                 </div>
 
                 {/* EDITAR EMPRESA */}
@@ -6559,10 +6564,32 @@ if (loggedIn && user && user.role === 'HR') {
       companyContracts.filter(
         (contract) => contract?.document_path,
       )
+    const companyContractEmployees = Array.from(
+      new Map(
+        companyContractsWithDocument.map((contract) => [
+          contract.employee_id,
+          {
+            id: contract.employee_id,
+            name: contract.employee_name || 'Empleado',
+          },
+        ]),
+      ).values(),
+    )
     const companyNominasWithDocument =
       companyNominas.filter(
         (nomina) => nomina?.document_path,
       )
+    const companyNominaEmployees = Array.from(
+      new Map(
+        companyNominasWithDocument.map((nomina) => [
+          nomina.employee_id,
+          {
+            id: nomina.employee_id,
+            name: nomina.employee_name || 'Empleado',
+          },
+        ]),
+      ).values(),
+    )
 
     return (
       <main className="app company-app">
@@ -6841,6 +6868,14 @@ if (loggedIn && user && user.role === 'HR') {
                           ))
                         )}
                       </div>
+
+                      <button
+                        type="button"
+                        className="company-activity-view-all"
+                        onClick={handleOpenCompanyActivityHistory}
+                      >
+                        Ver todo
+                      </button>
                     </section>
 
                     <section className="company-dashboard-box">
@@ -6901,6 +6936,103 @@ if (loggedIn && user && user.role === 'HR') {
             </div>
           )}
 
+          {companyPortalView === 'activity' && (
+            <section className="company-page-section">
+              <div className="company-page-header">
+                <div>
+                  <p className="eyebrow">HISTORIAL DE LA EMPRESA</p>
+                  <h1>Toda la actividad</h1>
+                </div>
+                <button
+                  type="button"
+                  className="company-back-button"
+                  onClick={() => handleCompanyNavigate('dashboard')}
+                >
+                  Volver
+                </button>
+              </div>
+
+              {companyAllActivitiesLoading ? (
+                <div className="company-dashboard-message">Cargando actividad...</div>
+              ) : companyAllActivitiesError ? (
+                <div className="company-dashboard-message company-dashboard-error">{companyAllActivitiesError}</div>
+              ) : companyAllActivities.length === 0 ? (
+                <div className="company-empty-activity">
+                  <strong>No hay actividad registrada</strong>
+                  <p>Las acciones realizadas sobre la documentación de tu empresa aparecerán aquí.</p>
+                </div>
+              ) : (
+                <div className="company-activity-list company-activity-history-list">
+                  {companyAllActivities.map((activity) => (
+                    <button
+                      type="button"
+                      className="company-activity-item"
+                      key={activity.id}
+                      onClick={() => handleCompanyActivityClick(activity)}
+                    >
+                      <span className="company-activity-icon">{activity.icon || '•'}</span>
+                      <span className="company-activity-content">
+                        <strong>{activity.title}</strong>
+                        <span>{activity.detail}</span>
+                      </span>
+                      <time>{formatCompanyDateTime(activity.timestamp)}</time>
+                      <span className="company-activity-arrow">→</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {companyPortalView === 'employee-detail' && selectedCompanyEmployee && (
+            <div className="company-content-panel">
+              <div className="company-content-header">
+                <div>
+                  <p className="eyebrow">FICHA DEL EMPLEADO</p>
+                  <h2>Datos del empleado</h2>
+                </div>
+                <button
+                  type="button"
+                  className="company-back-button"
+                  onClick={() => setCompanyPortalView('employees')}
+                >
+                  Volver
+                </button>
+              </div>
+
+              <div className="company-employee-detail-card">
+                <div className="company-employee-detail-heading">
+                  <div className="company-list-icon">👤</div>
+                  <div>
+                    <h3>
+                      {`${selectedCompanyEmployee.first_name || ''} ${selectedCompanyEmployee.last_name || ''}`.trim() || 'Empleado'}
+                    </h3>
+                    <p>Información registrada por Recursos Humanos</p>
+                  </div>
+                </div>
+
+                <div className="company-employee-detail-grid">
+                  <div>
+                    <span>Nombre</span>
+                    <strong>{selectedCompanyEmployee.first_name || '—'}</strong>
+                  </div>
+                  <div>
+                    <span>Apellidos</span>
+                    <strong>{selectedCompanyEmployee.last_name || '—'}</strong>
+                  </div>
+                  <div>
+                    <span>Puesto</span>
+                    <strong>{selectedCompanyEmployee.job_title || '—'}</strong>
+                  </div>
+                  <div>
+                    <span>Categoría</span>
+                    <strong>{selectedCompanyEmployee.job_category || '—'}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {companyPortalView === 'employees' && (
             <div className="company-content-panel">
               <div className="company-content-header">
@@ -6941,17 +7073,15 @@ if (loggedIn && user && user.role === 'HR') {
                           {`${employee.first_name || ''} ${employee.last_name || ''}`.trim() ||
                             'Empleado'}
                         </strong>
-                        <span>
-                          {employee.job_title ||
-                            employee.job_category ||
-                            'Sin puesto indicado'}
-                        </span>
                       </div>
-                      <div className="company-list-meta">
-                        <span>Código</span>
-                        <strong>
-                          {employee.employee_code || '—'}
-                        </strong>
+                      <div className="company-employee-list-actions">
+                        <button
+                          type="button"
+                          className="company-view-button"
+                          onClick={() => handleViewCompanyEmployee(employee)}
+                        >
+                          Ver
+                        </button>
                       </div>
                     </article>
                   ))}
@@ -6970,9 +7100,7 @@ if (loggedIn && user && user.role === 'HR') {
                 <button
                   type="button"
                   className="company-back-button"
-                  onClick={() =>
-                    handleCompanyNavigate('dashboard')
-                  }
+                  onClick={() => handleCompanyNavigate('dashboard')}
                 >
                   Volver
                 </button>
@@ -6980,66 +7108,82 @@ if (loggedIn && user && user.role === 'HR') {
 
               {companyPortalLoading ? (
                 <p className="muted">Cargando contratos...</p>
-              ) : companyContractsWithDocument.length === 0 ? (
+              ) : companyContractEmployees.length === 0 ? (
                 <div className="company-empty-state">
                   <strong>No hay contratos cargados</strong>
-                  <p>
-                    No hay documentos de contrato disponibles para esta empresa.
-                  </p>
+                  <p>No hay documentos de contrato disponibles para esta empresa.</p>
                 </div>
               ) : (
                 <div className="company-list">
-                  {companyContractsWithDocument.map((contract) => (
-                    <article
-                      className="company-list-card company-document-card"
-                      key={contract.id}
-                    >
+                  {companyContractEmployees.map((employee) => (
+                    <article className="company-list-card company-document-card" key={employee.id}>
                       <div className="company-list-icon">📄</div>
                       <div className="company-list-main">
-                        <strong>
-                          {contract.employee_name || 'Empleado'}
-                        </strong>
-                        <span>
-                          {contract.contract_type || 'Contrato'} ·{' '}
-                          {formatCompanyContractName(contract)}
-                        </span>
-                        <small>
-                          {formatCompanyDate(contract.start_date)}
-                          {contract.end_date
-                            ? ' — ' +
-                              formatCompanyDate(contract.end_date)
-                            : ''}
-                        </small>
+                        <strong>{employee.name}</strong>
                       </div>
                       <div className="company-document-actions">
                         <button
                           type="button"
-                          onClick={() =>
-                            handleViewContract(
-                              contract,
-                              contract.employee_id,
-                            )
-                          }
+                          onClick={() => handleViewCompanyContracts(employee)}
                         >
                           Ver
-                        </button>
-                        <button
-                          type="button"
-                          className="secondary"
-                          onClick={() =>
-                            handleDownload(
-                              contract,
-                              contract.employee_id,
-                            )
-                          }
-                        >
-                          Descargar
                         </button>
                       </div>
                     </article>
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {companyPortalView === 'employee-contracts' && selectedCompanyContractEmployee && (
+            <div className="company-content-panel">
+              <div className="company-content-header">
+                <div>
+                  <p className="eyebrow">DOCUMENTACIÓN DEL EMPLEADO</p>
+                  <h2>Contratos de {selectedCompanyContractEmployee.name}</h2>
+                </div>
+                <button
+                  type="button"
+                  className="company-back-button"
+                  onClick={() => setCompanyPortalView('contracts')}
+                >
+                  Volver
+                </button>
+              </div>
+
+              <div className="company-list">
+                {companyContractsWithDocument
+                  .filter((contract) => contract.employee_id === selectedCompanyContractEmployee.id)
+                  .map((contract) => (
+                    <article className="company-list-card company-document-card" key={contract.id}>
+                      <div className="company-list-icon">📄</div>
+                      <div className="company-list-main">
+                        <strong>{formatCompanyContractName(contract)}</strong>
+                        <span>{contract.contract_type || 'Contrato'}</span>
+                        <small>
+                          {formatCompanyDate(contract.start_date)}
+                          {contract.end_date ? ' — ' + formatCompanyDate(contract.end_date) : ''}
+                        </small>
+                      </div>
+                      <div className="company-document-actions">
+                        <button
+                          type="button"
+                          onClick={() => handleViewContract(contract, contract.employee_id)}
+                        >
+                          Ver
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => handleDownload(contract, contract.employee_id)}
+                        >
+                          Descargar
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+              </div>
             </div>
           )}
 
@@ -7072,19 +7216,54 @@ if (loggedIn && user && user.role === 'HR') {
                 </div>
               ) : (
                 <div className="company-list">
-                  {companyNominasWithDocument.map((nomina) => (
+                  {companyNominaEmployees.map((employee) => (
                     <article
                       className="company-list-card company-document-card"
-                      key={nomina.id}
+                      key={employee.id}
                     >
                       <div className="company-list-icon">💳</div>
                       <div className="company-list-main">
-                        <strong>
-                          {nomina.employee_name || 'Empleado'}
-                        </strong>
-                        <span>
-                          {formatCompanyNominaName(nomina)}
-                        </span>
+                        <strong>{employee.name}</strong>
+                      </div>
+                      <div className="company-document-actions">
+                        <button
+                          type="button"
+                          onClick={() => handleViewCompanyNominas(employee)}
+                        >
+                          Ver
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {companyPortalView === 'employee-nominas' && selectedCompanyNominaEmployee && (
+            <div className="company-content-panel">
+              <div className="company-content-header">
+                <div>
+                  <p className="eyebrow">DOCUMENTACIÓN DEL EMPLEADO</p>
+                  <h2>Nóminas de {selectedCompanyNominaEmployee.name}</h2>
+                </div>
+                <button
+                  type="button"
+                  className="company-back-button"
+                  onClick={() => setCompanyPortalView('nominas')}
+                >
+                  Volver
+                </button>
+              </div>
+
+              <div className="company-list">
+                {companyNominasWithDocument
+                  .filter((nomina) => nomina.employee_id === selectedCompanyNominaEmployee.id)
+                  .map((nomina) => (
+                    <article className="company-list-card company-document-card" key={nomina.id}>
+                      <div className="company-list-icon">💳</div>
+                      <div className="company-list-main">
+                        <strong>{formatCompanyNominaName(nomina)}</strong>
                         <small>
                           Fecha: {formatCompanyDate(nomina.date)}
                         </small>
@@ -7092,32 +7271,21 @@ if (loggedIn && user && user.role === 'HR') {
                       <div className="company-document-actions">
                         <button
                           type="button"
-                          onClick={() =>
-                            handleViewNomina(
-                              nomina,
-                              nomina.employee_id,
-                            )
-                          }
+                          onClick={() => handleViewNomina(nomina, nomina.employee_id)}
                         >
                           Ver
                         </button>
                         <button
                           type="button"
                           className="secondary"
-                          onClick={() =>
-                            handleDownloadNomina(
-                              nomina,
-                              nomina.employee_id,
-                            )
-                          }
+                          onClick={() => handleDownloadNomina(nomina, nomina.employee_id)}
                         >
                           Descargar
                         </button>
                       </div>
                     </article>
                   ))}
-                </div>
-              )}
+              </div>
             </div>
           )}
         </div>
