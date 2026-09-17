@@ -4867,23 +4867,52 @@ button:disabled {
 }
 
 /* =========================================================
-   RR. HH. — AÑADIR EMPLEADO
+   RR. HH. — CREDENCIALES DE EMPRESA
    ========================================================= */
 
-.hr-main .hr-employee-create-actions {
-  gap: 14px;
+.hr-main .hr-company-credentials-entry {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
 }
 
-.hr-main .hr-employee-create-actions .hr-employee-create-save-button {
+.hr-main .hr-company-credentials-button {
   margin: 0;
-  background: #f4f3ee !important;
-  color: #000000 !important;
-  border: 1px solid #f4f3ee !important;
-  box-shadow: none !important;
+  padding: 12px 22px;
+  border: 1px solid #f4f3ee;
+  border-radius: 10px;
+  background: #f4f3ee;
+  color: #172b45;
+  box-shadow: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
-.hr-main .hr-employee-create-actions .hr-employee-create-save-button:hover {
-  background: #ebe9e2 !important;
-  color: #000000 !important;
-  border-color: #ebe9e2 !important;
+.hr-main .hr-company-credentials-button:hover:not(:disabled) {
+  background: #ebe9e2;
+  border-color: #ebe9e2;
+  transform: translateY(-1px);
+}
+
+.hr-main .hr-company-credentials-button:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.hr-main .hr-company-credentials-panel {
+  margin-top: 24px;
+}
+
+.hr-main .hr-company-credentials-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+/* Credenciales dentro de la fila de acciones de la ficha de empresa */
+.hr-main .hr-company-detail-actions .hr-company-credentials-button {
+  margin: 0;
 }

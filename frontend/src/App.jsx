@@ -68,6 +68,7 @@ function App() {
   const [companyCredentialsSaving, setCompanyCredentialsSaving] = useState(false)
   const [companyCredentialsError, setCompanyCredentialsError] = useState('')
   const [companyCredentialsMessage, setCompanyCredentialsMessage] = useState('')
+  const [companyCredentialsSaved, setCompanyCredentialsSaved] = useState(false)
 
   const [creatingCompany, setCreatingCompany] = useState(false)
   const [companyCreateSaving, setCompanyCreateSaving] = useState(false)
@@ -1110,6 +1111,7 @@ function App() {
     setCompanyCredentialsForm({ username: '', password: '' })
     setCompanyCredentialsError('')
     setCompanyCredentialsMessage('')
+    setCompanyCredentialsSaved(false)
     setCompaniesError('')
   }
 
@@ -1124,6 +1126,7 @@ function App() {
     setCompanyCredentialsForm({ username: '', password: '' })
     setCompanyCredentialsError('')
     setCompanyCredentialsMessage('')
+    setCompanyCredentialsSaved(false)
 
     setCompanyForm({
       name: '',
@@ -1293,14 +1296,50 @@ function App() {
 
       setCompanyCredentialsForm({
         username: data?.username || companyCredentialsForm.username.trim(),
-        password: '',
+        password: companyCredentialsForm.password,
       })
+      setCompanyCredentialsSaved(true)
       setCompanyCredentialsMessage('Credenciales de empresa guardadas correctamente')
     } catch (err) {
       setCompanyCredentialsError(err.message)
     } finally {
       setCompanyCredentialsSaving(false)
     }
+  }
+
+  async function handleOpenCompanyCredentials() {
+    setCompanyCredentialsError('')
+    setCompanyCredentialsMessage('')
+    setCompanyCredentialsSaved(false)
+    setCompanyView('credentials')
+
+    const token = localStorage.getItem('access_token')
+    if (!token || !selectedCompany) return
+
+    try {
+      const response = await fetch(
+        API_URL + '/api/companies/' + selectedCompany.id + '/credentials',
+        { headers: { Authorization: 'Bearer ' + token } },
+      )
+      const data = await response.json().catch(() => null)
+      if (!response.ok) {
+        throw new Error(data?.detail || 'No se pudieron cargar las credenciales')
+      }
+
+      setCompanyCredentialsForm({
+        username: data?.username || '',
+        password: data?.password || '',
+      })
+      setCompanyCredentialsSaved(Boolean(data?.username && data?.password))
+    } catch (err) {
+      setCompanyCredentialsError(err.message)
+    }
+  }
+
+  function handleEditCompanyCredentials() {
+    setCompanyCredentialsSaved(false)
+    setCompanyCredentialsError('')
+    setCompanyCredentialsMessage('')
   }
 
   // =========================================================
@@ -4344,6 +4383,96 @@ if (loggedIn && user && user.role === 'HR') {
           {/* FICHA DE EMPRESA */}
           {/* ================================================= */}
 
+          {companyView === 'credentials' && selectedCompany && (
+            <div className="contracts">
+              <div className="section-header">
+                <div>
+                  <p className="eyebrow">Acceso de empresa</p>
+                  <h2>Credenciales de empresa</h2>
+                </div>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setCompanyView('company')}
+                >
+                  Volver
+                </button>
+              </div>
+
+              <div className="profile hr-company-credentials-panel">
+                <form onSubmit={handleSaveCompanyCredentials}>
+                  <label htmlFor="company-access-username">Usuario</label>
+                  <input
+                    id="company-access-username"
+                    type="text"
+                    value={companyCredentialsForm.username}
+                    onChange={(event) =>
+                      setCompanyCredentialsForm((previous) => ({
+                        ...previous,
+                        username: event.target.value,
+                      }))
+                    }
+                    autoComplete="off"
+                    disabled={companyCredentialsSaved}
+                  />
+
+                  <label htmlFor="company-access-password">Contraseña</label>
+                  <input
+                    id="company-access-password"
+                    type={companyCredentialsSaved ? 'text' : 'password'}
+                    value={companyCredentialsForm.password}
+                    onChange={(event) =>
+                      setCompanyCredentialsForm((previous) => ({
+                        ...previous,
+                        password: event.target.value,
+                      }))
+                    }
+                    autoComplete="new-password"
+                    disabled={companyCredentialsSaved}
+                  />
+
+                  {companyCredentialsError && (
+                    <p className="error">{companyCredentialsError}</p>
+                  )}
+                  {companyCredentialsMessage && (
+                    <p className="muted">{companyCredentialsMessage}</p>
+                  )}
+
+                  <div className="hr-company-credentials-actions">
+                    {!companyCredentialsSaved ? (
+                      <button
+                        type="submit"
+                        className="hr-company-credentials-button"
+                        disabled={companyCredentialsSaving}
+                      >
+                        {companyCredentialsSaving
+                          ? 'Guardando...'
+                          : 'Guardar acceso de empresa'}
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="hr-company-credentials-button"
+                          disabled
+                        >
+                          Credenciales guardadas
+                        </button>
+                        <button
+                          type="button"
+                          className="hr-company-credentials-button"
+                          onClick={handleEditCompanyCredentials}
+                        >
+                          Editar
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           {companyView === 'company' &&
             selectedCompany && (
               <div className="contracts">
@@ -4434,6 +4563,14 @@ if (loggedIn && user && user.role === 'HR') {
 
                     <button
                       type="button"
+                      className="hr-company-credentials-button"
+                      onClick={handleOpenCompanyCredentials}
+                    >
+                      Credenciales
+                    </button>
+
+                    <button
+                      type="button"
                       className="hr-company-detail-button"
                       onClick={() =>
                         handleEditCompany(
@@ -4480,82 +4617,6 @@ if (loggedIn && user && user.role === 'HR') {
 
                   </div>
 
-                </div>
-
-                <div className="profile" style={{ marginTop: '24px' }}>
-                  <div className="section-header">
-                    <div>
-                      <p className="eyebrow">
-                        Acceso de empresa
-                      </p>
-                      <h2>
-                        Credenciales de acceso
-                      </h2>
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleSaveCompanyCredentials}>
-                    <label htmlFor="company-access-username">
-                      Usuario
-                    </label>
-                    <input
-                      id="company-access-username"
-                      type="text"
-                      value={companyCredentialsForm.username}
-                      onChange={(event) =>
-                        setCompanyCredentialsForm((previous) => ({
-                          ...previous,
-                          username: event.target.value,
-                        }))
-                      }
-                      autoComplete="off"
-                    />
-
-                    <label htmlFor="company-access-password">
-                      Contraseña
-                    </label>
-                    <input
-                      id="company-access-password"
-                      type="password"
-                      value={companyCredentialsForm.password}
-                      onChange={(event) =>
-                        setCompanyCredentialsForm((previous) => ({
-                          ...previous,
-                          password: event.target.value,
-                        }))
-                      }
-                      autoComplete="new-password"
-                    />
-
-                    {companyCredentialsError && (
-                      <p className="error">
-                        {companyCredentialsError}
-                      </p>
-                    )}
-
-                    {companyCredentialsMessage && (
-                      <p className="muted" style={{ margin: '10px 0 0' }}>
-                        {companyCredentialsMessage}
-                      </p>
-                    )}
-
-                    <button
-                      type="submit"
-                      className="hr-company-detail-button"
-                      disabled={companyCredentialsSaving}
-                      style={{
-                        background: '#f4f3ee',
-                        color: '#172b45',
-                        border: '1px solid #f4f3ee',
-                        boxShadow: 'none',
-                        marginTop: '18px',
-                      }}
-                    >
-                      {companyCredentialsSaving
-                        ? 'Guardando...'
-                        : 'Guardar acceso de empresa'}
-                    </button>
-                  </form>
                 </div>
 
                 {/* EDITAR EMPRESA */}
@@ -5282,11 +5343,10 @@ if (loggedIn && user && user.role === 'HR') {
                         </p>
                       )}
 
-                      <div className="contract-document hr-employee-create-actions">
+                      <div className="contract-document">
 
                         <button
                           type="submit"
-                          className="hr-employee-create-save-button"
                           disabled={
                             employeeCreateSaving
                           }
