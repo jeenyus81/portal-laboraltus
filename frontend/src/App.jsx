@@ -45,6 +45,9 @@ function App() {
   const [recentActivities, setRecentActivities] = useState([])
   const [recentActivitiesLoading, setRecentActivitiesLoading] = useState(false)
   const [recentActivitiesError, setRecentActivitiesError] = useState('')
+  const [allActivities, setAllActivities] = useState([])
+  const [allActivitiesLoading, setAllActivitiesLoading] = useState(false)
+  const [allActivitiesError, setAllActivitiesError] = useState('')
 
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [companyView, setCompanyView] = useState('companies')
@@ -966,6 +969,40 @@ function App() {
     )
   }
 
+  async function handleOpenAllActivities() {
+    const token = localStorage.getItem('access_token')
+
+    setActiveMenu('dashboard')
+    setCompanyView('activityAll')
+    setAllActivitiesLoading(true)
+    setAllActivitiesError('')
+
+    if (!token) {
+      setAllActivities([])
+      setAllActivitiesError('No hay una sesión válida')
+      setAllActivitiesLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch(API_URL + '/api/activity/all', {
+        headers: { Authorization: 'Bearer ' + token },
+      })
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(data?.detail || 'No se pudo cargar toda la actividad')
+      }
+
+      setAllActivities(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setAllActivities([])
+      setAllActivitiesError(err.message)
+    } finally {
+      setAllActivitiesLoading(false)
+    }
+  }
+
   function handleRecentActivityClick(activity) {
     if (!activity?.target) {
       return
@@ -1144,6 +1181,10 @@ function App() {
   // =========================================================
 
   function handleAddCompany() {
+    setActiveMenu('companies')
+    setCompanyView('companies')
+    setSelectedCompany(null)
+    setSelectedEmployee(null)
     setCreatingCompany(true)
     setCompanyCreateError('')
 
@@ -3833,7 +3874,7 @@ if (loggedIn && user && user.role === 'HR') {
         <button
           type="button"
           className="hr-dashboard-view-all"
-          onClick={() => setCompanyView('companies')}
+          onClick={handleOpenAllActivities}
         >
           Ver todo
         </button>
@@ -3877,11 +3918,11 @@ if (loggedIn && user && user.role === 'HR') {
             <div className="hr-quick-action-content">
 
               <strong>
-                Gestionar empresas
+                Añadir empresa
               </strong>
 
               <span>
-                Añadir o editar empresas
+                Crear una nueva empresa
               </span>
 
             </div>
@@ -3897,11 +3938,11 @@ if (loggedIn && user && user.role === 'HR') {
             type="button"
             className="hr-quick-action"
             onClick={() => {
-              if (selectedCompany) {
-                handleAddEmployee()
-              } else {
-                setCompanyView('companies')
-              }
+              setActiveMenu('companies')
+              setSelectedCompany(null)
+              setSelectedEmployee(null)
+              setCreatingCompany(false)
+              setCompanyView('companies')
             }}
           >
 
@@ -3912,11 +3953,11 @@ if (loggedIn && user && user.role === 'HR') {
             <div className="hr-quick-action-content">
 
               <strong>
-                Gestionar empleados
+                Añadir empleado
               </strong>
 
               <span>
-                Añadir o editar empleados
+                Seleccionar empresa y añadir empleado
               </span>
 
             </div>
@@ -3932,14 +3973,7 @@ if (loggedIn && user && user.role === 'HR') {
             type="button"
             className="hr-quick-action"
             onClick={() => {
-              setActiveMenu('contracts')
-              if (selectedEmployee) {
-                handleViewContracts(selectedEmployee)
-              } else if (selectedCompany) {
-                handleEnterEmployees()
-              } else {
-                setCompanyView('companies')
-              }
+              handleEnterAllEmployees()
             }}
           >
 
@@ -3950,11 +3984,11 @@ if (loggedIn && user && user.role === 'HR') {
             <div className="hr-quick-action-content">
 
               <strong>
-                Gestionar contratos
+                Añadir contrato
               </strong>
 
               <span>
-                Consultar documentación
+                Seleccionar empleado y añadir contrato
               </span>
 
             </div>
@@ -3970,14 +4004,7 @@ if (loggedIn && user && user.role === 'HR') {
             type="button"
             className="hr-quick-action"
             onClick={() => {
-              setActiveMenu('nominas')
-              if (selectedEmployee) {
-                handleViewNominas(selectedEmployee)
-              } else if (selectedCompany) {
-                handleEnterEmployees()
-              } else {
-                setCompanyView('companies')
-              }
+              handleEnterAllEmployees()
             }}
           >
 
@@ -3988,11 +4015,11 @@ if (loggedIn && user && user.role === 'HR') {
             <div className="hr-quick-action-content">
 
               <strong>
-                Gestionar nóminas
+                Añadir nómina
               </strong>
 
               <span>
-                Consultar nóminas
+                Seleccionar empleado y añadir nómina
               </span>
 
             </div>
@@ -4041,6 +4068,59 @@ if (loggedIn && user && user.role === 'HR') {
 
   </div>
 )}
+          {/* ================================================= */}
+          {/* TODA LA ACTIVIDAD */}
+          {/* ================================================= */}
+
+          {companyView === 'activityAll' && (
+            <div className="contracts hr-all-activity-panel">
+              <div className="section-header">
+                <div>
+                  <p className="eyebrow">Historial del sistema</p>
+                  <h2>Toda la actividad</h2>
+                </div>
+
+                <button
+                  type="button"
+                  className="hr-activity-back-button"
+                  style={{
+                    backgroundColor: '#f4f3ee',
+                    color: '#000000',
+                    border: '1px solid #f4f3ee',
+                    boxShadow: 'none',
+                  }}
+                  onClick={handleBackToDashboard}
+                >
+                  Volver al inicio
+                </button>
+              </div>
+
+              <div className="hr-all-activity-list">
+                {allActivitiesLoading ? (
+                  <p className="muted">Cargando actividad...</p>
+                ) : allActivitiesError ? (
+                  <p className="error">{allActivitiesError}</p>
+                ) : allActivities.length === 0 ? (
+                  <div className="empty-state">
+                    <strong>No hay actividad registrada</strong>
+                    <p>Las acciones realizadas aparecerán aquí.</p>
+                  </div>
+                ) : (
+                  allActivities.map((activity) => (
+                    <div className="hr-activity-item" key={activity.id}>
+                      <div className="hr-activity-icon">{activity.icon || '•'}</div>
+                      <div className="hr-activity-content">
+                        <strong>{activity.title}</strong>
+                        <span>{activity.detail}</span>
+                      </div>
+                      <time>{formatActivityDateTime(activity.timestamp)}</time>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
           {/* ================================================= */}
           {/* LISTA DE EMPRESAS */}
           {/* ================================================= */}

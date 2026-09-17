@@ -910,7 +910,7 @@ button:disabled {
   border: 1px solid #dbe4ee;
   border-radius: 12px;
   background: #eef6ff !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   text-align: left;
   box-shadow: none;
 }
@@ -964,7 +964,7 @@ button:disabled {
 .hr-quick-action-content strong {
   display: block;
   margin: 0 0 5px;
-  color: #172b45 !important;
+  color: #000000 !important;
   font-size: 14px;
   line-height: 1.35;
   white-space: normal;
@@ -1421,14 +1421,14 @@ button:disabled {
 .hr-main .hr-companies-add-button,
 .hr-main .hr-companies-enter-button {
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
 }
 
 .hr-main .hr-companies-add-button:hover,
 .hr-main .hr-companies-enter-button:hover {
   background: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -1598,14 +1598,14 @@ button:disabled {
 .hr-main .hr-company-create-actions .hr-company-create-save-button {
   margin: 0;
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
 }
 
 .hr-main .hr-company-create-actions .hr-company-create-save-button:hover {
   background: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -1624,14 +1624,14 @@ button:disabled {
 .hr-main .hr-company-detail-actions .hr-company-detail-button {
   margin: 0;
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
 }
 
 .hr-main .hr-company-detail-actions .hr-company-detail-button:hover {
   background: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -1650,7 +1650,7 @@ button:disabled {
 .hr-main .hr-company-edit-actions .hr-company-edit-cancel-button {
   margin: 0;
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
 }
@@ -1658,7 +1658,7 @@ button:disabled {
 .hr-main .hr-company-edit-actions .hr-company-edit-save-button:hover,
 .hr-main .hr-company-edit-actions .hr-company-edit-cancel-button:hover {
   background: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -1669,14 +1669,14 @@ button:disabled {
 .hr-main .hr-company-logo-button,
 .hr-main .hr-company-logo-remove {
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #f4f3ee !important;
 }
 
 .hr-main .hr-company-logo-button:hover,
 .hr-main .hr-company-logo-remove:hover {
   background: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -1731,7 +1731,7 @@ button:disabled {
 .hr-main .hr-employees-add-button,
 .hr-main .hr-employees-enter-button {
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
 }
@@ -1739,7 +1739,7 @@ button:disabled {
 .hr-main .hr-employees-add-button:hover,
 .hr-main .hr-employees-enter-button:hover {
   background: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -1827,14 +1827,14 @@ button:disabled {
 .hr-main .hr-employee-detail-actions .hr-employee-detail-button {
   margin: 0;
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
 }
 
 .hr-main .hr-employee-detail-actions .hr-employee-detail-button:hover {
   background: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -1894,7 +1894,7 @@ button:disabled {
 .hr-main .hr-employee-edit-actions .hr-employee-edit-cancel-button {
   margin: 0;
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
 }
@@ -1902,7 +1902,7 @@ button:disabled {
 .hr-main .hr-employee-edit-actions .hr-employee-edit-save-button:hover,
 .hr-main .hr-employee-edit-actions .hr-employee-edit-cancel-button:hover {
   background: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -1960,7 +1960,7 @@ button:disabled {
 .hr-main .hr-nominas-download-button {
   margin: 0;
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
 }
@@ -1968,7 +1968,7 @@ button:disabled {
 .hr-main .hr-nominas-action-button:hover,
 .hr-main .hr-nominas-download-button:hover {
   background: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -2034,7 +2034,7 @@ button:disabled {
 .hr-main .hr-nominas-download-button {
   margin: 0 !important;
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
 }
@@ -2044,7 +2044,7 @@ button:disabled {
 .hr-main .hr-nominas-action-button:hover,
 .hr-main .hr-nominas-download-button:hover {
   background: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -2066,7 +2066,7 @@ button:disabled {
   margin: 0 !important;
   background: #f4f3ee !important;
   background-color: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
 }
@@ -2074,7 +2074,7 @@ button:disabled {
 .hr-main .hr-contracts-employee-actions .hr-contracts-action-button:hover {
   background: #ebe9e2 !important;
   background-color: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -2089,7 +2089,7 @@ button:disabled {
   margin: 0 !important;
   background: #f4f3ee !important;
   background-color: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
   appearance: none;
@@ -2098,7 +2098,7 @@ button:disabled {
 .hr-main .hr-nominas-download-area .hr-nominas-download-button:hover {
   background: #ebe9e2 !important;
   background-color: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -2109,7 +2109,7 @@ button:disabled {
 .hr-main .contracts .contract-document .hr-nominas-download-button {
   background: #f4f3ee !important;
   background-color: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
 }
@@ -2117,7 +2117,7 @@ button:disabled {
 .hr-main .contracts .contract-document .hr-nominas-download-button:hover {
   background: #ebe9e2 !important;
   background-color: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -2336,7 +2336,7 @@ button:disabled {
 .hr-sidebar .hr-nav-button.active:focus-visible {
   background: #f4f3ee !important;
   background-color: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   box-shadow: none !important;
 }
 
@@ -2557,7 +2557,7 @@ button:disabled {
 .employee-nav-button.active:focus,
 .employee-nav-button.active:focus-visible {
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   box-shadow: none !important;
 }
 
@@ -2900,7 +2900,7 @@ button:disabled {
   border: 1px solid #dbe4ee;
   border-radius: 12px;
   background: #eef6ff !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   text-align: left;
   box-shadow: none;
 }
@@ -2938,7 +2938,7 @@ button:disabled {
 .employee-quick-action-content strong {
   display: block;
   margin: 0 0 5px;
-  color: #172b45 !important;
+  color: #000000 !important;
   font-size: 14px;
   line-height: 1.35;
 }
@@ -3122,14 +3122,14 @@ button:disabled {
 .employee-documents-back-button {
   margin: 0;
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
 }
 
 .employee-documents-back-button:hover {
   background: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -3162,14 +3162,14 @@ button:disabled {
 .employee-document-nav-button {
   margin: 0;
   background: #ffffff !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #e3e7ec !important;
   box-shadow: none !important;
 }
 
 .employee-document-nav-button:hover {
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #f4f3ee !important;
 }
 
@@ -3178,7 +3178,7 @@ button:disabled {
 .employee-document-nav-button.active:focus,
 .employee-document-nav-button.active:focus-visible {
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #f4f3ee !important;
   box-shadow: none !important;
 }
@@ -3292,7 +3292,7 @@ button:disabled {
   border: 1px solid #f4f3ee !important;
   border-radius: 12px !important;
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   font-size: 18px !important;
   font-weight: 700 !important;
   box-shadow: none !important;
@@ -3376,7 +3376,7 @@ button:disabled {
   border: 1px solid #f4f3ee !important;
   border-radius: 12px !important;
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   font-size: 20px !important;
   font-weight: 700 !important;
   box-shadow: none !important;
@@ -3434,7 +3434,7 @@ button:disabled {
   margin-top: 0 !important;
   background: #f4f3ee !important;
   background-color: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
   font-weight: 700;
@@ -3443,7 +3443,7 @@ button:disabled {
 .employee-contract-download-button:hover:not(:disabled) {
   background: #ebe9e2 !important;
   background-color: #ebe9e2 !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #ebe9e2 !important;
 }
 
@@ -3452,7 +3452,7 @@ button:disabled {
   cursor: default !important;
   background: #f4f3ee !important;
   background-color: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border-color: #f4f3ee !important;
 }
 
@@ -3565,7 +3565,7 @@ button:disabled {
 .company-nav-button.active:focus,
 .company-nav-button.active:focus-visible {
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   box-shadow: none !important;
 }
 
@@ -3859,7 +3859,7 @@ button:disabled {
   border: 1px solid #dbe4ee;
   border-radius: 12px;
   background: #eef6ff !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   text-align: left;
   box-shadow: none;
 }
@@ -3897,7 +3897,7 @@ button:disabled {
 .company-quick-action-content strong {
   display: block;
   margin: 0 0 5px;
-  color: #172b45 !important;
+  color: #000000 !important;
   font-size: 14px;
   line-height: 1.35;
 }
@@ -3948,7 +3948,7 @@ button:disabled {
   padding: 13px 18px;
   border-radius: 10px;
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   border: 1px solid #f4f3ee !important;
   box-shadow: none !important;
 }
@@ -4158,7 +4158,7 @@ button:disabled {
 .company-nav-button.active:focus,
 .company-nav-button.active:focus-visible {
   background: #f4f3ee !important;
-  color: #172b45 !important;
+  color: #000000 !important;
   box-shadow: none !important;
 }
 
@@ -4915,4 +4915,47 @@ button:disabled {
 /* Credenciales dentro de la fila de acciones de la ficha de empresa */
 .hr-main .hr-company-detail-actions .hr-company-credentials-button {
   margin: 0;
+}
+  
+
+.hr-all-activity-panel {
+  width: 100%;
+}
+
+.hr-all-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hr-all-activity-list .hr-activity-item {
+  cursor: default;
+}
+
+/* Botón Volver al inicio del historial de actividad de RR. HH. */
+.hr-main .hr-activity-back-button {
+  background: #f4f3ee !important;
+  color: #000000 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.hr-main .hr-activity-back-button:hover {
+  background: #e9e7df !important;
+  color: #000000 !important;
+}
+
+/* Ajuste definitivo: botón Volver al inicio del historial de RR. HH. */
+.hr-activity-back-button {
+  background-color: #f4f3ee !important;
+  color: #000000 !important;
+  border: 1px solid #f4f3ee !important;
+  box-shadow: none !important;
+}
+
+.hr-activity-back-button:hover,
+.hr-activity-back-button:focus-visible {
+  background-color: #e9e7df !important;
+  color: #000000 !important;
+  border-color: #e9e7df !important;
 }

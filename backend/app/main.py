@@ -1,6 +1,5 @@
 import base64
 import json
-import os
 from datetime import datetime
 
 from pathlib import Path
@@ -19,8 +18,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from uuid import uuid4
 from zoneinfo import ZoneInfo
-
-from cryptography.fernet import Fernet, InvalidToken
 
 from app.database import Base, add_missing_code_columns, engine
 from app.dependencies import get_current_user, require_company, require_hr
@@ -239,17 +236,6 @@ def _add_missing_company_user_column():
 
 
 _add_missing_company_user_column()
-
-
-def _add_missing_password_encrypted_column():
-    inspector = inspect(engine)
-    columns = {column["name"] for column in inspector.get_columns("users")}
-    if "password_encrypted" not in columns:
-        with engine.begin() as connection:
-            connection.execute(text("ALTER TABLE users ADD COLUMN password_encrypted VARCHAR(4096)"))
-
-
-_add_missing_password_encrypted_column()
 
 
 # ============================================================
@@ -633,55 +619,6 @@ def delete_company_logo(
 # ============================================================
 
 
-def _credentials_cipher() -> Fernet:
-    key = os.getenv("CREDENTIALS_ENCRYPTION_KEY")
-    if not key:
-        raise HTTPException(
-            status_code=500,
-            detail="Falta configurar CREDENTIALS_ENCRYPTION_KEY en el servidor",
-        )
-    try:
-        return Fernet(key.encode("utf-8"))
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail="La clave de cifrado no es válida") from exc
-
-
-def _encrypt_credential(value: str) -> str:
-    return _credentials_cipher().encrypt(value.encode("utf-8")).decode("utf-8")
-
-
-def _decrypt_credential(value: str | None) -> str:
-    if not value:
-        return ""
-    try:
-        return _credentials_cipher().decrypt(value.encode("utf-8")).decode("utf-8")
-    except (InvalidToken, ValueError):
-        return ""
-
-
-@app.get("/api/companies/{company_id}/credentials")
-def get_company_credentials(
-    company_id: int,
-    current_user: User = Depends(require_hr),
-):
-    with Session(engine) as session:
-        company = session.get(Company, company_id)
-        if company is None:
-            raise HTTPException(status_code=404, detail="Company not found")
-
-        user = session.scalar(select(User).where(User.company_id == company_id))
-        if user is None:
-            return {"company_id": company_id, "username": "", "password": "", "role": UserRole.COMPANY}
-
-        return {
-            "id": user.id,
-            "company_id": company_id,
-            "username": user.username,
-            "password": _decrypt_credential(getattr(user, "password_encrypted", None)),
-            "role": user.role,
-        }
-
-
 @app.post("/api/companies/{company_id}/credentials")
 def create_or_update_company_credentials(
     company_id: int,
@@ -728,7 +665,6 @@ def create_or_update_company_credentials(
             user = User(
                 username=username,
                 password_hash=hash_password(password),
-                password_encrypted=_encrypt_credential(password),
                 role=UserRole.COMPANY,
                 company_id=company_id,
             )
@@ -737,7 +673,6 @@ def create_or_update_company_credentials(
             user = existing_company_user
             user.username = username
             user.password_hash = hash_password(password)
-            user.password_encrypted = _encrypt_credential(password)
             user.role = UserRole.COMPANY
             user.company_id = company_id
 
@@ -1313,6 +1248,18 @@ def list_recent_activity(
         return []
 
     return activities[:4]
+
+
+@app.get("/api/activity/all")
+def list_all_activity(
+    current_user: User = Depends(require_hr),
+):
+    activities = _read_activity()
+    return sorted(
+        activities,
+        key=lambda activity: activity.get("timestamp") or "",
+        reverse=True,
+    )
 
 
 # ============================================================
