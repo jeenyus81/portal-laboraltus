@@ -4197,10 +4197,11 @@ if (loggedIn && user && user.role === 'HR') {
                       </p>
                     )}
 
-                    <div className="contract-document">
+                    <div className="contract-document hr-company-create-actions">
 
                       <button
                         type="submit"
+                        className="hr-company-create-save-button"
                         disabled={companyCreateSaving}
                       >
                         {companyCreateSaving
@@ -5281,10 +5282,11 @@ if (loggedIn && user && user.role === 'HR') {
                         </p>
                       )}
 
-                      <div className="contract-document">
+                      <div className="contract-document hr-employee-create-actions">
 
                         <button
                           type="submit"
+                          className="hr-employee-create-save-button"
                           disabled={
                             employeeCreateSaving
                           }
