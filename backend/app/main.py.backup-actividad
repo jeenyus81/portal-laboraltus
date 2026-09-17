@@ -1315,16 +1315,6 @@ def list_recent_activity(
     return activities[:4]
 
 
-@app.get("/api/activity/all")
-def list_all_hr_activity(
-    current_user: User = Depends(get_current_user),
-):
-    if current_user.role != UserRole.HR:
-        return []
-
-    return _read_activity()
-
-
 # ============================================================
 # CONTRATOS
 # ============================================================

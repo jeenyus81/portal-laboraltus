@@ -45,9 +45,6 @@ function App() {
   const [recentActivities, setRecentActivities] = useState([])
   const [recentActivitiesLoading, setRecentActivitiesLoading] = useState(false)
   const [recentActivitiesError, setRecentActivitiesError] = useState('')
-  const [allActivities, setAllActivities] = useState([])
-  const [allActivitiesLoading, setAllActivitiesLoading] = useState(false)
-  const [allActivitiesError, setAllActivitiesError] = useState('')
 
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [companyView, setCompanyView] = useState('companies')
@@ -773,42 +770,6 @@ function App() {
     }
   }
 
-  async function loadAllHrActivities(token) {
-    if (!token) {
-      setAllActivities([])
-      return
-    }
-
-    setAllActivitiesLoading(true)
-    setAllActivitiesError('')
-
-    try {
-      const response = await fetch(
-        API_URL + '/api/activity/all',
-        {
-          headers: {
-            Authorization: 'Bearer ' + token,
-          },
-        },
-      )
-
-      const data = await response.json().catch(() => null)
-
-      if (!response.ok) {
-        throw new Error(
-          data?.detail || 'No se pudo cargar el historial de actividad',
-        )
-      }
-
-      setAllActivities(Array.isArray(data) ? data : [])
-    } catch (err) {
-      setAllActivities([])
-      setAllActivitiesError(err.message)
-    } finally {
-      setAllActivitiesLoading(false)
-    }
-  }
-
   async function loadCompanyPortalData(token) {
     if (!token) {
       setCompanyDashboard(null)
@@ -1047,20 +1008,6 @@ function App() {
     }
 
     loadRecentActivities(token)
-  }, [loggedIn, user?.role, companyView])
-
-  useEffect(() => {
-    if (!loggedIn || user?.role !== 'HR' || companyView !== 'activityHistory') {
-      return
-    }
-
-    const token = localStorage.getItem('access_token')
-
-    if (!token) {
-      return
-    }
-
-    loadAllHrActivities(token)
   }, [loggedIn, user?.role, companyView])
 
   useEffect(() => {
@@ -3886,10 +3833,7 @@ if (loggedIn && user && user.role === 'HR') {
         <button
           type="button"
           className="hr-dashboard-view-all"
-          onClick={() => {
-            setActiveMenu('dashboard')
-            setCompanyView('activityHistory')
-          }}
+          onClick={() => setCompanyView('companies')}
         >
           Ver todo
         </button>
@@ -3933,11 +3877,11 @@ if (loggedIn && user && user.role === 'HR') {
             <div className="hr-quick-action-content">
 
               <strong>
-                Añadir empresa
+                Gestionar empresas
               </strong>
 
               <span>
-                Crear una nueva empresa
+                Añadir o editar empresas
               </span>
 
             </div>
@@ -3968,11 +3912,11 @@ if (loggedIn && user && user.role === 'HR') {
             <div className="hr-quick-action-content">
 
               <strong>
-                Añadir empleado
+                Gestionar empleados
               </strong>
 
               <span>
-                Crear un nuevo empleado
+                Añadir o editar empleados
               </span>
 
             </div>
@@ -3988,10 +3932,14 @@ if (loggedIn && user && user.role === 'HR') {
             type="button"
             className="hr-quick-action"
             onClick={() => {
-              setActiveMenu('employees')
-              setSelectedEmployee(null)
-              setSelectedCompany(null)
-              handleEnterAllEmployees()
+              setActiveMenu('contracts')
+              if (selectedEmployee) {
+                handleViewContracts(selectedEmployee)
+              } else if (selectedCompany) {
+                handleEnterEmployees()
+              } else {
+                setCompanyView('companies')
+              }
             }}
           >
 
@@ -4002,11 +3950,11 @@ if (loggedIn && user && user.role === 'HR') {
             <div className="hr-quick-action-content">
 
               <strong>
-                Añadir contrato
+                Gestionar contratos
               </strong>
 
               <span>
-                Seleccionar un empleado para añadir un contrato
+                Consultar documentación
               </span>
 
             </div>
@@ -4022,10 +3970,14 @@ if (loggedIn && user && user.role === 'HR') {
             type="button"
             className="hr-quick-action"
             onClick={() => {
-              setActiveMenu('employees')
-              setSelectedEmployee(null)
-              setSelectedCompany(null)
-              handleEnterAllEmployees()
+              setActiveMenu('nominas')
+              if (selectedEmployee) {
+                handleViewNominas(selectedEmployee)
+              } else if (selectedCompany) {
+                handleEnterEmployees()
+              } else {
+                setCompanyView('companies')
+              }
             }}
           >
 
@@ -4036,11 +3988,11 @@ if (loggedIn && user && user.role === 'HR') {
             <div className="hr-quick-action-content">
 
               <strong>
-                Añadir nómina
+                Gestionar nóminas
               </strong>
 
               <span>
-                Seleccionar un empleado para añadir una nómina
+                Consultar nóminas
               </span>
 
             </div>
@@ -4089,81 +4041,6 @@ if (loggedIn && user && user.role === 'HR') {
 
   </div>
 )}
-{/* ================================================= */}
-{/* HISTORIAL COMPLETO DE ACTIVIDAD RR. HH. */}
-{/* ================================================= */}
-
-{companyView === 'activityHistory' && (
-  <div className="hr-dashboard">
-    <div className="section-header">
-      <div>
-        <p className="eyebrow">Actividad</p>
-        <h2>Historial completo de actividad</h2>
-      </div>
-
-      <button
-        type="button"
-        className="hr-company-detail-button"
-        style={{
-          background: '#f4f3ee',
-          color: '#172b45',
-          border: '1px solid #f4f3ee',
-          boxShadow: 'none',
-        }}
-        onClick={() => {
-          setActiveMenu('dashboard')
-          setCompanyView('dashboard')
-        }}
-      >
-        Volver a Inicio
-      </button>
-    </div>
-
-    <section className="hr-dashboard-box">
-      <div className="hr-activity-list">
-        {allActivitiesLoading ? (
-          <p className="muted">Cargando historial de actividad...</p>
-        ) : allActivitiesError ? (
-          <p className="error">{allActivitiesError}</p>
-        ) : allActivities.length === 0 ? (
-          <div className="empty-state">
-            <strong>No hay actividad registrada</strong>
-            <p>Las acciones realizadas aparecerán aquí.</p>
-          </div>
-        ) : (
-          allActivities.map((activity) => (
-            <div
-              className="hr-activity-item clickable"
-              key={activity.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => handleRecentActivityClick(activity)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  handleRecentActivityClick(activity)
-                }
-              }}
-            >
-              <div className="hr-activity-icon">
-                {activity.icon || '•'}
-              </div>
-
-              <div className="hr-activity-content">
-                <strong>{activity.title}</strong>
-                <span>{activity.detail}</span>
-              </div>
-
-              <time>{formatActivityDateTime(activity.timestamp)}</time>
-            </div>
-          ))
-        )}
-      </div>
-    </section>
-
-  </div>
-)}
-
           {/* ================================================= */}
           {/* LISTA DE EMPRESAS */}
           {/* ================================================= */}
