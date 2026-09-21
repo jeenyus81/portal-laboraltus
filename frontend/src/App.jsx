@@ -55,6 +55,7 @@ function App() {
 
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [companyView, setCompanyView] = useState('companies')
+  const [hrQuickAction, setHrQuickAction] = useState(null)
   const [activeMenu, setActiveMenu] = useState('companies')
 
   const [companyForm, setCompanyForm] = useState({
@@ -1260,7 +1261,7 @@ function App() {
   // ENTRAR EN EMPRESA
   // =========================================================
 
-  function handleEnterCompany(company) {
+  async function handleEnterCompany(company) {
     const storedCredentials = JSON.parse(
       localStorage.getItem(COMPANY_CREDENTIALS_STORAGE_KEY) || '{}',
     )
@@ -1278,6 +1279,17 @@ function App() {
     setCompanyCredentialsError('')
     setCompanyCredentialsMessage('')
     setCompaniesError('')
+
+    if (hrQuickAction === 'employee' || hrQuickAction === 'contract' || hrQuickAction === 'nomina') {
+      const pendingAction = hrQuickAction
+      if (pendingAction === 'employee') {
+        setHrQuickAction(null)
+      }
+      await handleEnterEmployees()
+      if (pendingAction === 'employee') {
+        setCreatingEmployee(true)
+      }
+    }
   }
 
   // =========================================================
@@ -1928,6 +1940,22 @@ function App() {
   // =========================================================
   // ENTRAR EN EMPLEADO
   // =========================================================
+
+  async function handleHrQuickEmployeeEntry(employee) {
+    if (hrQuickAction === 'contract') {
+      setHrQuickAction(null)
+      await handleViewContracts(employee)
+      return
+    }
+
+    if (hrQuickAction === 'nomina') {
+      setHrQuickAction(null)
+      await handleViewNominas(employee)
+      return
+    }
+
+    await handleEnterEmployee(employee)
+  }
 
   async function handleEnterEmployee(employee) {
     setActiveMenu('employees')
@@ -4019,7 +4047,12 @@ if (loggedIn && user && user.role === 'HR') {
           <button
             type="button"
             className="hr-quick-action"
-            onClick={handleAddCompany}
+            onClick={() => {
+              setHrQuickAction(null)
+              setActiveMenu('companies')
+              setCompanyView('companies')
+              handleAddCompany()
+            }}
           >
 
             <div className="hr-quick-action-icon">
@@ -4029,11 +4062,11 @@ if (loggedIn && user && user.role === 'HR') {
             <div className="hr-quick-action-content">
 
               <strong>
-                Gestionar empresas
+                Añadir empresa
               </strong>
 
               <span>
-                Añadir o editar empresas
+                Añadir una empresa
               </span>
 
             </div>
@@ -4050,8 +4083,11 @@ if (loggedIn && user && user.role === 'HR') {
             className="hr-quick-action"
             onClick={() => {
               if (selectedCompany) {
+                setHrQuickAction(null)
                 handleAddEmployee()
               } else {
+                setHrQuickAction('employee')
+                setActiveMenu('companies')
                 setCompanyView('companies')
               }
             }}
@@ -4064,11 +4100,11 @@ if (loggedIn && user && user.role === 'HR') {
             <div className="hr-quick-action-content">
 
               <strong>
-                Gestionar empleados
+                Añadir empleado
               </strong>
 
               <span>
-                Añadir o editar empleados
+                Seleccionar empresa y añadir empleado
               </span>
 
             </div>
@@ -4084,12 +4120,14 @@ if (loggedIn && user && user.role === 'HR') {
             type="button"
             className="hr-quick-action"
             onClick={() => {
-              setActiveMenu('contracts')
               if (selectedEmployee) {
                 handleViewContracts(selectedEmployee)
               } else if (selectedCompany) {
+                setHrQuickAction('contract')
                 handleEnterEmployees()
               } else {
+                setHrQuickAction('contract')
+                setActiveMenu('companies')
                 setCompanyView('companies')
               }
             }}
@@ -4102,11 +4140,11 @@ if (loggedIn && user && user.role === 'HR') {
             <div className="hr-quick-action-content">
 
               <strong>
-                Gestionar contratos
+                Añadir contrato
               </strong>
 
               <span>
-                Consultar documentación
+                Seleccionar empleado y añadir contrato
               </span>
 
             </div>
@@ -4122,12 +4160,14 @@ if (loggedIn && user && user.role === 'HR') {
             type="button"
             className="hr-quick-action"
             onClick={() => {
-              setActiveMenu('nominas')
               if (selectedEmployee) {
                 handleViewNominas(selectedEmployee)
               } else if (selectedCompany) {
+                setHrQuickAction('nomina')
                 handleEnterEmployees()
               } else {
+                setHrQuickAction('nomina')
+                setActiveMenu('companies')
                 setCompanyView('companies')
               }
             }}
@@ -4140,11 +4180,11 @@ if (loggedIn && user && user.role === 'HR') {
             <div className="hr-quick-action-content">
 
               <strong>
-                Gestionar nóminas
+                Añadir nómina
               </strong>
 
               <span>
-                Consultar nóminas
+                Seleccionar empleado y añadir nómina
               </span>
 
             </div>
@@ -5152,7 +5192,7 @@ if (loggedIn && user && user.role === 'HR') {
                                 type="button"
                                 className="hr-employees-enter-button"
                                 onClick={() =>
-                                  handleEnterEmployee(employee)
+                                  handleHrQuickEmployeeEntry(employee)
                                 }
                               >
                                 Entrar
