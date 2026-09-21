@@ -46,12 +46,6 @@ function App() {
   const [recentActivities, setRecentActivities] = useState([])
   const [recentActivitiesLoading, setRecentActivitiesLoading] = useState(false)
   const [recentActivitiesError, setRecentActivitiesError] = useState('')
-  const [hrAllActivities, setHrAllActivities] = useState([])
-  const [hrAllActivitiesLoading, setHrAllActivitiesLoading] = useState(false)
-  const [hrAllActivitiesError, setHrAllActivitiesError] = useState('')
-  const [employeeAllActivities, setEmployeeAllActivities] = useState([])
-  const [employeeAllActivitiesLoading, setEmployeeAllActivitiesLoading] = useState(false)
-  const [employeeAllActivitiesError, setEmployeeAllActivitiesError] = useState('')
 
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [companyView, setCompanyView] = useState('companies')
@@ -783,92 +777,6 @@ function App() {
     }
   }
 
-  async function loadHrActivityHistory() {
-    setHrAllActivitiesLoading(true)
-    setHrAllActivitiesError('')
-
-    const token = localStorage.getItem('access_token')
-
-    if (!token) {
-      setHrAllActivities([])
-      setHrAllActivitiesLoading(false)
-      return
-    }
-
-    try {
-      const response = await fetch(
-        API_URL + '/api/activity/all',
-        {
-          headers: {
-            Authorization: 'Bearer ' + token,
-          },
-        },
-      )
-
-      const data = await response.json().catch(() => null)
-
-      if (!response.ok) {
-        throw new Error(
-          data?.detail || 'No se pudo cargar el historial de actividad',
-        )
-      }
-
-      setHrAllActivities(Array.isArray(data) ? data : [])
-    } catch (err) {
-      setHrAllActivities([])
-      setHrAllActivitiesError(err.message)
-    } finally {
-      setHrAllActivitiesLoading(false)
-    }
-  }
-
-  function handleOpenHrActivityHistory() {
-    setHrAllActivitiesLoading(true)
-    setHrAllActivitiesError('')
-    setCompanyView('activity')
-    setActiveMenu('dashboard')
-    loadHrActivityHistory()
-  }
-
-  async function loadEmployeeActivityHistory() {
-    setEmployeeAllActivitiesLoading(true)
-    setEmployeeAllActivitiesError('')
-
-    const token = localStorage.getItem('access_token')
-
-    if (!token) {
-      setEmployeeAllActivities([])
-      setEmployeeAllActivitiesLoading(false)
-      return
-    }
-
-    try {
-      const response = await fetch(
-        API_URL + '/api/activity/employee/all',
-        {
-          headers: {
-            Authorization: 'Bearer ' + token,
-          },
-        },
-      )
-
-      const data = await response.json().catch(() => null)
-
-      if (!response.ok) {
-        throw new Error(
-          data?.detail || 'No se pudo cargar el historial de actividad',
-        )
-      }
-
-      setEmployeeAllActivities(Array.isArray(data) ? data : [])
-    } catch (err) {
-      setEmployeeAllActivities([])
-      setEmployeeAllActivitiesError(err.message)
-    } finally {
-      setEmployeeAllActivitiesLoading(false)
-    }
-  }
-
   async function loadCompanyPortalData(token) {
     if (!token) {
       setCompanyDashboard(null)
@@ -1092,12 +1000,6 @@ function App() {
   // =========================================================
   // ACTIVIDAD RECIENTE
   // =========================================================
-
-  function handleOpenEmployeeActivityHistory() {
-    setEmployeePortalView('activity')
-    setEmployeeActiveMenu('dashboard')
-    loadEmployeeActivityHistory()
-  }
 
   function formatActivityDateTime(value) {
     if (!value) {
@@ -3985,7 +3887,7 @@ if (loggedIn && user && user.role === 'HR') {
         <button
           type="button"
           className="hr-dashboard-view-all"
-          onClick={handleOpenHrActivityHistory}
+          onClick={() => setCompanyView('companies')}
         >
           Ver todo
         </button>
@@ -4196,57 +4098,6 @@ if (loggedIn && user && user.role === 'HR') {
           {/* ================================================= */}
           {/* LISTA DE EMPRESAS */}
           {/* ================================================= */}
-
-          {companyView === 'activity' && (
-            <section className="company-page-section">
-              <div className="company-page-header">
-                <div>
-                  <p className="eyebrow">HISTORIAL DE ACTIVIDAD</p>
-                  <h1>Toda la actividad</h1>
-                </div>
-                <button
-                  type="button"
-                  className="company-back-button"
-                  onClick={() => {
-                    setCompanyView('dashboard')
-                    setActiveMenu('dashboard')
-                  }}
-                >
-                  Volver
-                </button>
-              </div>
-
-              {hrAllActivitiesLoading ? (
-                <div className="company-dashboard-message">Cargando actividad...</div>
-              ) : hrAllActivitiesError ? (
-                <div className="company-dashboard-message company-dashboard-error">{hrAllActivitiesError}</div>
-              ) : hrAllActivities.length === 0 ? (
-                <div className="company-empty-activity">
-                  <strong>No hay actividad registrada</strong>
-                  <p>Las acciones realizadas en el portal aparecerán aquí.</p>
-                </div>
-              ) : (
-                <div className="company-activity-list company-activity-history-list">
-                  {hrAllActivities.map((activity) => (
-                    <button
-                      type="button"
-                      className="company-activity-item"
-                      key={activity.id}
-                      onClick={() => handleRecentActivityClick(activity)}
-                    >
-                      <span className="company-activity-icon">{activity.icon || '•'}</span>
-                      <span className="company-activity-content">
-                        <strong>{activity.title}</strong>
-                        <span>{activity.detail}</span>
-                      </span>
-                      <time>{formatActivityDateTime(activity.timestamp)}</time>
-                      <span className="company-activity-arrow">→</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
 
           {companyView === 'companies' && (
             <div className="contracts">
@@ -4641,16 +4492,11 @@ if (loggedIn && user && user.role === 'HR') {
                     <p className="muted">{companyCredentialsMessage}</p>
                   )}
 
-                  <div className="hr-company-credentials-actions hr-company-detail-actions">
+                  <div className="hr-company-credentials-actions">
                     {!companyCredentialsSaved ? (
                       <button
                         type="submit"
                         className="hr-company-credentials-button"
-                        style={{
-                          backgroundColor: '#f4f3ee',
-                          color: '#172b45',
-                          borderColor: '#f4f3ee',
-                        }}
                         disabled={companyCredentialsSaving}
                       >
                         {companyCredentialsSaving
@@ -4661,14 +4507,14 @@ if (loggedIn && user && user.role === 'HR') {
                       <>
                         <button
                           type="button"
-                          className="hr-company-detail-button"
+                          className="hr-company-credentials-button"
                           disabled
                         >
                           Credenciales guardadas
                         </button>
                         <button
                           type="button"
-                          className="hr-company-detail-button"
+                          className="hr-company-credentials-button"
                           onClick={handleEditCompanyCredentials}
                         >
                           Editar
@@ -4772,7 +4618,7 @@ if (loggedIn && user && user.role === 'HR') {
 
                     <button
                       type="button"
-                      className="hr-company-detail-button"
+                      className="hr-company-credentials-button"
                       onClick={handleOpenCompanyCredentials}
                     >
                       Credenciales
@@ -7667,14 +7513,6 @@ if (loggedIn && user && user.role === 'HR') {
                       ))
                     )}
                   </div>
-
-                  <button
-                    type="button"
-                    className="employee-activity-view-all"
-                    onClick={handleOpenEmployeeActivityHistory}
-                  >
-                    Ver todo
-                  </button>
                 </section>
 
                 <section className="employee-dashboard-box">
@@ -7840,58 +7678,6 @@ if (loggedIn && user && user.role === 'HR') {
                   </div>
                 </section>
               </div>
-            </div>
-          )}
-
-          {employeePortalView === 'activity' && (
-            <div className="employee-content-panel employee-activity-history-panel">
-              <div className="employee-content-header">
-                <div>
-                  <p className="eyebrow">
-                    ACTIVIDAD
-                  </p>
-                  <h2>Historial de actividad</h2>
-                </div>
-
-                <div className="employee-contracts-landing-header-actions">
-                  <button
-                    type="button"
-                    className="employee-back-button employee-activity-back-button"
-                    onClick={() => {
-                      setEmployeePortalView('dashboard')
-                      setEmployeeActiveMenu('dashboard')
-                    }}
-                  >
-                    Volver a Inicio
-                  </button>
-                </div>
-              </div>
-
-              {employeeAllActivitiesLoading ? (
-                <p className="muted">Cargando historial de actividad...</p>
-              ) : employeeAllActivitiesError ? (
-                <p className="error">{employeeAllActivitiesError}</p>
-              ) : employeeAllActivities.length === 0 ? (
-                <div className="empty-state">
-                  <strong>No hay actividad registrada</strong>
-                  <p>Las acciones relacionadas con tu perfil aparecerán aquí.</p>
-                </div>
-              ) : (
-                <div className="employee-activity-history-list">
-                  {employeeAllActivities.map((activity) => (
-                    <div className="employee-activity-history-item" key={activity.id}>
-                      <div className="hr-activity-icon">
-                        {activity.icon || '•'}
-                      </div>
-                      <div className="hr-activity-content">
-                        <strong>{activity.title}</strong>
-                        <span>{activity.detail}</span>
-                      </div>
-                      <time>{formatActivityDateTime(activity.timestamp)}</time>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
