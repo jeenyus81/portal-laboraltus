@@ -1209,6 +1209,15 @@ def get_employee(
                 detail="Employee not found",
             )
 
+        if (
+            current_user.role == UserRole.COMPANY
+            and current_user.company_id != employee.company_id
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access employees from your company",
+            )
+
         username = None
 
         if employee.user is not None:
@@ -1610,6 +1619,15 @@ def list_downloaded_contracts(
                 detail="Employee not found",
             )
 
+        if (
+            current_user.role == UserRole.COMPANY
+            and current_user.company_id != employee.company_id
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access employees from your company",
+            )
+
     downloads = _read_downloaded_contracts()
     employee_ids = set(
         int(contract_id)
@@ -1649,6 +1667,16 @@ def mark_contract_downloaded(
             raise HTTPException(
                 status_code=404,
                 detail="Contract document not found",
+            )
+
+        employee = session.get(Employee, employee_id)
+        if (
+            current_user.role == UserRole.COMPANY
+            and (employee is None or current_user.company_id != employee.company_id)
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access employees from your company",
             )
 
     downloads = _read_downloaded_contracts()
@@ -2035,6 +2063,15 @@ def list_downloaded_nominas(
                 detail="Employee not found",
             )
 
+        if (
+            current_user.role == UserRole.COMPANY
+            and current_user.company_id != employee.company_id
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access employees from your company",
+            )
+
     downloads = _read_downloaded_nominas()
 
     employee_ids = set(
@@ -2081,6 +2118,16 @@ def mark_nomina_downloaded(
             raise HTTPException(
                 status_code=404,
                 detail="Nomina document not found",
+            )
+
+        employee = session.get(Employee, employee_id)
+        if (
+            current_user.role == UserRole.COMPANY
+            and (employee is None or current_user.company_id != employee.company_id)
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access employees from your company",
             )
 
         file_path = Path(nomina.document_path)

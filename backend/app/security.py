@@ -7,10 +7,12 @@ from pwdlib import PasswordHash
 password_hash = PasswordHash.recommended()
 
 
-SECRET_KEY = os.getenv(
-    "SECRET_KEY",
-    "clave-local-desarrollo-proyecto-learning-2026",
-)
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY no está configurada en las variables de entorno"
+    )
 
 ALGORITHM = "HS256"
 

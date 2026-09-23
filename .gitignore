@@ -3,3 +3,7 @@ backend/portal.db
 __pycache__/
 *.pyc
 backend/uploads/
+.env
+backend/resultado_base_datos.txt
+backend/resultado_limpio.txt
+resultado_base_datos.txt
