@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
-const API_URL = 'http://127.0.0.1:8000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 const COMPANY_CREDENTIALS_STORAGE_KEY = 'portal_laboraltus_company_credentials'
 
 function App() {
