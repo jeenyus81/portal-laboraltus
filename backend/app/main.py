@@ -217,8 +217,8 @@ def _record_activity(
 # CREAR TABLAS
 # ============================================================
 
-add_missing_code_columns()
 Base.metadata.create_all(bind=engine)
+add_missing_code_columns()
 
 
 def _add_missing_company_user_column():
@@ -2195,7 +2195,7 @@ def download_nomina_document(
             != employee_id
         ):
             raise HTTPException(
-                status_code=404,
+                status_code=404,127.0.0.1:8000
                 detail="Nomina not found",
             )
 
