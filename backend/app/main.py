@@ -244,12 +244,13 @@ _add_missing_company_user_column()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:5176",
-    ],
+allow_origins=[
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://localhost:5176",
+    "https://portal-laboraltus-1.onrender.com",
+],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
