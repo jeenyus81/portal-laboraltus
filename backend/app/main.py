@@ -2192,7 +2192,7 @@ def download_nomina_document(
             != employee_id
         ):
             raise HTTPException(
-                status_code=404,127.0.0.1:8000
+                status_code=404
                 detail="Nomina not found",
             )
 
