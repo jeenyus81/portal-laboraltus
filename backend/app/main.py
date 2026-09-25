@@ -244,9 +244,11 @@ _add_missing_company_user_column()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://portal-laboraltus-1.onrender.com",
-    ],
+allow_origins=[
+    "https://portal-laboraltus-1.onrender.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -279,16 +281,28 @@ def login(data: LoginRequest):
             )
         )
 
+        print(
+            f"LOGIN_DEBUG user_found={user is not None}",
+            flush=True,
+        )
+
         if user is None:
             raise HTTPException(
                 status_code=401,
                 detail="Invalid username or password",
             )
 
-        if not verify_password(
+        password_ok = verify_password(
             data.password,
             user.password_hash,
-        ):
+        )
+
+        print(
+            f"LOGIN_DEBUG password_ok={password_ok}",
+            flush=True,
+        )
+
+        if not password_ok:
             raise HTTPException(
                 status_code=401,
                 detail="Invalid username or password",
