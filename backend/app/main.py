@@ -246,6 +246,8 @@ app.add_middleware(
     CORSMiddleware,
 allow_origins=[
     "https://portal-laboraltus-1.onrender.com",
+    "https://portal-laboraltus.com",
+    "https://www.portal-laboraltus.com",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ],
