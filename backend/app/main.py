@@ -1,6 +1,6 @@
 import base64
 import json
-from datetime import datetime
+from datetime import date, datetime
 
 from pathlib import Path
 
