@@ -147,6 +147,7 @@ class ContractResponse(BaseModel):
 
     contract_type: str
     document_path: str | None
+    storage_key: str | None = None
 
     model_config = ConfigDict(
         from_attributes=True
@@ -170,6 +171,7 @@ class NominaResponse(BaseModel):
     date: date
 
     document_path: str | None
+    storage_key: str | None = None
 
     model_config = ConfigDict(
         from_attributes=True

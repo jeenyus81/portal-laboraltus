@@ -7,3 +7,23 @@ backend/uploads/
 backend/resultado_base_datos.txt
 backend/resultado_limpio.txt
 resultado_base_datos.txt
+portal.db
+# Archivos locales de pruebas y respaldos R2
+portal_r2_test*.db
+*.bak
+*.before_*
+aplicar_*_r2.py
+corregir_diff_r2.py
+probar_uvicorn_local.py
+revision_*.txt
+resultado_base_datos.txt
+respaldo_r2_*/
+
+# Configuración local de Neon (no publicar credenciales)
+.neon
+
+# Candidato auxiliar de R2
+backend/app/main_r2_candidate.py
+
+# Archivos locales subidos durante pruebas
+/uploads/

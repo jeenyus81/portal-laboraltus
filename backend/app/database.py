@@ -60,6 +60,8 @@ def add_missing_code_columns():
         for table_name, column_name in (
             ("companies", "company_code"),
             ("employees", "employee_code"),
+            ("contracts", "storage_key"),
+            ("nominas", "storage_key"),
         ):
             if table_name not in tables:
                 continue
@@ -70,9 +72,12 @@ def add_missing_code_columns():
             }
 
             if column_name not in columns:
+                column_length = (
+                    500 if column_name == "storage_key" else 50
+                )
                 connection.execute(
                     text(
                         f"ALTER TABLE {table_name} "
-                        f"ADD COLUMN {column_name} VARCHAR(50)"
+                        f"ADD COLUMN {column_name} VARCHAR({column_length})"
                     )
                 )

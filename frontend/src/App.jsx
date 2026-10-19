@@ -6280,7 +6280,7 @@ if (loggedIn && user && user.role === 'HR') {
                   !contractsError &&
                   contracts.filter(
                     (contract) =>
-                      contract.document_path,
+                      (contract.document_path || contract.storage_key),
                   ).length === 0 && (
                     <div className="empty-state">
 
@@ -6303,7 +6303,7 @@ if (loggedIn && user && user.role === 'HR') {
                       {contracts
                         .filter(
                           (contract) =>
-                            contract.document_path,
+                            (contract.document_path || contract.storage_key),
                         )
                         .map(
                           (contract) => (
@@ -6567,7 +6567,7 @@ if (loggedIn && user && user.role === 'HR') {
                   !nominasError &&
                   nominas.filter(
                     (nomina) =>
-                      nomina.document_path,
+                      (nomina.document_path || nomina.storage_key),
                   ).length === 0 && (
                     <div className="empty-state">
 
@@ -6590,7 +6590,7 @@ if (loggedIn && user && user.role === 'HR') {
                       {nominas
                         .filter(
                           (nomina) =>
-                            nomina.document_path,
+                            (nomina.document_path || nomina.storage_key),
                         )
                         .map(
                           (nomina) => (
@@ -7762,7 +7762,7 @@ if (loggedIn && user && user.role === 'HR') {
 
                           const latestContract =
                             (Array.isArray(data) ? data : [])
-                              .filter((contract) => contract.document_path)
+                              .filter((contract) => contract.document_path || contract.storage_key)
                               .sort(
                                 (a, b) =>
                                   Number(b.id || 0) - Number(a.id || 0),
@@ -7834,7 +7834,7 @@ if (loggedIn && user && user.role === 'HR') {
 
                           const latestNomina =
                             (Array.isArray(data) ? data : [])
-                              .filter((nomina) => nomina.document_path)
+                              .filter((nomina) => nomina.document_path || nomina.storage_key)
                               .sort((a, b) => {
                                 const dateA =
                                   a.date ? new Date(a.date).getTime() : 0
