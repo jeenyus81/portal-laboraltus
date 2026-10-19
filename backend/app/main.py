@@ -17,6 +17,9 @@ from sqlalchemy import inspect, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from uuid import uuid4
+import tempfile
+from starlette.background import BackgroundTask
+from app.storage_r2 import R2Storage
 from zoneinfo import ZoneInfo
 
 from app.database import Base, add_missing_code_columns, engine
@@ -49,7 +52,7 @@ from app.security import (
 
 
 # ============================================================
-# CREAR APLICACIÓN
+# CREAR APLICACIÃ“N
 # ============================================================
 
 app = FastAPI()
@@ -488,7 +491,7 @@ def create_company(
             "Empresa creada",
             company.name,
             "companies",
-            "🏢",
+            "ðŸ¢",
         )
 
         return company
@@ -540,7 +543,7 @@ def update_company(
             "Empresa actualizada",
             company.name,
             "companies",
-            "🏢",
+            "ðŸ¢",
         )
 
         return company
@@ -709,7 +712,7 @@ def create_or_update_company_credentials(
 
 
 # ============================================================
-# PORTAL DE EMPRESA — CONSULTA
+# PORTAL DE EMPRESA â€” CONSULTA
 # ============================================================
 
 
@@ -756,10 +759,10 @@ def company_dashboard(
             "address": company.address,
             "employees_count": len(employees),
             "contracts_count": sum(
-                1 for contract in contracts if contract.document_path
+                1 for contract in contracts if (contract.document_path or contract.storage_key)
             ),
             "nominas_count": sum(
-                1 for nomina in nominas if nomina.document_path
+                1 for nomina in nominas if (nomina.document_path or nomina.storage_key)
             ),
             "activities": company_activities,
         }
@@ -935,7 +938,7 @@ def list_employees(
 
 
 # ============================================================
-# AÑADIR EMPLEADO
+# AÃ‘ADIR EMPLEADO
 # ============================================================
 
 
@@ -1016,7 +1019,7 @@ def create_employee(
                 employee.last_name
             ).strip(),
             "employees",
-            "👥",
+            "ðŸ‘¥",
         )
 
         return {
@@ -1149,7 +1152,7 @@ def update_employee(
                 employee.last_name
             ).strip(),
             "employees",
-            "👥",
+            "ðŸ‘¥",
         )
 
         return {
@@ -1392,7 +1395,7 @@ def create_contract(
         session.refresh(contract)
 
         _record_activity(
-            "Contrato añadido",
+            "Contrato aÃ±adido",
             (
                 "Empleado: " +
                 employee.first_name +
@@ -1400,13 +1403,13 @@ def create_contract(
                 employee.last_name
             ).strip(),
             "contracts",
-            "📄",
+            "ðŸ“„",
             employee.id,
         )
 
         return contract
 # ============================================================
-# AÑADIR CONTRATO DIRECTAMENTE CON PDF
+# AÃ‘ADIR CONTRATO DIRECTAMENTE CON PDF
 # ============================================================
 
 @app.post(
@@ -1452,40 +1455,64 @@ def create_contract_with_document(
             end_date=None,
             contract_type="Documento",
             document_path=None,
+            storage_key=None,
         )
 
         session.add(contract)
-        session.commit()
-        session.refresh(contract)
+        session.flush()
 
-        upload_dir = Path(
-            "uploads/contracts"
+
+        temp_path = None
+        r2 = None
+        r2_key = (
+            f"contracts/employee_{employee_id}/"
+            f"contract_{contract.id}.pdf"
         )
+        uploaded_to_r2 = False
 
-        upload_dir.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
+        try:
+            with tempfile.NamedTemporaryFile(
+                suffix=".pdf",
+                delete=False,
+            ) as temp_file:
+                temp_path = Path(temp_file.name)
+                temp_file.write(file.file.read())
 
-        file_path = (
-            upload_dir
-            / f"contract_{contract.id}.pdf"
-        )
+            r2 = R2Storage()
+            r2.upload_file(str(temp_path), r2_key)
+            uploaded_to_r2 = True
 
-        with file_path.open("wb") as buffer:
-            buffer.write(
-                file.file.read()
-            )
+            contract.document_path = None
+            contract.storage_key = r2_key
 
-        contract.document_path = str(
-            file_path
-        )
+            session.commit()
+            session.refresh(contract)
 
-        session.commit()
-        session.refresh(contract)
+        except Exception as exc:
+            session.rollback()
 
+            if uploaded_to_r2 and r2 is not None:
+                try:
+                    r2.delete_file(r2_key)
+                except Exception:
+                    pass
+
+            if isinstance(exc, RuntimeError):
+                raise HTTPException(
+                    status_code=502,
+                    detail=(
+                        "No se pudo guardar el documento "
+                        "en el almacenamiento."
+                    ),
+                ) from exc
+
+            raise
+
+        finally:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
         _record_activity(
-            "Contrato añadido",
+            "Contrato aÃ±adido",
             (
                 "Empleado: " +
                 employee.first_name +
@@ -1493,21 +1520,20 @@ def create_contract_with_document(
                 employee.last_name
             ).strip(),
             "contracts",
-            "📄",
+            "ðŸ“„",
             employee.id,
         )
 
         return contract
-
 # ============================================================
 # SUBIR DOCUMENTO DEL CONTRATO
 # ============================================================
-
 
 @app.post(
     "/api/employees/{employee_id}/contracts/"
     "{contract_id}/document",
 )
+
 def upload_contract_document(
     employee_id: int,
     contract_id: int,
@@ -1540,7 +1566,6 @@ def upload_contract_document(
         )
 
     with Session(engine) as session:
-
         contract = session.get(
             Contract,
             contract_id,
@@ -1548,39 +1573,61 @@ def upload_contract_document(
 
         if (
             contract is None
-            or contract.employee_id
-            != employee_id
+            or contract.employee_id != employee_id
         ):
             raise HTTPException(
                 status_code=404,
                 detail="Contract not found",
             )
 
-        upload_dir = Path(
-            "uploads/contracts"
+        r2_key = (
+            f"contracts/employee_{employee_id}/"
+            f"contract_{contract.id}_{uuid4().hex}{extension}"
         )
 
-        upload_dir.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
+        temp_path = None
+        uploaded_to_r2 = False
+        previous_storage_key = contract.storage_key
+        previous_document_path = contract.document_path
 
-        file_path = (
-            upload_dir
-            / f"contract_{contract.id}{extension}"
-        )
+        try:
+            with tempfile.NamedTemporaryFile(
+                suffix=extension,
+                delete=False,
+            ) as temp_file:
+                temp_path = Path(temp_file.name)
+                temp_file.write(file.file.read())
 
-        with file_path.open("wb") as buffer:
-            buffer.write(
-                file.file.read()
-            )
+            r2 = R2Storage()
+            r2.upload_file(str(temp_path), r2_key)
+            uploaded_to_r2 = True
 
-        contract.document_path = str(
-            file_path
-        )
+            contract.storage_key = r2_key
+            contract.document_path = None
 
-        session.commit()
-        session.refresh(contract)
+            session.commit()
+            session.refresh(contract)
+
+        except Exception as exc:
+            session.rollback()
+
+            if uploaded_to_r2:
+                try:
+                    R2Storage().delete_file(r2_key)
+                except Exception:
+                    pass
+
+            if isinstance(exc, HTTPException):
+                raise
+
+            raise HTTPException(
+                status_code=502,
+                detail="No se pudo guardar el documento en el almacenamiento",
+            ) from exc
+
+        finally:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
 
         employee = session.get(
             Employee,
@@ -1597,21 +1644,20 @@ def upload_contract_document(
             "Contrato actualizado",
             "Empleado: " + employee_name,
             "contracts",
-            "📄",
+            "ðŸ“„",
             employee_id,
         )
 
         return {
             "contract_id": contract.id,
-            "document_path":
-                contract.document_path,
+            "document_path": contract.document_path,
+            "storage_key": contract.storage_key,
         }
 
 
 # ============================================================
 # ESTADO DE DESCARGA DE CONTRATOS DEL EMPLEADO
 # ============================================================
-
 
 @app.get("/api/employees/{employee_id}/contracts/downloaded")
 def list_downloaded_contracts(
@@ -1676,7 +1722,7 @@ def mark_contract_downloaded(
                 detail="Contract not found",
             )
 
-        if not contract.document_path:
+        if not (contract.document_path or contract.storage_key):
             raise HTTPException(
                 status_code=404,
                 detail="Contract document not found",
@@ -1758,6 +1804,96 @@ def download_contract_document(
                     detail="You can only access contracts from your own company",
                 )
 
+        media_types = {
+            ".pdf":
+                "application/pdf",
+            ".doc":
+                "application/msword",
+            ".docx":
+                (
+                    "application/vnd.openxmlformats-"
+                    "officedocument.wordprocessingml."
+                    "document"
+                ),
+        }
+
+        if contract.storage_key:
+            try:
+                r2 = R2Storage()
+
+                if not r2.file_exists(
+                    contract.storage_key
+                ):
+                    raise HTTPException(
+                        status_code=404,
+                        detail=(
+                            "Contract document not found"
+                        ),
+                    )
+
+                suffix = Path(
+                    contract.storage_key
+                ).suffix.lower() or ".pdf"
+
+                filename = Path(
+                    contract.storage_key
+                ).name
+
+                with tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix=suffix,
+                ) as temp_file:
+                    temp_path = Path(
+                        temp_file.name
+                    )
+
+                try:
+                    r2.download_file(
+                        contract.storage_key,
+                        str(temp_path),
+                    )
+                except Exception as exc:
+                    temp_path.unlink(
+                        missing_ok=True
+                    )
+
+                    if isinstance(exc, RuntimeError):
+                        raise HTTPException(
+                            status_code=502,
+                            detail=(
+                                "No se pudo recuperar "
+                                "el documento del "
+                                "almacenamiento."
+                            ),
+                        ) from exc
+
+                    raise
+
+                return FileResponse(
+                    path=temp_path,
+                    filename=filename,
+                    media_type=media_types.get(
+                        suffix,
+                        "application/octet-stream",
+                    ),
+                    background=BackgroundTask(
+                        temp_path.unlink,
+                        missing_ok=True,
+                    ),
+                )
+
+            except HTTPException:
+                raise
+
+            except RuntimeError as exc:
+                raise HTTPException(
+                    status_code=502,
+                    detail=(
+                        "No se pudo acceder al "
+                        "almacenamiento."
+                    ),
+                ) from exc
+
         if not contract.document_path:
             raise HTTPException(
                 status_code=404,
@@ -1777,19 +1913,6 @@ def download_contract_document(
                     "Contract document not found"
                 ),
             )
-
-        media_types = {
-            ".pdf":
-                "application/pdf",
-            ".doc":
-                "application/msword",
-            ".docx":
-                (
-                    "application/vnd.openxmlformats-"
-                    "officedocument.wordprocessingml."
-                    "document"
-                ),
-        }
 
         return FileResponse(
             path=file_path,
@@ -1859,7 +1982,7 @@ def list_employee_nominas(
 
 
 # ============================================================
-# SUBIR NÓMINA
+# SUBIR NÃ“MINA
 # ============================================================
 
 
@@ -1906,31 +2029,71 @@ def upload_nomina_document(
                 detail="Nomina not found",
             )
 
-        upload_dir = Path(
-            "uploads/nominas"
+        temp_path = None
+        r2 = None
+        r2_key = (
+            f"nominas/employee_{employee_id}/"
+            f"nomina_{nomina.id}_{uuid4().hex}.pdf"
         )
+        uploaded_to_r2 = False
 
-        upload_dir.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
+        try:
+            with tempfile.NamedTemporaryFile(
+                delete=False,
+                suffix=".pdf",
+            ) as temp_file:
+                temp_path = Path(temp_file.name)
 
-        file_path = (
-            upload_dir
-            / f"nomina_{nomina.id}.pdf"
-        )
+                temp_file.write(
+                    file.file.read()
+                )
 
-        with file_path.open("wb") as buffer:
-            buffer.write(
-                file.file.read()
+            r2 = R2Storage()
+
+            r2.upload_file(
+                str(temp_path),
+                r2_key,
             )
+            uploaded_to_r2 = True
 
-        nomina.document_path = str(
-            file_path
-        )
+            nomina.storage_key = r2_key
+            nomina.document_path = None
 
-        session.commit()
-        session.refresh(nomina)
+            session.commit()
+            session.refresh(nomina)
+
+        except Exception as exc:
+            session.rollback()
+
+            if uploaded_to_r2 and r2 is not None:
+                try:
+                    r2.delete_file(r2_key)
+                except Exception:
+                    pass
+
+            if temp_path is not None:
+                try:
+                    temp_path.unlink()
+                except FileNotFoundError:
+                    pass
+
+            if isinstance(exc, RuntimeError):
+                raise HTTPException(
+                    status_code=502,
+                    detail=(
+                        "No se pudo guardar el documento "
+                        "en el almacenamiento."
+                    ),
+                ) from exc
+
+            raise
+
+        finally:
+            if temp_path is not None:
+                try:
+                    temp_path.unlink()
+                except FileNotFoundError:
+                    pass
 
         employee = session.get(
             Employee,
@@ -1944,20 +2107,21 @@ def upload_nomina_document(
         )
 
         _record_activity(
-            "Nómina actualizada",
+            "NÃ³mina actualizada",
             "Empleado: " + employee_name,
             "nominas",
-            "💳",
+            "ðŸ’³",
             employee_id,
         )
 
         return {
             "nomina_id": nomina.id,
-            "document_path":
-                nomina.document_path,
+            "document_path": nomina.document_path,
+            "storage_key": nomina.storage_key,
         }
-# ============================================================
-# AÑADIR NÓMINA DIRECTAMENTE CON PDF
+
+
+# AÃ‘ADIR NÃ“MINA DIRECTAMENTE CON PDF
 # ============================================================
 
 @app.post(
@@ -2001,40 +2165,80 @@ def create_nomina_with_document(
             employee_id=employee_id,
             date=date.today(),
             document_path=None,
+            storage_key=None,
         )
 
         session.add(nomina)
-        session.commit()
-        session.refresh(nomina)
+        session.flush()
 
-        upload_dir = Path(
-            "uploads/nominas"
+        temp_path = None
+        r2 = None
+        r2_key = (
+            f"nominas/employee_{employee_id}/"
+            f"nomina_{nomina.id}_{uuid4().hex}.pdf"
         )
+        uploaded_to_r2 = False
 
-        upload_dir.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
+        try:
+            with tempfile.NamedTemporaryFile(
+                delete=False,
+                suffix=".pdf",
+            ) as temp_file:
+                temp_path = Path(temp_file.name)
 
-        file_path = (
-            upload_dir
-            / f"nomina_{nomina.id}.pdf"
-        )
+                temp_file.write(
+                    file.file.read()
+                )
 
-        with file_path.open("wb") as buffer:
-            buffer.write(
-                file.file.read()
+            r2 = R2Storage()
+
+            r2.upload_file(
+                str(temp_path),
+                r2_key,
             )
+            uploaded_to_r2 = True
 
-        nomina.document_path = str(
-            file_path
-        )
+            nomina.storage_key = r2_key
+            nomina.document_path = None
 
-        session.commit()
-        session.refresh(nomina)
+            session.commit()
+            session.refresh(nomina)
+
+        except Exception as exc:
+            session.rollback()
+
+            if uploaded_to_r2 and r2 is not None:
+                try:
+                    r2.delete_file(r2_key)
+                except Exception:
+                    pass
+
+            if temp_path is not None:
+                try:
+                    temp_path.unlink()
+                except FileNotFoundError:
+                    pass
+
+            if isinstance(exc, RuntimeError):
+                raise HTTPException(
+                    status_code=502,
+                    detail=(
+                        "No se pudo guardar el documento "
+                        "en el almacenamiento."
+                    ),
+                ) from exc
+
+            raise
+
+        finally:
+            if temp_path is not None:
+                try:
+                    temp_path.unlink()
+                except FileNotFoundError:
+                    pass
 
         _record_activity(
-            "Nómina añadida",
+            "NÃ³mina aÃ±adida",
             (
                 "Empleado: " +
                 employee.first_name +
@@ -2042,16 +2246,15 @@ def create_nomina_with_document(
                 employee.last_name
             ).strip(),
             "nominas",
-            "💳",
+            "ðŸ’³",
             employee.id,
         )
 
         return nomina
 
 # ============================================================
-# ESTADO DE DESCARGA DE NÓMINAS DEL EMPLEADO
+# ESTADO DE DESCARGA DE NÃ“MINAS DEL EMPLEADO
 # ============================================================
-
 
 @app.get("/api/employees/{employee_id}/nominas/downloaded")
 def list_downloaded_nominas(
@@ -2127,7 +2330,7 @@ def mark_nomina_downloaded(
                 detail="Nomina not found",
             )
 
-        if not nomina.document_path:
+        if not (nomina.storage_key or nomina.document_path):
             raise HTTPException(
                 status_code=404,
                 detail="Nomina document not found",
@@ -2143,13 +2346,14 @@ def mark_nomina_downloaded(
                 detail="You can only access employees from your company",
             )
 
-        file_path = Path(nomina.document_path)
+        if not nomina.storage_key:
+            file_path = Path(nomina.document_path)
 
-        if not file_path.exists():
-            raise HTTPException(
-                status_code=404,
-                detail="Nomina document not found",
-            )
+            if not file_path.exists():
+                raise HTTPException(
+                    status_code=404,
+                    detail="Nomina document not found",
+                )
 
     downloads = _read_downloaded_nominas()
     key = str(employee_id)
@@ -2171,7 +2375,7 @@ def mark_nomina_downloaded(
 
 
 # ============================================================
-# DESCARGAR NÓMINA
+# DESCARGAR NÃ“MINA
 # ============================================================
 
 
@@ -2219,6 +2423,80 @@ def download_nomina_document(
                     status_code=403,
                     detail="You can only access nominas from your own company",
                 )
+
+        if nomina.storage_key:
+            try:
+                r2 = R2Storage()
+
+                if not r2.file_exists(
+                    nomina.storage_key
+                ):
+                    raise HTTPException(
+                        status_code=404,
+                        detail=(
+                            "Nomina document not found"
+                        ),
+                    )
+
+                suffix = Path(
+                    nomina.storage_key
+                ).suffix.lower() or ".pdf"
+
+                filename = Path(
+                    nomina.storage_key
+                ).name
+
+                with tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix=suffix,
+                ) as temp_file:
+                    temp_path = Path(
+                        temp_file.name
+                    )
+
+                try:
+                    r2.download_file(
+                        nomina.storage_key,
+                        str(temp_path),
+                    )
+                except Exception as exc:
+                    temp_path.unlink(
+                        missing_ok=True
+                    )
+
+                    if isinstance(exc, RuntimeError):
+                        raise HTTPException(
+                            status_code=502,
+                            detail=(
+                                "No se pudo recuperar "
+                                "el documento del "
+                                "almacenamiento."
+                            ),
+                        ) from exc
+
+                    raise
+
+                return FileResponse(
+                    path=temp_path,
+                    filename=filename,
+                    media_type="application/pdf",
+                    background=BackgroundTask(
+                        temp_path.unlink,
+                        missing_ok=True,
+                    ),
+                )
+
+            except HTTPException:
+                raise
+
+            except RuntimeError as exc:
+                raise HTTPException(
+                    status_code=502,
+                    detail=(
+                        "No se pudo acceder al "
+                        "almacenamiento."
+                    ),
+                ) from exc
 
         if not nomina.document_path:
             raise HTTPException(
