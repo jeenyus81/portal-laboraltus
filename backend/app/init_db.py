@@ -10,10 +10,42 @@ from app.models import (
 )
 
 
+def add_original_filename_columns(conn):
+    if engine.dialect.name == "postgresql":
+        conn.execute(
+            text(
+                "ALTER TABLE contracts "
+                "ADD COLUMN IF NOT EXISTS original_filename VARCHAR(500)"
+            )
+        )
+        conn.execute(
+            text(
+                "ALTER TABLE nominas "
+                "ADD COLUMN IF NOT EXISTS original_filename VARCHAR(500)"
+            )
+        )
+    elif engine.dialect.name == "sqlite":
+        for table in ("contracts", "nominas"):
+            columns = {
+                row[1]
+                for row in conn.execute(
+                    text(f"PRAGMA table_info({table})")
+                ).all()
+            }
+            if "original_filename" not in columns:
+                conn.execute(
+                    text(
+                        f"ALTER TABLE {table} "
+                        "ADD COLUMN original_filename VARCHAR(500)"
+                    )
+                )
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 
-    with engine.connect() as conn:
+    with engine.begin() as conn:
+        add_original_filename_columns(conn)
         if engine.dialect.name == "postgresql":
             db_info = conn.execute(
                 text(

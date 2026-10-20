@@ -60,6 +60,7 @@ class Contract(Base):
     contract_type: Mapped[str] = mapped_column(String(100), nullable=False)
     document_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     storage_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    original_filename: Mapped[str | None] = mapped_column(String(500), nullable=True)
     employee: Mapped["Employee"] = relationship(back_populates="contracts")
 
 class Nomina(Base):
@@ -69,4 +70,5 @@ class Nomina(Base):
     date: Mapped[date] = mapped_column(Date, nullable=False)
     document_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     storage_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    original_filename: Mapped[str | None] = mapped_column(String(500), nullable=True)
     employee: Mapped["Employee"] = relationship(back_populates="nominas")

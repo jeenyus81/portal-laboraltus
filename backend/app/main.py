@@ -17,6 +17,22 @@ from sqlalchemy import inspect, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from uuid import uuid4
+
+def validate_original_filename(filename: str | None) -> str:
+    if (
+        not filename
+        or filename in {".", ".."}
+        or "/" in filename
+        or "\\" in filename
+        or "\x00" in filename
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file name",
+        )
+
+    return filename
+
 import tempfile
 from starlette.background import BackgroundTask
 from app.storage_r2 import R2Storage
@@ -52,7 +68,7 @@ from app.security import (
 
 
 # ============================================================
-# CREAR APLICACIÃ“N
+# CREAR APLICACIÃƒâ€œN
 # ============================================================
 
 app = FastAPI()
@@ -491,7 +507,7 @@ def create_company(
             "Empresa creada",
             company.name,
             "companies",
-            "ðŸ¢",
+            "Ã°Å¸ÂÂ¢",
         )
 
         return company
@@ -543,7 +559,7 @@ def update_company(
             "Empresa actualizada",
             company.name,
             "companies",
-            "ðŸ¢",
+            "Ã°Å¸ÂÂ¢",
         )
 
         return company
@@ -712,7 +728,7 @@ def create_or_update_company_credentials(
 
 
 # ============================================================
-# PORTAL DE EMPRESA â€” CONSULTA
+# PORTAL DE EMPRESA Ã¢â‚¬â€ CONSULTA
 # ============================================================
 
 
@@ -842,6 +858,10 @@ def company_contracts(
                 "end_date": contract.end_date,
                 "contract_type": contract.contract_type,
                 "document_path": contract.document_path,
+                "original_filename": contract.original_filename,
+                "has_document": bool(
+                    contract.storage_key or contract.document_path
+                ),
             }
             for contract, employee in rows
         ]
@@ -868,6 +888,10 @@ def company_nominas(
                 ),
                 "date": nomina.date,
                 "document_path": nomina.document_path,
+                "original_filename": nomina.original_filename,
+                "has_document": bool(
+                    nomina.storage_key or nomina.document_path
+                ),
             }
             for nomina, employee in rows
         ]
@@ -938,7 +962,7 @@ def list_employees(
 
 
 # ============================================================
-# AÃ‘ADIR EMPLEADO
+# AÃƒâ€˜ADIR EMPLEADO
 # ============================================================
 
 
@@ -1019,7 +1043,7 @@ def create_employee(
                 employee.last_name
             ).strip(),
             "employees",
-            "ðŸ‘¥",
+            "Ã°Å¸â€˜Â¥",
         )
 
         return {
@@ -1152,7 +1176,7 @@ def update_employee(
                 employee.last_name
             ).strip(),
             "employees",
-            "ðŸ‘¥",
+            "Ã°Å¸â€˜Â¥",
         )
 
         return {
@@ -1395,7 +1419,7 @@ def create_contract(
         session.refresh(contract)
 
         _record_activity(
-            "Contrato aÃ±adido",
+            "Contrato aÃƒÂ±adido",
             (
                 "Empleado: " +
                 employee.first_name +
@@ -1403,13 +1427,13 @@ def create_contract(
                 employee.last_name
             ).strip(),
             "contracts",
-            "ðŸ“„",
+            "Ã°Å¸â€œâ€ž",
             employee.id,
         )
 
         return contract
 # ============================================================
-# AÃ‘ADIR CONTRATO DIRECTAMENTE CON PDF
+# AÃƒâ€˜ADIR CONTRATO DIRECTAMENTE CON PDF
 # ============================================================
 
 @app.post(
@@ -1426,9 +1450,8 @@ def create_contract_with_document(
             detail="A file name is required",
         )
 
-    extension = Path(
-        file.filename
-    ).suffix.lower()
+    original_filename = validate_original_filename(file.filename)
+    extension = Path(original_filename).suffix.lower()
 
     if extension != ".pdf":
         raise HTTPException(
@@ -1466,7 +1489,8 @@ def create_contract_with_document(
         r2 = None
         r2_key = (
             f"contracts/employee_{employee_id}/"
-            f"contract_{contract.id}.pdf"
+            f"contract_{contract.id}_{uuid4().hex}/"
+            f"{original_filename}"
         )
         uploaded_to_r2 = False
 
@@ -1484,6 +1508,7 @@ def create_contract_with_document(
 
             contract.document_path = None
             contract.storage_key = r2_key
+            contract.original_filename = original_filename
 
             session.commit()
             session.refresh(contract)
@@ -1512,7 +1537,7 @@ def create_contract_with_document(
             if temp_path is not None:
                 temp_path.unlink(missing_ok=True)
         _record_activity(
-            "Contrato aÃ±adido",
+            "Contrato aÃƒÂ±adido",
             (
                 "Empleado: " +
                 employee.first_name +
@@ -1520,7 +1545,7 @@ def create_contract_with_document(
                 employee.last_name
             ).strip(),
             "contracts",
-            "ðŸ“„",
+            "Ã°Å¸â€œâ€ž",
             employee.id,
         )
 
@@ -1552,9 +1577,8 @@ def upload_contract_document(
             detail="A file name is required",
         )
 
-    extension = Path(
-        file.filename
-    ).suffix.lower()
+    original_filename = validate_original_filename(file.filename)
+    extension = Path(original_filename).suffix.lower()
 
     if extension not in allowed_extensions:
         raise HTTPException(
@@ -1582,7 +1606,8 @@ def upload_contract_document(
 
         r2_key = (
             f"contracts/employee_{employee_id}/"
-            f"contract_{contract.id}_{uuid4().hex}{extension}"
+            f"contract_{contract.id}_{uuid4().hex}/"
+            f"{original_filename}"
         )
 
         temp_path = None
@@ -1604,6 +1629,7 @@ def upload_contract_document(
 
             contract.storage_key = r2_key
             contract.document_path = None
+            contract.original_filename = original_filename
 
             session.commit()
             session.refresh(contract)
@@ -1644,7 +1670,7 @@ def upload_contract_document(
             "Contrato actualizado",
             "Empleado: " + employee_name,
             "contracts",
-            "ðŸ“„",
+            "Ã°Å¸â€œâ€ž",
             employee_id,
         )
 
@@ -1835,9 +1861,10 @@ def download_contract_document(
                     contract.storage_key
                 ).suffix.lower() or ".pdf"
 
-                filename = Path(
-                    contract.storage_key
-                ).name
+                filename = (
+                    contract.original_filename
+                    or Path(contract.storage_key).name
+                )
 
                 with tempfile.NamedTemporaryFile(
                     delete=False,
@@ -1982,7 +2009,7 @@ def list_employee_nominas(
 
 
 # ============================================================
-# SUBIR NÃ“MINA
+# SUBIR NÃƒâ€œMINA
 # ============================================================
 
 
@@ -2002,9 +2029,8 @@ def upload_nomina_document(
             detail="A file name is required",
         )
 
-    extension = Path(
-        file.filename
-    ).suffix.lower()
+    original_filename = validate_original_filename(file.filename)
+    extension = Path(original_filename).suffix.lower()
 
     if extension != ".pdf":
         raise HTTPException(
@@ -2033,7 +2059,8 @@ def upload_nomina_document(
         r2 = None
         r2_key = (
             f"nominas/employee_{employee_id}/"
-            f"nomina_{nomina.id}_{uuid4().hex}.pdf"
+            f"nomina_{nomina.id}_{uuid4().hex}/"
+            f"{original_filename}"
         )
         uploaded_to_r2 = False
 
@@ -2058,6 +2085,7 @@ def upload_nomina_document(
 
             nomina.storage_key = r2_key
             nomina.document_path = None
+            nomina.original_filename = original_filename
 
             session.commit()
             session.refresh(nomina)
@@ -2107,10 +2135,10 @@ def upload_nomina_document(
         )
 
         _record_activity(
-            "NÃ³mina actualizada",
+            "NÃƒÂ³mina actualizada",
             "Empleado: " + employee_name,
             "nominas",
-            "ðŸ’³",
+            "Ã°Å¸â€™Â³",
             employee_id,
         )
 
@@ -2121,7 +2149,7 @@ def upload_nomina_document(
         }
 
 
-# AÃ‘ADIR NÃ“MINA DIRECTAMENTE CON PDF
+# AÃƒâ€˜ADIR NÃƒâ€œMINA DIRECTAMENTE CON PDF
 # ============================================================
 
 @app.post(
@@ -2138,9 +2166,8 @@ def create_nomina_with_document(
             detail="A file name is required",
         )
 
-    extension = Path(
-        file.filename
-    ).suffix.lower()
+    original_filename = validate_original_filename(file.filename)
+    extension = Path(original_filename).suffix.lower()
 
     if extension != ".pdf":
         raise HTTPException(
@@ -2175,7 +2202,8 @@ def create_nomina_with_document(
         r2 = None
         r2_key = (
             f"nominas/employee_{employee_id}/"
-            f"nomina_{nomina.id}_{uuid4().hex}.pdf"
+            f"nomina_{nomina.id}_{uuid4().hex}/"
+            f"{original_filename}"
         )
         uploaded_to_r2 = False
 
@@ -2200,6 +2228,7 @@ def create_nomina_with_document(
 
             nomina.storage_key = r2_key
             nomina.document_path = None
+            nomina.original_filename = original_filename
 
             session.commit()
             session.refresh(nomina)
@@ -2238,7 +2267,7 @@ def create_nomina_with_document(
                     pass
 
         _record_activity(
-            "NÃ³mina aÃ±adida",
+            "NÃƒÂ³mina aÃƒÂ±adida",
             (
                 "Empleado: " +
                 employee.first_name +
@@ -2246,14 +2275,14 @@ def create_nomina_with_document(
                 employee.last_name
             ).strip(),
             "nominas",
-            "ðŸ’³",
+            "Ã°Å¸â€™Â³",
             employee.id,
         )
 
         return nomina
 
 # ============================================================
-# ESTADO DE DESCARGA DE NÃ“MINAS DEL EMPLEADO
+# ESTADO DE DESCARGA DE NÃƒâ€œMINAS DEL EMPLEADO
 # ============================================================
 
 @app.get("/api/employees/{employee_id}/nominas/downloaded")
@@ -2375,7 +2404,7 @@ def mark_nomina_downloaded(
 
 
 # ============================================================
-# DESCARGAR NÃ“MINA
+# DESCARGAR NÃƒâ€œMINA
 # ============================================================
 
 
@@ -2442,9 +2471,10 @@ def download_nomina_document(
                     nomina.storage_key
                 ).suffix.lower() or ".pdf"
 
-                filename = Path(
-                    nomina.storage_key
-                ).name
+                filename = (
+                    nomina.original_filename
+                    or Path(nomina.storage_key).name
+                )
 
                 with tempfile.NamedTemporaryFile(
                     delete=False,

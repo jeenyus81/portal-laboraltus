@@ -1078,6 +1078,7 @@ function App() {
 
   function formatCompanyContractName(contract) {
     return (
+      contract?.original_filename ||
       contract?.document_path?.split(/[\\/]/).pop() ||
       'Documento de contrato'
     )
@@ -1085,6 +1086,7 @@ function App() {
 
   function formatCompanyNominaName(nomina) {
     return (
+      nomina?.original_filename ||
       nomina?.document_path?.split(/[\\/]/).pop() ||
       'Documento de nómina'
     )
@@ -2823,6 +2825,10 @@ async function handleDirectNominaFile(event) {
   // =========================================================
 
   function getDocumentName(contract) {
+    if (contract.original_filename) {
+      return contract.original_filename
+    }
+
     if (contract.document_path) {
       const normalizedPath =
         contract.document_path.replaceAll('\\', '/')
@@ -2839,6 +2845,10 @@ async function handleDirectNominaFile(event) {
   }
 
   function getNominaDocumentName(nomina) {
+    if (nomina.original_filename) {
+      return nomina.original_filename
+    }
+
     if (nomina.document_path) {
       const normalizedPath =
         nomina.document_path.replaceAll('\\', '/')
@@ -6683,7 +6693,10 @@ if (loggedIn && user && user.role === 'HR') {
         : []
     const companyContractsWithDocument =
       companyContracts.filter(
-        (contract) => contract?.document_path,
+        (contract) =>
+          contract?.has_document ||
+          contract?.original_filename ||
+          contract?.document_path,
       )
     const companyContractEmployees = Array.from(
       new Map(
@@ -6698,7 +6711,10 @@ if (loggedIn && user && user.role === 'HR') {
     )
     const companyNominasWithDocument =
       companyNominas.filter(
-        (nomina) => nomina?.document_path,
+        (nomina) =>
+          nomina?.has_document ||
+          nomina?.original_filename ||
+          nomina?.document_path,
       )
     const companyNominaEmployees = Array.from(
       new Map(
