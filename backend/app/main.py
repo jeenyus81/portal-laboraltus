@@ -9,6 +9,7 @@ from fastapi import (
     FastAPI,
     File,
     HTTPException,
+    Request,
     UploadFile,
 )
 from fastapi.middleware.cors import CORSMiddleware
@@ -40,6 +41,7 @@ from zoneinfo import ZoneInfo
 
 from app.database import Base, add_missing_code_columns, engine
 from app.dependencies import get_current_user, require_company, require_hr
+from app.client_ip import get_client_ip
 from app.models import (
     Company,
     Contract,
@@ -294,53 +296,71 @@ def hello():
 
 
 @app.post("/api/auth/login")
-def login(data: LoginRequest):
-    with Session(engine) as session:
-        user = session.scalar(
-            select(User).where(
-                User.username == data.username
-            )
-        )
+def login(data: LoginRequest, request: Request):
+    from sqlalchemy.exc import SQLAlchemyError
 
-        print(
-            f"LOGIN_DEBUG user_found={user is not None}",
-            flush=True,
-        )
+    from app.login_rate_limit_db import PersistentLoginRateLimiter
 
-        if user is None:
+    client_ip = get_client_ip(request)
+
+    try:
+        limiter = PersistentLoginRateLimiter(engine)
+
+        if limiter.is_blocked(client_ip):
             raise HTTPException(
-                status_code=401,
-                detail="Invalid username or password",
+                status_code=429,
+                detail="Too many failed login attempts. Try again later.",
+                headers={"Retry-After": "900"},
             )
 
-        password_ok = verify_password(
-            data.password,
-            user.password_hash,
-        )
-
-        print(
-            f"LOGIN_DEBUG password_ok={password_ok}",
-            flush=True,
-        )
-
-        if not password_ok:
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid username or password",
+        with Session(engine) as session:
+            user = session.scalar(
+                select(User).where(User.username == data.username)
             )
 
-        token = create_access_token(
-            user.id,
-            user.role,
-        )
+            password_ok = (
+                user is not None
+                and verify_password(data.password, user.password_hash)
+            )
 
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "role": user.role,
-        }
+            if not password_ok:
+                blocked = limiter.record_failure(client_ip)
+                if blocked:
+                    raise HTTPException(
+                        status_code=429,
+                        detail="Too many failed login attempts. Try again later.",
+                        headers={"Retry-After": "900"},
+                    )
 
+                raise HTTPException(
+                    status_code=401,
+                    detail="Invalid username or password",
+                )
 
+            limiter.record_success(client_ip)
+
+            if limiter.is_blocked(client_ip):
+                raise HTTPException(
+                    status_code=429,
+                    detail="Too many failed login attempts. Try again later.",
+                    headers={"Retry-After": "900"},
+                )
+
+            token = create_access_token(user.id, user.role)
+            return {
+                "access_token": token,
+                "token_type": "bearer",
+                "role": user.role,
+            }
+
+    except HTTPException:
+        raise
+    except (SQLAlchemyError, RuntimeError):
+        raise HTTPException(
+            status_code=503,
+            detail="Authentication temporarily unavailable",
+        ) from None
+# ============================================================
 # ============================================================
 # PERFIL DEL EMPLEADO LOGUEADO
 # ============================================================

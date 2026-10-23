@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone, timedelta
 
 import jwt
 from pwdlib import PasswordHash
@@ -15,6 +16,7 @@ if not SECRET_KEY:
     )
 
 ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
 def hash_password(password: str) -> str:
@@ -38,6 +40,8 @@ def create_access_token(
     payload = {
         "sub": str(user_id),
         "role": role,
+        "iat": datetime.now(timezone.utc),
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     }
 
     return jwt.encode(
@@ -54,4 +58,5 @@ def decode_access_token(
         token,
         SECRET_KEY,
         algorithms=[ALGORITHM],
+        options={"require": ["exp", "sub", "role"]},
     )
