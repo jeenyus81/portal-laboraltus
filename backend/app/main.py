@@ -467,7 +467,6 @@ def get_me(
             "social_security_number":
                 employee.social_security_number,
             "company_name": company_name,
-            "company_code": company.company_code if company is not None else "",
             "company_logo": company_logo,
         }
 
