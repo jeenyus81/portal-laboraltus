@@ -2918,6 +2918,35 @@ async function handleDirectNominaFile(event) {
   // LOGIN
   // =========================================================
 
+  function navigateToCompany(companyName) {
+    let normalizedName = String(companyName || '').trim();
+
+    if (!normalizedName) {
+      throw new Error(
+        'La cuenta no tiene un nombre de empresa configurado. Contacta con RR. HH.',
+      );
+    }
+
+    normalizedName = normalizedName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\b(S\.?\s?L\.?U?\.?|S\.?\s?A\.?|S\.?\s?C\.?|LIMITADA|SOCIEDAD LIMITADA|SOCIEDAD ANONIMA)\b/gi, '')
+      .replace(/\s+\d{4}\s*$/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    if (!normalizedName) {
+      throw new Error('No se pudo generar la dirección de la empresa.');
+    }
+
+    window.history.replaceState(
+      {},
+      '',
+      `/${encodeURIComponent(normalizedName)}`,
+    );
+  }
+
   async function handleLogin(event) {
     event.preventDefault()
 
@@ -2953,6 +2982,7 @@ async function handleDirectNominaFile(event) {
       )
 
       if (data.role === 'HR') {
+        window.history.replaceState({}, '', '/')
         const loggedUser = {
           username: username,
           role: data.role,
@@ -2986,6 +3016,8 @@ async function handleDirectNominaFile(event) {
             me.detail || 'No se pudo cargar la empresa',
           )
         }
+
+        navigateToCompany(me.company_name)
 
         const companyLogo =
           (await loadEmployeeCompanyLogo(
@@ -3032,6 +3064,8 @@ async function handleDirectNominaFile(event) {
             me.detail || 'No se pudo cargar el perfil',
           )
         }
+
+        navigateToCompany(me.company_name)
 
         const employeeCompanyLogo =
           (await loadEmployeeCompanyLogo(
@@ -3085,6 +3119,7 @@ async function handleDirectNominaFile(event) {
   // =========================================================
 
   function handleLogout() {
+    window.history.replaceState({}, '', '/')
     localStorage.removeItem('access_token')
 
     setUser(null)
