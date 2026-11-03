@@ -121,6 +121,94 @@ def _logo_data_url(path: Path, mime_type: str):
     return f"data:{mime_type};base64,{encoded}"
 
 
+COMPANY_LOGO_MIME_TYPES = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+}
+COMPANY_LOGO_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp", ".svg")
+
+def _company_logo_storage():
+    """Use R2 in production; keep local storage for development without R2."""
+    try:
+        return R2Storage()
+    except RuntimeError as exc:
+        if str(exc).startswith("Falta R2_"):
+            return None
+        raise
+
+def _company_logo_r2_key(company_id: int, extension: str) -> str:
+    return f"companies/{company_id}/logo{extension}"
+
+def _load_company_logo_data(company_id: int) -> str:
+    storage = _company_logo_storage()
+    if storage is not None:
+        for extension in COMPANY_LOGO_EXTENSIONS:
+            key = _company_logo_r2_key(company_id, extension)
+            if not storage.file_exists(key):
+                continue
+            temp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(suffix=extension, delete=False) as temp_file:
+                    temp_path = Path(temp_file.name)
+                storage.download_file(key, str(temp_path))
+                return _logo_data_url(temp_path, COMPANY_LOGO_MIME_TYPES[extension])
+            finally:
+                if temp_path is not None:
+                    temp_path.unlink(missing_ok=True)
+
+    # Compatibilidad local y migracion automatica de logos antiguos a R2.
+    files = list(_company_logo_files(company_id))
+    if not files:
+        return ""
+    logo_path = files[0]
+    extension = logo_path.suffix.lower()
+    mime_type = COMPANY_LOGO_MIME_TYPES.get(extension)
+    if mime_type is None:
+        return ""
+    if storage is not None:
+        storage.upload_file(str(logo_path), _company_logo_r2_key(company_id, extension))
+    return _logo_data_url(logo_path, mime_type)
+
+def _save_company_logo_data(company_id: int, logo_data: str) -> str:
+    _mime_type, extension, content = _decode_company_logo(logo_data)
+    storage = _company_logo_storage()
+    if storage is not None:
+        temp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=extension, delete=False) as temp_file:
+                temp_path = Path(temp_file.name)
+                temp_file.write(content)
+            storage.upload_file(str(temp_path), _company_logo_r2_key(company_id, extension))
+        finally:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
+        # Elimina extensiones anteriores solo despues de subir el nuevo logo.
+        for old_extension in COMPANY_LOGO_EXTENSIONS:
+            if old_extension == extension:
+                continue
+            old_key = _company_logo_r2_key(company_id, old_extension)
+            if storage.file_exists(old_key):
+                storage.delete_file(old_key)
+    else:
+        for old_path in _company_logo_files(company_id):
+            old_path.unlink(missing_ok=True)
+        (COMPANY_LOGOS_DIR / f"company_{company_id}{extension}").write_bytes(content)
+    return logo_data
+
+def _delete_company_logo_data(company_id: int) -> None:
+    storage = _company_logo_storage()
+    if storage is not None:
+        for extension in COMPANY_LOGO_EXTENSIONS:
+            key = _company_logo_r2_key(company_id, extension)
+            if storage.file_exists(key):
+                storage.delete_file(key)
+    for old_path in _company_logo_files(company_id):
+        old_path.unlink(missing_ok=True)
+
+
 def _contract_downloads_path() -> Path:
     path = Path("uploads/contracts/downloaded_contracts.json")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -380,26 +468,7 @@ def get_me(
                     detail="Company not found",
                 )
 
-            company_logo = ''
-            logo_files = list(_company_logo_files(company.id))
-
-            if logo_files:
-                logo_path = logo_files[0]
-                mime_types = {
-                    ".jpg": "image/jpeg",
-                    ".png": "image/png",
-                    ".webp": "image/webp",
-                    ".svg": "image/svg+xml",
-                }
-                mime_type = mime_types.get(
-                    logo_path.suffix.lower()
-                )
-
-                if mime_type is not None:
-                    company_logo = _logo_data_url(
-                        logo_path,
-                        mime_type,
-                    )
+            company_logo = _load_company_logo_data(company.id)
 
             return {
                 "role": current_user.role,
@@ -429,25 +498,7 @@ def get_me(
 
         if company is not None:
             company_name = company.name
-
-            logo_files = list(_company_logo_files(company.id))
-            if logo_files:
-                logo_path = logo_files[0]
-                mime_types = {
-                    ".jpg": "image/jpeg",
-                    ".png": "image/png",
-                    ".webp": "image/webp",
-                    ".svg": "image/svg+xml",
-                }
-                mime_type = mime_types.get(
-                    logo_path.suffix.lower()
-                )
-
-                if mime_type is not None:
-                    company_logo = _logo_data_url(
-                        logo_path,
-                        mime_type,
-                    )
+            company_logo = _load_company_logo_data(company.id)
 
         return {
             "role": current_user.role,
@@ -610,22 +661,10 @@ def get_company_logo(
                     detail="You can only access your own company logo",
                 )
 
-    files = list(_company_logo_files(company_id))
-    if not files:
+    logo = _load_company_logo_data(company_id)
+    if not logo:
         raise HTTPException(status_code=404, detail="Company logo not found")
-
-    path = files[0]
-    mime_types = {
-        ".jpg": "image/jpeg",
-        ".png": "image/png",
-        ".webp": "image/webp",
-        ".svg": "image/svg+xml",
-    }
-    mime_type = mime_types.get(path.suffix.lower())
-    if mime_type is None:
-        raise HTTPException(status_code=500, detail="Company logo format not supported")
-
-    return {"logo": _logo_data_url(path, mime_type)}
+    return {"logo": logo}
 
 
 @app.put("/api/companies/{company_id}/logo")
@@ -640,14 +679,7 @@ def save_company_logo(
             raise HTTPException(status_code=404, detail="Company not found")
 
     logo_data = data.get("logo")
-    _mime_type, extension, content = _decode_company_logo(logo_data)
-
-    for old_path in _company_logo_files(company_id):
-        old_path.unlink(missing_ok=True)
-
-    path = COMPANY_LOGOS_DIR / f"company_{company_id}{extension}"
-    path.write_bytes(content)
-    return {"logo": logo_data}
+    return {"logo": _save_company_logo_data(company_id, logo_data)}
 
 
 @app.delete("/api/companies/{company_id}/logo")
@@ -660,9 +692,7 @@ def delete_company_logo(
         if company is None:
             raise HTTPException(status_code=404, detail="Company not found")
 
-    for old_path in _company_logo_files(company_id):
-        old_path.unlink(missing_ok=True)
-
+    _delete_company_logo_data(company_id)
     return {"logo": ""}
 
 
