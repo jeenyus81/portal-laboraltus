@@ -13,7 +13,7 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from sqlalchemy import inspect, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -2574,82 +2574,3 @@ def download_nomina_document(
             filename=file_path.name,
             media_type="application/pdf",
         )
-
-
-# ============================================================
-# MANIFIESTOS PWA PUBLICOS POR EMPRESA
-# ============================================================
-
-def _get_company_for_public_pwa(session: Session, company_code: str):
-    companies = session.scalars(
-        select(Company).where(Company.company_code == company_code)
-    ).all()
-
-    if len(companies) != 1:
-        raise HTTPException(status_code=404, detail="Empresa no encontrada")
-
-    return companies[0]
-
-
-@app.get("/api/public/companies/{company_code}/pwa-manifest.webmanifest")
-def get_company_pwa_manifest(company_code: str):
-    if not company_code or company_code in {".", ".."} or "/" in company_code or "\\" in company_code:
-        raise HTTPException(status_code=400, detail="C?digo de empresa no v?lido")
-
-    with Session(engine) as session:
-        company = _get_company_for_public_pwa(session, company_code)
-        files = list(_company_logo_files(company.id))
-        icon_type = "image/png"
-        if files:
-            icon_type = {
-                ".jpg": "image/jpeg",
-                ".jpeg": "image/jpeg",
-                ".png": "image/png",
-                ".webp": "image/webp",
-                ".svg": "image/svg+xml",
-            }.get(files[0].suffix.lower(), "image/png")
-
-        return JSONResponse({
-            "id": f"/{company_code}/",
-            "name": company.name,
-            "short_name": company.name[:20],
-            "start_url": f"/{company_code}/",
-            "scope": f"/{company_code}/",
-            "display": "standalone",
-            "background_color": "#ffffff",
-            "theme_color": "#17365d",
-            "icons": [{
-                "src": f"/api/public/companies/{company_code}/pwa-icon",
-                "sizes": "any",
-                "type": icon_type,
-                "purpose": "any maskable"
-            }]
-        }, media_type="application/manifest+json")
-
-
-@app.get("/api/public/companies/{company_code}/pwa-icon")
-def get_company_pwa_icon(company_code: str):
-    if not company_code or company_code in {".", ".."} or "/" in company_code or "\\" in company_code:
-        raise HTTPException(status_code=400, detail="C?digo de empresa no v?lido")
-
-    with Session(engine) as session:
-        company = _get_company_for_public_pwa(session, company_code)
-        files = list(_company_logo_files(company.id))
-
-        if not files:
-            raise HTTPException(status_code=404, detail="Logo no encontrado")
-
-        path = files[0]
-        mime_types = {
-            ".jpg": "image/jpeg",
-            ".jpeg": "image/jpeg",
-            ".png": "image/png",
-            ".webp": "image/webp",
-            ".svg": "image/svg+xml",
-        }
-        mime_type = mime_types.get(path.suffix.lower())
-
-        if mime_type is None:
-            raise HTTPException(status_code=415, detail="Formato de logo no compatible")
-
-        return FileResponse(path, media_type=mime_type)
