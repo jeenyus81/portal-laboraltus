@@ -4,7 +4,7 @@ import os
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-# Detectar si la aplicación se está ejecutando en Render.
+# Detectar si la aplicaciÃ³n se estÃ¡ ejecutando en Render.
 IS_RENDER = bool(os.getenv("RENDER_SERVICE_ID"))
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -13,7 +13,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if IS_RENDER:
     if not DATABASE_URL:
         raise RuntimeError(
-            "DATABASE_URL no está configurada en Render."
+            "DATABASE_URL no estÃ¡ configurada en Render."
         )
     if DATABASE_URL.startswith("sqlite"):
         raise RuntimeError(
@@ -24,7 +24,11 @@ else:
     DATABASE_URL = DATABASE_URL or "sqlite:///./portal.db"
 
 # Usar psycopg 3 para PostgreSQL.
-if DATABASE_URL.startswith("postgresql://"):
+if DATABASE_URL.startswith("postgresql+psycopg2://"):
+    DATABASE_URL = DATABASE_URL.replace(
+        "postgresql+psycopg2://", "postgresql+psycopg://", 1
+    )
+elif DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace(
         "postgresql://", "postgresql+psycopg://", 1
     )
@@ -39,7 +43,18 @@ connect_args = (
     else {}
 )
 
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+engine_options = (
+    {} if DATABASE_URL.startswith("sqlite") else {
+        "pool_pre_ping": True,
+        "pool_recycle": 1200,
+        "pool_timeout": 30,
+    }
+)
+engine = create_engine(
+    DATABASE_URL,
+    connect_args=connect_args,
+    **engine_options,
+)
 
 SessionLocal = sessionmaker(
     bind=engine,
