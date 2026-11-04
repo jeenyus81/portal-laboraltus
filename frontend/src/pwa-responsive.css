@@ -1,0 +1,391 @@
+/* LABORALTUS - RESPONSIVE GENERAL PARA WEB Y PWA */
+
+/* Evitar desbordamientos y textos cortados */
+.hr-app, .company-app, .employee-app,
+.hr-main, .company-main, .employee-main,
+.hr-dashboard, .company-dashboard, .employee-dashboard {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hr-dashboard *, .company-dashboard *, .employee-dashboard * {
+  box-sizing: border-box;
+  min-width: 0;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
+}
+
+/* Ventanas medianas y portátiles */
+@media screen and (max-width: 1366px) {
+  .hr-sidebar, .company-sidebar, .employee-sidebar {
+    width: 240px;
+  }
+
+  .hr-main, .company-main, .employee-main {
+    left: 240px;
+    width: calc(100% - 240px);
+    margin-left: 0;
+  }
+
+  .hr-topbar, .company-topbar, .employee-topbar {
+    min-width: 0;
+    max-width: 100%;
+    padding-left: 18px;
+    padding-right: 18px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .hr-topbar-title, .company-topbar-title, .employee-topbar-title {
+    min-width: 0;
+    flex: 1 1 220px;
+  }
+
+  .hr-topbar-user {
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .hr-dashboard, .company-dashboard, .employee-dashboard {
+    width: calc(100% - 32px);
+    max-width: 100%;
+    margin-left: 16px;
+    margin-right: 16px;
+    padding: 22px 16px;
+  }
+
+  /* Las tarjetas dejan de comprimirse en cuatro columnas */
+  .hr-dashboard-stats,
+  .company-dashboard-stats,
+  .employee-dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    width: 100%;
+  }
+
+  .hr-dashboard-stats > *,
+  .company-dashboard-stats > *,
+  .employee-dashboard-stats > * {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  /* Los accesos rápidos pasan a ocupar todo el ancho */
+  .hr-quick-actions,
+  .company-quick-actions,
+  .employee-quick-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    gap: 14px;
+  }
+
+  .hr-quick-action,
+  .company-quick-action,
+  .employee-quick-action {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .hr-quick-action-content,
+  .company-quick-action-content,
+  .employee-quick-action-content {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .hr-dashboard-bottom,
+  .company-dashboard-bottom,
+  .employee-dashboard-bottom {
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .pwa-install-button {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
+
+/* Ventanas pequeñas y tablets */
+@media screen and (max-width: 980px) {
+  .hr-sidebar, .company-sidebar, .employee-sidebar {
+    width: 210px;
+  }
+
+  .hr-main, .company-main, .employee-main {
+    left: 210px;
+    width: calc(100% - 210px);
+  }
+
+  .hr-dashboard, .company-dashboard, .employee-dashboard {
+    width: calc(100% - 24px);
+    margin-left: 12px;
+    margin-right: 12px;
+    padding: 18px 12px;
+  }
+
+  .hr-dashboard-stats,
+  .company-dashboard-stats,
+  .employee-dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hr-topbar, .company-topbar, .employee-topbar {
+    padding: 14px;
+  }
+}
+
+/* Móviles y ventanas muy estrechas */
+@media screen and (max-width: 760px) {
+  .hr-sidebar, .company-sidebar, .employee-sidebar {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-width: 100%;
+  }
+
+  .hr-main, .company-main, .employee-main {
+    position: relative;
+    inset: auto;
+    left: auto;
+    right: auto;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 0;
+    margin: 0;
+    overflow: visible;
+  }
+
+  .hr-topbar, .company-topbar, .employee-topbar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    min-height: 0;
+    height: auto;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .hr-topbar-user {
+    width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .hr-dashboard, .company-dashboard, .employee-dashboard {
+    width: calc(100% - 24px);
+    margin: 0 12px;
+    padding: 18px 8px 26px;
+  }
+
+  .hr-dashboard-stats,
+  .company-dashboard-stats,
+  .employee-dashboard-stats,
+  .hr-quick-actions,
+  .company-quick-actions,
+  .employee-quick-actions,
+  .hr-dashboard-bottom,
+  .company-dashboard-bottom,
+  .employee-dashboard-bottom {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    gap: 12px;
+  }
+
+  .hr-quick-action,
+  .company-quick-action,
+  .employee-quick-action {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    padding: 16px;
+  }
+
+  .hr-quick-action-content,
+  .company-quick-action-content,
+  .employee-quick-action-content {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .hr-topbar-date, .company-topbar-date, .employee-topbar-date {
+    white-space: normal;
+    max-width: 100%;
+  }
+
+  .pwa-install-button {
+    width: fit-content;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+}
+
+/* Evitar que los controles y textos desborden en cualquier tamaño */
+@media screen {
+  .hr-dashboard button,
+  .company-dashboard button,
+  .employee-dashboard button,
+  .hr-topbar button,
+  .company-topbar button,
+  .employee-topbar button {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .hr-dashboard h1, .hr-dashboard h2, .hr-dashboard h3,
+  .company-dashboard h1, .company-dashboard h2, .company-dashboard h3,
+  .employee-dashboard h1, .employee-dashboard h2, .employee-dashboard h3 {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+}
+/* ==========================================================
+   LABORALTUS - AJUSTE DE DISTRIBUCION DE TARJETAS Y TEXTOS
+   Aplicable tanto a Chrome como a la PWA
+   ========================================================== */
+
+@media screen and (max-width: 1100px) {
+
+  /* Estadísticas: dos tarjetas por fila */
+  .hr-dashboard-stats,
+  .company-dashboard-stats,
+  .employee-dashboard-stats {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+    width: 100% !important;
+  }
+
+  /* Interior de cada tarjeta: icono y texto con espacio real */
+  .hr-dashboard-stats > *,
+  .company-dashboard-stats > *,
+  .employee-dashboard-stats > * {
+    display: grid !important;
+    grid-template-columns: 52px minmax(0, 1fr) !important;
+    align-items: center !important;
+    justify-content: start !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 112px !important;
+    padding: 16px !important;
+    text-align: left !important;
+  }
+
+  .hr-dashboard-stats > * *,
+  .company-dashboard-stats > * *,
+  .employee-dashboard-stats > * * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+  }
+
+  /* Paneles inferiores: uno debajo del otro */
+  .hr-dashboard-bottom,
+  .company-dashboard-bottom,
+  .employee-dashboard-bottom {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    gap: 16px !important;
+  }
+
+  /* Accesos rápidos: una tarjeta por fila */
+  .hr-quick-actions,
+  .company-quick-actions,
+  .employee-quick-actions {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+
+  .hr-quick-action,
+  .company-quick-action,
+  .employee-quick-action {
+    display: grid !important;
+    grid-template-columns: 48px minmax(0, 1fr) 20px !important;
+    align-items: center !important;
+    justify-content: start !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 92px !important;
+    height: auto !important;
+    padding: 16px !important;
+    gap: 12px !important;
+    text-align: left !important;
+  }
+
+  .hr-quick-action-content,
+  .company-quick-action-content,
+  .employee-quick-action-content {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    text-align: left !important;
+  }
+
+  .hr-quick-action strong,
+  .hr-quick-action span,
+  .company-quick-action strong,
+  .company-quick-action span,
+  .employee-quick-action strong,
+  .employee-quick-action span {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    text-align: left !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    hyphens: none !important;
+  }
+}
+
+/* Ventanas estrechas: una sola columna */
+@media screen and (max-width: 600px) {
+  .hr-dashboard-stats,
+  .company-dashboard-stats,
+  .employee-dashboard-stats {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .hr-dashboard-stats > *,
+  .company-dashboard-stats > *,
+  .employee-dashboard-stats > * {
+    min-height: 96px !important;
+  }
+
+  .hr-dashboard,
+  .company-dashboard,
+  .employee-dashboard {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
