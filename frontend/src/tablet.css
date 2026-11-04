@@ -1,0 +1,106 @@
+/*
+ * LaboralTus — ajustes exclusivos para tablets táctiles.
+ * No modifica estilos globales ni reglas de escritorio.
+ * Alcance: 761–1366 CSS px, dispositivos táctiles sin hover.
+ */
+@media (min-width: 761px) and (max-width: 1366px) and (hover: none) and (pointer: coarse) {
+  /* Navegación RR. HH. */
+  .hr-sidebar { width: 220px; }
+  .hr-main { left: 220px; right: 0; width: auto; margin-left: 0; }
+
+  /* Navegación Empleado */
+  .employee-sidebar { width: 220px; }
+  .employee-main { left: 220px; right: 0; width: auto; }
+
+  /* Navegación Empresa */
+  .company-sidebar { width: 220px; }
+  .company-main { left: 220px; right: 0; width: auto; }
+
+  /* Rejillas de RR. HH. que contienen datos de empresa/empleado */
+  .hr-main .hr-company-row,
+  .hr-main .hr-company-detail-grid,
+  .hr-main .hr-general-employee-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 18px;
+    row-gap: 16px;
+  }
+  .hr-main .hr-company-row { padding-block: 12px; }
+  .hr-main .hr-company-detail-grid { justify-content: stretch; }
+  .hr-main .hr-company-detail-grid > div,
+  .hr-main .hr-company-detail-grid > div > span,
+  .hr-main .hr-company-detail-grid > div > strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .hr-main .hr-company-detail-logo { grid-column: 1 / -1; }
+
+  /* Paneles y cabeceras: permitir que el contenido use el ancho disponible */
+  .hr-dashboard,
+  .employee-dashboard,
+  .employee-content-panel,
+  .company-dashboard,
+  .company-content-panel { min-width: 0; }
+
+  .hr-topbar,
+  .employee-topbar,
+  .company-topbar {
+    gap: 16px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .hr-dashboard-stats,
+  .employee-dashboard-stats,
+  .company-dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hr-dashboard-bottom,
+  .employee-dashboard-bottom,
+  .company-dashboard-bottom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Controles táctiles: mínimo recomendado, solo dentro de perfiles */
+  .hr-sidebar .hr-nav-button,
+  .employee-sidebar .employee-nav-button,
+  .company-sidebar .company-nav-button,
+  .hr-main button,
+  .employee-main button,
+  .company-main button,
+  .hr-main input,
+  .hr-main select,
+  .hr-main textarea,
+  .employee-main input,
+  .employee-main select,
+  .employee-main textarea,
+  .company-main input,
+  .company-main select,
+  .company-main textarea { min-height: 44px; }
+
+  /* Evitar que hijos flex/grid provoquen desbordamiento horizontal */
+  .hr-main *,
+  .employee-main *,
+  .company-main * { min-width: 0; }
+
+  .hr-main img,
+  .employee-main img,
+  .company-main img { max-width: 100%; }
+}
+
+
+/* Safari/iPad: texto legible en el formulario de acceso. */
+@media (min-width: 761px) and (max-width: 1366px) and (hover: none) and (pointer: coarse) {
+  .login-card input {
+    color: #1f2937 !important;
+    -webkit-text-fill-color: #1f2937;
+    background-color: #ffffff;
+    color-scheme: light;
+    caret-color: #1f2937;
+  }
+
+  .login-card input::placeholder {
+    color: #667085;
+    -webkit-text-fill-color: #667085;
+    opacity: 1;
+  }
+}
