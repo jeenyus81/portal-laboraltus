@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
+import PwaInstallButton from './PwaInstallButton.jsx'
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://portal-laboraltus.onrender.com';
+const API_URL = import.meta.env.MODE === 'preview' ? '' : (import.meta.env.VITE_API_URL ?? 'https://portal-laboraltus.onrender.com');
 const COMPANY_CREDENTIALS_STORAGE_KEY = 'portal_laboraltus_company_credentials'
 
 function App() {
@@ -21,6 +22,19 @@ function App() {
 
   const [loggedIn, setLoggedIn] = useState(false)
   const [user, setUser] = useState(null)
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState(null)
+
+  useEffect(() => {
+    const captureInstallPrompt = (event) => {
+      event.preventDefault()
+      setDeferredInstallPrompt(event)
+    }
+
+    window.addEventListener('beforeinstallprompt', captureInstallPrompt)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', captureInstallPrompt)
+    }
+  }, [])
 
   // =========================================================
   // INPUTS DE ARCHIVOS DIRECTOS
@@ -3431,6 +3445,7 @@ if (loggedIn && user && user.role === 'HR') {
   </div>
 
   <div className="hr-topbar-user">
+    <PwaInstallButton installPrompt={deferredInstallPrompt} onPromptConsumed={() => setDeferredInstallPrompt(null)} />
 
     <div className="hr-topbar-date">
       <span className="hr-topbar-date-icon">
@@ -6904,6 +6919,7 @@ if (loggedIn && user && user.role === 'HR') {
                 )}
               </span>
             </div>
+            <PwaInstallButton installPrompt={deferredInstallPrompt} onPromptConsumed={() => setDeferredInstallPrompt(null)} />
           </div>
 
           {companyPortalView === 'dashboard' && (
@@ -7627,6 +7643,7 @@ if (loggedIn && user && user.role === 'HR') {
                 )}
               </span>
             </div>
+            <PwaInstallButton installPrompt={deferredInstallPrompt} onPromptConsumed={() => setDeferredInstallPrompt(null)} />
           </div>
 
           {employeePortalView === 'dashboard' && (
