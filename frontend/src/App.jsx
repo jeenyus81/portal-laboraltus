@@ -8282,7 +8282,7 @@ if (loggedIn && user && user.role === 'HR') {
                         </div>
 
                         <div className="contract-document">
-                          {contract.document_path ? (
+                          {(contract.document_path || contract.storage_key) ? (
                             <button
                               type="button"
                               className="download-button employee-contract-download-button"
@@ -8350,7 +8350,7 @@ if (loggedIn && user && user.role === 'HR') {
                 !contractsError &&
                 contracts.filter(
                   (contract) =>
-                    contract.document_path &&
+                    (contract.document_path || contract.storage_key) &&
                     downloadedContractIds.includes(contract.id),
                 ).length === 0 && (
                   <div className="empty-state">
@@ -8369,7 +8369,7 @@ if (loggedIn && user && user.role === 'HR') {
                     {contracts
                       .filter(
                         (contract) =>
-                          contract.document_path &&
+                          (contract.document_path || contract.storage_key) &&
                           downloadedContractIds.includes(contract.id),
                       )
                       .map((contract) => (
@@ -8620,7 +8620,7 @@ if (loggedIn && user && user.role === 'HR') {
                         </div>
 
                         <div className="contract-document">
-                          {nomina.document_path ? (
+                          {(nomina.document_path || nomina.storage_key) ? (
                             <button
                               type="button"
                               className="download-button employee-contract-download-button"
@@ -8687,7 +8687,7 @@ if (loggedIn && user && user.role === 'HR') {
                 !nominasError &&
                 nominas.filter(
                   (nomina) =>
-                    nomina.document_path &&
+                    (nomina.document_path || nomina.storage_key) &&
                     downloadedNominaIds.includes(nomina.id),
                 ).length === 0 && (
                   <div className="empty-state">
@@ -8706,7 +8706,7 @@ if (loggedIn && user && user.role === 'HR') {
                     {nominas
                       .filter(
                         (nomina) =>
-                          nomina.document_path &&
+                          (nomina.document_path || nomina.storage_key) &&
                           downloadedNominaIds.includes(nomina.id),
                       )
                       .map((nomina) => (
