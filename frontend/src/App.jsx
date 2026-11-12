@@ -4288,7 +4288,7 @@ if (loggedIn && user && user.role === 'HR') {
     </section>
 
     <footer className="hr-dashboard-footer">
-      © 2025 Portal Laboraltus. Todos los derechos reservados.
+      © 2026 Portal Laboraltus. Todos los derechos reservados.
     </footer>
 
   </div>
