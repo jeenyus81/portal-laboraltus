@@ -6556,7 +6556,7 @@ if (loggedIn && user && user.role === 'HR') {
                         handleNominaStore
                       }
                     >
-                      Almacén de contratos
+                      Almacén de nóminas
                     </button>
 
                   </div>
