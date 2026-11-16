@@ -94,6 +94,7 @@ class EmployeeUpdate(BaseModel):
     social_security_number: str
 
     username: str
+    password: str | None = None
 
 
 class EmployeeResponse(BaseModel):

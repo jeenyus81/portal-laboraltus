@@ -4,6 +4,7 @@ import PwaInstallButton from './PwaInstallButton.jsx'
 
 const API_URL = import.meta.env.MODE === 'preview' ? '' : (import.meta.env.VITE_API_URL ?? 'https://portal-laboraltus.onrender.com');
 const COMPANY_CREDENTIALS_STORAGE_KEY = 'portal_laboraltus_company_credentials'
+const EMPLOYEE_CREDENTIALS_STORAGE_KEY = 'portal_laboraltus_employee_credentials'
 
 function App() {
   const [username, setUsername] = useState('')
@@ -151,6 +152,8 @@ function App() {
 
   const [employeeSaving, setEmployeeSaving] = useState(false)
   const [employeeEditError, setEmployeeEditError] = useState('')
+  const [employeeCredentialsSaved, setEmployeeCredentialsSaved] = useState(false)
+  const [employeePasswordVisible, setEmployeePasswordVisible] = useState(false)
 
   // =========================================================
   // AÑADIR EMPLEADO
@@ -1779,8 +1782,12 @@ function App() {
       job_category: employee.job_category || '',
       nationality: employee.nationality || '',
       username: employee.username || '',
+      password: (JSON.parse(localStorage.getItem(EMPLOYEE_CREDENTIALS_STORAGE_KEY) || '{}')[String(employee.id)] || {}).password || '',
     })
 
+    const savedEmployeeCredentials = JSON.parse(localStorage.getItem(EMPLOYEE_CREDENTIALS_STORAGE_KEY) || '{}')[String(employee.id)]
+    setEmployeeCredentialsSaved(Boolean(savedEmployeeCredentials?.username && savedEmployeeCredentials?.password))
+    setEmployeePasswordVisible(false)
     setEmployeeEditError('')
   }
 
@@ -1795,8 +1802,16 @@ function App() {
       job_category: '',
       nationality: '',
       username: '',
+      password: '',
     })
 
+    setEmployeeCredentialsSaved(false)
+    setEmployeePasswordVisible(false)
+    setEmployeeEditError('')
+  }
+
+  function handleEditEmployeeCredentials() {
+    setEmployeeCredentialsSaved(false)
     setEmployeeEditError('')
   }
 
@@ -1842,6 +1857,7 @@ function App() {
             social_security_number:
               editingEmployee.social_security_number,
             username: employeeForm.username,
+            ...(employeeForm.password ? { password: employeeForm.password } : {}),
           }),
         },
       )
@@ -1861,6 +1877,14 @@ function App() {
       )
 
       setSelectedEmployee(data)
+
+      const storedEmployeeCredentials = JSON.parse(localStorage.getItem(EMPLOYEE_CREDENTIALS_STORAGE_KEY) || '{}')
+      storedEmployeeCredentials[String(editingEmployee.id)] = {
+        username: employeeForm.username.trim(),
+        password: employeeForm.password || storedEmployeeCredentials[String(editingEmployee.id)]?.password || '',
+      }
+      localStorage.setItem(EMPLOYEE_CREDENTIALS_STORAGE_KEY, JSON.stringify(storedEmployeeCredentials))
+
       setEditingEmployee(null)
 
       setEmployeeForm({
@@ -6040,7 +6064,39 @@ if (loggedIn && user && user.role === 'HR') {
                           })
                         }
                         required
+                        disabled={employeeCredentialsSaved}
                       />
+
+                      <label htmlFor="employee-access-password">Contraseña</label>
+                      <div className="hr-employee-password-field" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input
+                          id="employee-access-password"
+                          type={employeePasswordVisible ? 'text' : 'password'}
+                          value={employeeForm.password || ''}
+                          onChange={(event) => setEmployeeForm({ ...employeeForm, password: event.target.value })}
+                          autoComplete="new-password"
+                          disabled={employeeCredentialsSaved}
+                          placeholder="Introduce una contraseña"
+                        />
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => setEmployeePasswordVisible((visible) => !visible)}
+                          aria-label={employeePasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        >
+                          {employeePasswordVisible ? 'Ocultar' : 'Mostrar'}
+                        </button>
+                      </div>
+                      {employeeCredentialsSaved && (
+                        <div className="hr-employee-edit-actions">
+                          <button type="button" className="hr-employee-edit-save-button" disabled>
+                            Credenciales guardadas
+                          </button>
+                          <button type="button" className="secondary" onClick={handleEditEmployeeCredentials}>
+                            Editar
+                          </button>
+                        </div>
+                      )}
 
                       <label htmlFor="employee-job-title">
                         Puesto

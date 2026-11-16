@@ -1196,6 +1196,8 @@ def update_employee(
 
         if user is not None:
             user.username = data.username
+            if data.password:
+                user.password_hash = hash_password(data.password)
 
         try:
             session.commit()
