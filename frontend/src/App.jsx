@@ -6,6 +6,17 @@ const API_URL = import.meta.env.MODE === 'preview' ? '' : (import.meta.env.VITE_
 const COMPANY_CREDENTIALS_STORAGE_KEY = 'portal_laboraltus_company_credentials'
 const EMPLOYEE_CREDENTIALS_STORAGE_KEY = 'portal_laboraltus_employee_credentials'
 
+function createCompanyPortalSlug(companyName) {
+  return String(companyName || 'empresa')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\b(?:s\s*\.?\s*l\s*\.?\s*u?|s\s*\.?\s*a|sociedad\s+(?:limitada|anonima))\b/gi, ' ')
+    .replace(/\b\d{4}\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'empresa'
+}
+
 function App() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -6975,7 +6986,7 @@ if (loggedIn && user && user.role === 'HR') {
                 )}
               </span>
             </div>
-            <PwaInstallButton installPrompt={deferredInstallPrompt} onPromptConsumed={() => setDeferredInstallPrompt(null)} />
+            <PwaInstallButton installPrompt={deferredInstallPrompt} onPromptConsumed={() => setDeferredInstallPrompt(null)} label={`Instalar APP portal-${createCompanyPortalSlug(companyName)}`} />
           </div>
 
           {companyPortalView === 'dashboard' && (
@@ -7699,7 +7710,7 @@ if (loggedIn && user && user.role === 'HR') {
                 )}
               </span>
             </div>
-            <PwaInstallButton installPrompt={deferredInstallPrompt} onPromptConsumed={() => setDeferredInstallPrompt(null)} />
+            <PwaInstallButton installPrompt={deferredInstallPrompt} onPromptConsumed={() => setDeferredInstallPrompt(null)} label={`Instalar APP portal-${createCompanyPortalSlug(employeeCompanyName)}`} />
           </div>
 
           {employeePortalView === 'dashboard' && (
