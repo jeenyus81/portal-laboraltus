@@ -3377,14 +3377,14 @@ button:disabled {
 }
 
 .employee-contracts-menu-button {
-  min-height: 112px;
+  min-height: 80px;
   margin: 0 !important;
-  padding: 20px !important;
+  padding: 14px 18px !important;
   border: 1px solid #f4f3ee !important;
   border-radius: 12px !important;
   background: #f4f3ee !important;
   color: #172b45 !important;
-  font-size: 20px !important;
+  font-size: 17px !important;
   font-weight: 700 !important;
   box-shadow: none !important;
   cursor: pointer;
