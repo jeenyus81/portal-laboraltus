@@ -578,7 +578,7 @@ def create_company(
             "Empresa creada",
             company.name,
             "companies",
-            "Ã°Å¸ÂÂ¢",
+            "🏢",
         )
 
         return company
@@ -630,7 +630,7 @@ def update_company(
             "Empresa actualizada",
             company.name,
             "companies",
-            "Ã°Å¸ÂÂ¢",
+            "🏢",
         )
 
         return company
@@ -1479,7 +1479,7 @@ def create_contract(
                 employee.last_name
             ).strip(),
             "contracts",
-            "Ã°Å¸â€œâ€ž",
+            "📄",
             employee.id,
         )
 
@@ -1597,7 +1597,7 @@ def create_contract_with_document(
                 employee.last_name
             ).strip(),
             "contracts",
-            "Ã°Å¸â€œâ€ž",
+            "📄",
             employee.id,
         )
 
@@ -1722,7 +1722,7 @@ def upload_contract_document(
             "Contrato actualizado",
             "Empleado: " + employee_name,
             "contracts",
-            "Ã°Å¸â€œâ€ž",
+            "📄",
             employee_id,
         )
 
@@ -2190,7 +2190,7 @@ def upload_nomina_document(
             "NÃƒÂ³mina actualizada",
             "Empleado: " + employee_name,
             "nominas",
-            "Ã°Å¸â€™Â³",
+            "💳",
             employee_id,
         )
 
@@ -2327,7 +2327,7 @@ def create_nomina_with_document(
                 employee.last_name
             ).strip(),
             "nominas",
-            "Ã°Å¸â€™Â³",
+            "💳",
             employee.id,
         )
 
