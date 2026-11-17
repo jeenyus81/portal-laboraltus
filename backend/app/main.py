@@ -522,6 +522,99 @@ def get_me(
         }
 
 
+FILE_CLEANUP_QUEUE = Path("uploads/pending_file_cleanup.json")
+
+
+def _read_file_cleanup_queue() -> list[dict]:
+    if not FILE_CLEANUP_QUEUE.exists():
+        return []
+    try:
+        data = json.loads(FILE_CLEANUP_QUEUE.read_text(encoding="utf-8"))
+        return data if isinstance(data, list) else []
+    except (OSError, json.JSONDecodeError):
+        return []
+
+
+def _write_file_cleanup_queue(items: list[dict]) -> None:
+    FILE_CLEANUP_QUEUE.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = FILE_CLEANUP_QUEUE.with_suffix(".json.tmp")
+    temporary_path.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary_path.replace(FILE_CLEANUP_QUEUE)
+
+
+def _cleanup_deleted_files(new_items: list[dict]) -> int:
+    """Delete external files after the DB commit and retain failures for retry."""
+    pending = _read_file_cleanup_queue()
+    combined = pending + new_items
+    # Persist the complete work list before attempting any external deletion.
+    _write_file_cleanup_queue(combined)
+    remaining = []
+    storage = None
+
+    for item in combined:
+        try:
+            if item.get("kind") == "r2":
+                if storage is None:
+                    storage = R2Storage()
+                storage.delete_file(item["key"])
+            elif item.get("kind") == "local":
+                candidate = Path(item["path"])
+                if not candidate.is_absolute():
+                    candidate = Path.cwd() / candidate
+                uploads_root = (Path.cwd() / "uploads").resolve()
+                resolved = candidate.resolve()
+                if not resolved.is_relative_to(uploads_root):
+                    raise ValueError("La ruta de limpieza está fuera de uploads")
+                if resolved.is_file():
+                    resolved.unlink()
+            else:
+                raise ValueError("Tipo de limpieza de archivo no reconocido")
+        except Exception:
+            remaining.append(item)
+
+    _write_file_cleanup_queue(remaining)
+    return len(remaining)
+
+
+@app.on_event("startup")
+def retry_pending_file_cleanup() -> None:
+    """Retry external file deletions retained from earlier requests."""
+    try:
+        if _read_file_cleanup_queue():
+            _cleanup_deleted_files([])
+    except Exception:
+        # Keep the API available; the durable queue remains for a later retry.
+        pass
+
+
+def _remove_employee_download_marks(employee_ids: set[int]) -> None:
+    for reader, writer in (
+        (_read_downloaded_contracts, _write_downloaded_contracts),
+        (_read_downloaded_nominas, _write_downloaded_nominas),
+    ):
+        downloads = reader()
+        changed = False
+        for employee_id in employee_ids:
+            if downloads.pop(str(employee_id), None) is not None:
+                changed = True
+        if changed:
+            writer(downloads)
+
+
+def _remove_employee_download_marks(employee_ids: set[int]) -> None:
+    for reader, writer in (
+        (_read_downloaded_contracts, _write_downloaded_contracts),
+        (_read_downloaded_nominas, _write_downloaded_nominas),
+    ):
+        downloads = reader()
+        changed = False
+        for employee_id in employee_ids:
+            if downloads.pop(str(employee_id), None) is not None:
+                changed = True
+        if changed:
+            writer(downloads)
+
+
 # ============================================================
 # EMPRESAS
 # ============================================================
@@ -634,6 +727,94 @@ def update_company(
         )
 
         return company
+
+
+@app.delete("/api/companies/{company_id}")
+def delete_company(
+    company_id: int,
+    data: dict,
+    current_user: User = Depends(require_hr),
+):
+    password = data.get("password") if isinstance(data, dict) else None
+    if not isinstance(password, str) or not verify_password(password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Contraseña de RR. HH. incorrecta")
+
+    cleanup_items: list[dict] = []
+    with Session(engine) as session:
+        company = session.get(Company, company_id)
+        if company is None:
+            raise HTTPException(status_code=404, detail="Company not found")
+
+        employees = session.scalars(
+            select(Employee).where(Employee.company_id == company_id)
+        ).all()
+        company_name = company.name
+        employee_ids = {employee.id for employee in employees}
+        employee_users = (
+            session.scalars(select(User).where(User.employee_id.in_(employee_ids))).all()
+            if employee_ids else []
+        )
+        company_user = session.scalar(select(User).where(User.company_id == company_id))
+        contracts = (
+            session.scalars(select(Contract).where(Contract.employee_id.in_(employee_ids))).all()
+            if employee_ids else []
+        )
+        nominas = (
+            session.scalars(select(Nomina).where(Nomina.employee_id.in_(employee_ids))).all()
+            if employee_ids else []
+        )
+
+        for item in [*contracts, *nominas]:
+            if item.storage_key:
+                cleanup_items.append({"kind": "r2", "key": item.storage_key})
+            if item.document_path:
+                cleanup_items.append({"kind": "local", "path": item.document_path})
+
+        logo_storage = _company_logo_storage()
+        if logo_storage is not None:
+            for extension in COMPANY_LOGO_EXTENSIONS:
+                cleanup_items.append({
+                    "kind": "r2",
+                    "key": _company_logo_r2_key(company_id, extension),
+                })
+        for logo_path in _company_logo_files(company_id):
+            cleanup_items.append({"kind": "local", "path": str(logo_path)})
+
+        for user in employee_users:
+            session.delete(user)
+        if company_user is not None:
+            session.delete(company_user)
+        for contract in contracts:
+            session.delete(contract)
+        for nomina in nominas:
+            session.delete(nomina)
+        for employee in employees:
+            session.delete(employee)
+        session.delete(company)
+        # If this commit fails, no external file has yet been deleted.
+        session.commit()
+
+    cleanup_pending = _cleanup_deleted_files(cleanup_items)
+    try:
+        _remove_employee_download_marks(employee_ids)
+    except Exception:
+        pass
+    try:
+        _record_activity(
+            "Empresa dada de baja",
+            f"{company_name} ({len(employee_ids)} empleados eliminados)",
+            "companies",
+            "🗑️",
+        )
+    except Exception:
+        pass
+    return {
+        "deleted": True,
+        "company_id": company_id,
+        "employees_deleted": len(employee_ids),
+        "employee_ids": sorted(employee_ids),
+        "cleanup_pending": cleanup_pending,
+    }
 
 
 @app.get("/api/companies/{company_id}/logo")
@@ -1262,6 +1443,63 @@ def update_employee(
             "username":
                 username,
         }
+
+
+@app.delete("/api/employees/{employee_id}")
+def delete_employee(
+    employee_id: int,
+    data: dict,
+    current_user: User = Depends(require_hr),
+):
+    password = data.get("password") if isinstance(data, dict) else None
+    if not isinstance(password, str) or not verify_password(password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Contraseña de RR. HH. incorrecta")
+
+    cleanup_items: list[dict] = []
+    with Session(engine) as session:
+        employee = session.get(Employee, employee_id)
+        if employee is None:
+            raise HTTPException(status_code=404, detail="Employee not found")
+
+        employee_name = f"{employee.first_name} {employee.last_name}".strip()
+        user = session.scalar(select(User).where(User.employee_id == employee_id))
+        contracts = session.scalars(
+            select(Contract).where(Contract.employee_id == employee_id)
+        ).all()
+        nominas = session.scalars(
+            select(Nomina).where(Nomina.employee_id == employee_id)
+        ).all()
+
+        for item in [*contracts, *nominas]:
+            if item.storage_key:
+                cleanup_items.append({"kind": "r2", "key": item.storage_key})
+            if item.document_path:
+                cleanup_items.append({"kind": "local", "path": item.document_path})
+
+        if user is not None:
+            session.delete(user)
+        for contract in contracts:
+            session.delete(contract)
+        for nomina in nominas:
+            session.delete(nomina)
+        session.delete(employee)
+        # If this commit fails, no external file has yet been deleted.
+        session.commit()
+
+    cleanup_pending = _cleanup_deleted_files(cleanup_items)
+    try:
+        _remove_employee_download_marks({employee_id})
+    except Exception:
+        pass
+    try:
+        _record_activity("Empleado dado de baja", employee_name, "employees", "🗑️")
+    except Exception:
+        pass
+    return {
+        "deleted": True,
+        "employee_id": employee_id,
+        "cleanup_pending": cleanup_pending,
+    }
 
 
 # ============================================================
