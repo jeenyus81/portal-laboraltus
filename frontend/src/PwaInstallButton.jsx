@@ -1,6 +1,6 @@
 import './pwa-install.css'
 
-export default function PwaInstallButton({ installPrompt, onPromptConsumed }) {
+export default function PwaInstallButton({ installPrompt, onPromptConsumed, label = "Instalar portal LaboralTus" }) {
   async function handleInstall() {
     if (installPrompt) {
       try {
@@ -43,7 +43,7 @@ export default function PwaInstallButton({ installPrompt, onPromptConsumed }) {
       className="pwa-install-button"
       onClick={handleInstall}
     >
-      Instalar portal LaboralTus
+      {label}
     </button>
   )
 }

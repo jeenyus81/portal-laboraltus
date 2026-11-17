@@ -3469,7 +3469,7 @@ if (loggedIn && user && user.role === 'HR') {
   </div>
 
   <div className="hr-topbar-user">
-    <PwaInstallButton installPrompt={deferredInstallPrompt} onPromptConsumed={() => setDeferredInstallPrompt(null)} />
+    <PwaInstallButton installPrompt={deferredInstallPrompt} onPromptConsumed={() => setDeferredInstallPrompt(null)} label="Instalar APP portal-laboraltus" />
 
     <div className="hr-topbar-date">
       <span className="hr-topbar-date-icon">
