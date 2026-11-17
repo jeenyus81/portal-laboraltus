@@ -1093,7 +1093,7 @@ def create_employee(
                 employee.last_name
             ).strip(),
             "employees",
-            "Ã°Å¸â€˜Â¥",
+            "👥",
         )
 
         return {
@@ -1228,7 +1228,7 @@ def update_employee(
                 employee.last_name
             ).strip(),
             "employees",
-            "Ã°Å¸â€˜Â¥",
+            "👥",
         )
 
         return {
