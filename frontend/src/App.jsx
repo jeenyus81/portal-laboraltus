@@ -94,6 +94,7 @@ function App() {
 
   const [editingCompany, setEditingCompany] = useState(null)
   const [companySaving, setCompanySaving] = useState(false)
+  const [deletionDialog, setDeletionDialog] = useState(null)
 
   const [companyCredentialsForm, setCompanyCredentialsForm] = useState({
     username: '',
@@ -1571,6 +1572,71 @@ function App() {
     setCompaniesError('')
   }
 
+  function handleDeleteCompany() {
+    if (!editingCompany || companySaving) return
+    const confirmed = window.confirm(`Vas a dar de baja definitivamente a ${editingCompany.name} y eliminar todos sus empleados, documentos y accesos. Esta acción no se puede deshacer. ¿Deseas continuar?`)
+    if (!confirmed) return
+    setDeletionDialog({ type: 'company', password: '', error: '' })
+  }
+
+  async function handleConfirmDeleteCompany(event) {
+    event.preventDefault()
+    if (!editingCompany || !deletionDialog?.password || companySaving) return
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      setDeletionDialog((previous) => ({ ...previous, error: 'No hay una sesión válida. Inicia sesión de nuevo.' }))
+      return
+    }
+    let deletionSucceeded = false
+    try {
+      setCompanySaving(true)
+      setDeletionDialog((previous) => ({ ...previous, error: '' }))
+      const response = await fetch(API_URL + '/api/companies/' + editingCompany.id, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ password: deletionDialog.password }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.detail || 'No se pudo dar de baja la empresa')
+      const deletedCompanyId = editingCompany.id
+      setCompanies((previous) => previous.filter((company) => company.id !== deletedCompanyId))
+      setSelectedCompany(null)
+      setEditingCompany(null)
+      setCompanyView('companies')
+      setCompaniesError('')
+      setDeletionDialog(null)
+      deletionSucceeded = true
+      try {
+        saveStoredCompanyLogo(deletedCompanyId, '')
+        const savedEmployeeCredentials = JSON.parse(localStorage.getItem(EMPLOYEE_CREDENTIALS_STORAGE_KEY) || '{}')
+        for (const employeeId of (data.employee_ids || [])) {
+          delete savedEmployeeCredentials[String(employeeId)]
+        }
+        localStorage.setItem(EMPLOYEE_CREDENTIALS_STORAGE_KEY, JSON.stringify(savedEmployeeCredentials))
+      } catch {
+        // La baja en el servidor ya se ha completado; no bloquear la interfaz por la caché local.
+      }
+      await loadCompanies(token)
+      await loadEmployees(token)
+      if (data.cleanup_pending) {
+        setCompaniesError('La empresa se ha eliminado. Algunos archivos quedan pendientes de limpieza y se reintentará al reiniciar el servicio.')
+      }
+    } catch (err) {
+      if (deletionSucceeded) {
+        setCompaniesError('La baja se ha completado, pero no se pudieron actualizar todos los datos de pantalla: ' + err.message)
+      } else {
+        setDeletionDialog((previous) => previous ? ({ ...previous, error: err.message }) : previous)
+      }
+    } finally {
+      setCompanySaving(false)
+    }
+  }
+
+  function handleCancelDeletion() {
+    if (companySaving || employeeSaving) return
+    setDeletionDialog(null)
+  }
+
   async function handleUpdateCompany(event) {
     event.preventDefault()
 
@@ -1824,6 +1890,64 @@ function App() {
   function handleEditEmployeeCredentials() {
     setEmployeeCredentialsSaved(false)
     setEmployeeEditError('')
+  }
+
+  function handleDeleteEmployee() {
+    if (!editingEmployee || employeeSaving) return
+    const employeeName = `${editingEmployee.first_name || ''} ${editingEmployee.last_name || ''}`.trim()
+    const confirmed = window.confirm(`Vas a dar de baja definitivamente a ${employeeName} y eliminar su cuenta, contratos, nóminas y documentos. Esta acción no se puede deshacer. ¿Deseas continuar?`)
+    if (!confirmed) return
+    setDeletionDialog({ type: 'employee', password: '', error: '' })
+  }
+
+  async function handleConfirmDeleteEmployee(event) {
+    event.preventDefault()
+    if (!editingEmployee || !deletionDialog?.password || employeeSaving) return
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      setDeletionDialog((previous) => ({ ...previous, error: 'No hay una sesión válida. Inicia sesión de nuevo.' }))
+      return
+    }
+    let deletionSucceeded = false
+    try {
+      setEmployeeSaving(true)
+      setDeletionDialog((previous) => ({ ...previous, error: '' }))
+      const response = await fetch(API_URL + '/api/employees/' + editingEmployee.id, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ password: deletionDialog.password }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.detail || 'No se pudo dar de baja al empleado')
+      const deletedId = editingEmployee.id
+      setEmployees((previous) => previous.filter((employee) => employee.id !== deletedId))
+      setSelectedEmployee(null)
+      setEditingEmployee(null)
+      setContracts([])
+      setNominas([])
+      setEmployeeEditError('')
+      setDeletionDialog(null)
+      deletionSucceeded = true
+      try {
+        const savedCredentials = JSON.parse(localStorage.getItem(EMPLOYEE_CREDENTIALS_STORAGE_KEY) || '{}')
+        delete savedCredentials[String(deletedId)]
+        localStorage.setItem(EMPLOYEE_CREDENTIALS_STORAGE_KEY, JSON.stringify(savedCredentials))
+      } catch {
+        // La baja en el servidor ya se ha completado; no bloquear la interfaz por la caché local.
+      }
+      await loadEmployees(token)
+      if (data.cleanup_pending) {
+        setEmployeesError('El empleado se ha eliminado. Algunos archivos quedan pendientes de limpieza y se reintentará al reiniciar el servicio.')
+      }
+    } catch (err) {
+      if (deletionSucceeded) {
+        setEmployeesError('La baja se ha completado, pero no se pudieron actualizar todos los datos de pantalla: ' + err.message)
+      } else {
+        setDeletionDialog((previous) => previous ? ({ ...previous, error: err.message }) : previous)
+      }
+    } finally {
+      setEmployeeSaving(false)
+    }
   }
 
   async function handleUpdateEmployee(event) {
@@ -5131,6 +5255,15 @@ if (loggedIn && user && user.role === 'HR') {
 
                         <button
                           type="button"
+                          className="hr-company-edit-save-button"
+                          onClick={handleDeleteCompany}
+                          disabled={companySaving}
+                        >
+                          Baja empresa
+                        </button>
+
+                        <button
+                          type="button"
                           className="secondary hr-company-edit-cancel-button"
                           onClick={
                             handleCancelEditCompany
@@ -6197,6 +6330,21 @@ if (loggedIn && user && user.role === 'HR') {
 
                         <button
                           type="button"
+                          className="hr-employee-edit-save-button"
+                          style={{
+                            background: '#f4f3ee',
+                            color: '#172b45',
+                            border: '1px solid #f4f3ee',
+                            boxShadow: 'none',
+                          }}
+                          onClick={handleDeleteEmployee}
+                          disabled={employeeSaving}
+                        >
+                          Baja empleado
+                        </button>
+
+                        <button
+                          type="button"
                           className="secondary hr-employee-edit-cancel-button"
                           style={{
                             background: '#f4f3ee',
@@ -6789,6 +6937,49 @@ if (loggedIn && user && user.role === 'HR') {
 
 </div>
         </div>
+
+        {deletionDialog && (
+          <div
+            className="hr-deletion-modal-backdrop"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) handleCancelDeletion()
+            }}
+          >
+            <section
+              className="hr-deletion-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="hr-deletion-modal-title"
+            >
+              <h2 id="hr-deletion-modal-title">Confirmar baja definitiva</h2>
+              <p>
+                {deletionDialog.type === 'company'
+                  ? `Vas a eliminar definitivamente ${editingCompany?.name || 'la empresa'}, sus empleados, accesos y documentos.`
+                  : `Vas a eliminar definitivamente a ${editingEmployee?.first_name || ''} ${editingEmployee?.last_name || ''}, su acceso y sus documentos.`}
+              </p>
+              <form onSubmit={deletionDialog.type === 'company' ? handleConfirmDeleteCompany : handleConfirmDeleteEmployee}>
+                <label htmlFor="hr-deletion-password">Contraseña de inicio de sesión de RR. HH.</label>
+                <input
+                  id="hr-deletion-password"
+                  type="password"
+                  value={deletionDialog.password}
+                  onChange={(event) => setDeletionDialog((previous) => ({ ...previous, password: event.target.value, error: '' }))}
+                  autoComplete="current-password"
+                  required
+                  autoFocus
+                />
+                {deletionDialog.error && <p className="error" role="alert">{deletionDialog.error}</p>}
+                <div className="hr-deletion-modal-actions">
+                  <button type="button" className="secondary" onClick={handleCancelDeletion} disabled={companySaving || employeeSaving}>Cancelar</button>
+                  <button type="submit" disabled={!deletionDialog.password || companySaving || employeeSaving}>
+                    {(companySaving || employeeSaving) ? 'Procesando...' : 'Confirmar baja definitiva'}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        )}
       </main>
     )
   }

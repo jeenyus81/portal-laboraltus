@@ -1646,6 +1646,13 @@ button:disabled {
   gap: 18px;
 }
 
+/* Coloca el botón de baja a la izquierda; guardar y cancelar permanecen a la derecha. */
+.hr-main .hr-company-edit-actions > button:nth-child(2),
+.hr-main .hr-employee-edit-actions > button:nth-child(2) {
+  order: -1;
+  margin-right: auto;
+}
+
 .hr-main .hr-company-edit-actions .hr-company-edit-save-button,
 .hr-main .hr-company-edit-actions .hr-company-edit-cancel-button {
   margin: 0;
@@ -5117,4 +5124,81 @@ button:disabled {
 .employee-activity-history-panel .employee-content-header {
   padding-right: 24px;
   box-sizing: border-box;
+}
+
+
+/* =========================================================
+   MODAL DE CONFIRMACIÓN DE BAJAS DEFINITIVAS (RR. HH.)
+   ========================================================= */
+.hr-deletion-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(16, 24, 40, 0.58);
+}
+
+.hr-deletion-modal {
+  width: min(100%, 460px);
+  padding: 28px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 24px 64px rgba(16, 24, 40, 0.24);
+}
+
+.hr-deletion-modal h2 {
+  margin: 0 0 12px;
+  color: #172b45;
+  font-size: 21px;
+}
+
+.hr-deletion-modal > p {
+  margin: 0 0 18px;
+  color: #475467;
+  line-height: 1.5;
+}
+
+.hr-deletion-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hr-deletion-modal label {
+  margin-top: 0;
+  color: #344054;
+  font-weight: 600;
+}
+
+.hr-deletion-modal input {
+  width: 100%;
+}
+
+.hr-deletion-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.hr-deletion-modal-actions button {
+  margin-top: 0;
+}
+
+@media (max-width: 520px) {
+  .hr-deletion-modal {
+    padding: 22px;
+  }
+
+  .hr-deletion-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .hr-deletion-modal-actions button {
+    width: 100%;
+  }
 }
