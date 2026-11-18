@@ -8367,7 +8367,7 @@ if (loggedIn && user && user.role === 'HR') {
                 </h3>
               </div>
 
-              <section className="employee-contracts-menu-card">
+              <section className="employee-contracts-menu-card employee-profile-menu-card">
                 <div className="employee-contracts-identity-card">
                   <span>
                     Nombre
@@ -8381,7 +8381,7 @@ if (loggedIn && user && user.role === 'HR') {
                 <div className="employee-contracts-menu-actions">
                   <button
                     type="button"
-                    className="employee-contracts-menu-button"
+                    className="employee-contracts-menu-button employee-profile-menu-button"
                     onClick={async () => {
                       const token = localStorage.getItem('access_token')
 
@@ -8400,12 +8400,13 @@ if (loggedIn && user && user.role === 'HR') {
                       setEmployeeActiveMenu('contracts')
                     }}
                   >
+                    <svg className="employee-profile-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.75h7l4 4v5.1M14 3.75v4h4M7 3.75a2 2 0 0 0-2 2v12.5a2 2 0 0 0 2 2h6M14 17.5h7M17.5 14v7" /></svg>
                     Contratos nuevos
                   </button>
 
                   <button
                     type="button"
-                    className="employee-contracts-menu-button employee-contracts-menu-button-nominas"
+                    className="employee-contracts-menu-button employee-contracts-menu-button-nominas employee-profile-menu-button"
                     onClick={async () => {
                       const token = localStorage.getItem('access_token')
 
@@ -8424,6 +8425,7 @@ if (loggedIn && user && user.role === 'HR') {
                       setEmployeeActiveMenu('contracts')
                     }}
                   >
+                    <svg className="employee-profile-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5" /></svg>
                     Almacén de contratos
                   </button>
                 </div>
@@ -8725,7 +8727,7 @@ if (loggedIn && user && user.role === 'HR') {
                 </h3>
               </div>
 
-              <section className="employee-contracts-menu-card">
+              <section className="employee-contracts-menu-card employee-profile-menu-card">
                 <div className="employee-contracts-identity-card">
                   <span>
                     Nombre
@@ -8739,7 +8741,7 @@ if (loggedIn && user && user.role === 'HR') {
                 <div className="employee-contracts-menu-actions">
                   <button
                     type="button"
-                    className="employee-contracts-menu-button"
+                    className="employee-contracts-menu-button employee-profile-menu-button"
                     onClick={async () => {
                       const token = localStorage.getItem('access_token')
 
@@ -8758,12 +8760,13 @@ if (loggedIn && user && user.role === 'HR') {
                       setEmployeeActiveMenu('nominas')
                     }}
                   >
+                    <svg className="employee-profile-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.75h7l4 4v5.1M14 3.75v4h4M7 3.75a2 2 0 0 0-2 2v12.5a2 2 0 0 0 2 2h6M14 17.5h7M17.5 14v7" /></svg>
                     Nóminas nuevas
                   </button>
 
                   <button
                     type="button"
-                    className="employee-contracts-menu-button employee-contracts-menu-button-nominas"
+                    className="employee-contracts-menu-button employee-contracts-menu-button-nominas employee-profile-menu-button"
                     onClick={async () => {
                       const token = localStorage.getItem('access_token')
 
@@ -8782,6 +8785,7 @@ if (loggedIn && user && user.role === 'HR') {
                       setEmployeeActiveMenu('nominas')
                     }}
                   >
+                    <svg className="employee-profile-menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5" /></svg>
                     Almacén de nóminas
                   </button>
                 </div>
